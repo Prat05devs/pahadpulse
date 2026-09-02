@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+.expo/
+out/
+
+# Test output
+coverage/
+.nyc_output/
+playwright-report/
+cypress/screenshots/
+cypress/videos/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Local database data — NEVER commit a database data directory
+database/db_data/
+*.sqlite
+*.sqlite3
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Claude Code local overrides
+.claude/settings.local.json
