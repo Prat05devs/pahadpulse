@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SYNTHETIC TEST FIXTURE — not real IMD data.
+
+  Modeled precisely on the structure of imd-cap-alert.sample.xml (a real alert fetched from
+  https://cap-sources.s3.amazonaws.com/in-imd-en/rss.xml on 2026-09-03), with the area
+  changed to Uttarakhand and the identifier changed so it cannot be mistaken for a live
+  alert. Used only to exercise the Uttarakhand-matching path in unit tests; never loaded by
+  the application at runtime.
+-->
+<cap:alert xmlns:cap="urn:oasis:names:tc:emergency:cap:1.2">
+  <cap:identifier>urn:oid:2.49.0.1.356.0.TEST.FIXTURE.UTTARAKHAND</cap:identifier>
+  <cap:sender>rainfallnwfc@gmail.com</cap:sender>
+  <cap:sent>2026-09-03T12:51:21+05:30</cap:sent>
+  <cap:status>Actual</cap:status>
+  <cap:msgType>Alert</cap:msgType>
+  <cap:scope>Public</cap:scope>
+  <cap:info>
+    <cap:language>en</cap:language>
+    <cap:category>Met</cap:category>
+    <cap:event>Heavy rainfall</cap:event>
+    <cap:responseType>Monitor</cap:responseType>
+    <cap:urgency>Expected</cap:urgency>
+    <cap:severity>Severe</cap:severity>
+    <cap:certainty>Likely</cap:certainty>
+    <cap:onset>2026-09-03T07:00:00+05:30</cap:onset>
+    <cap:expires>2026-09-04T07:00:00+05:30</cap:expires>
+    <cap:senderName>NWFC DIVISION, IMD, NEW DELHI</cap:senderName>
+    <cap:headline>Heavy to very heavy rainfall likely over Uttarakhand</cap:headline>
+    <cap:description>Heavy to very heavy rainfall at isolated places very likely over Uttarakhand during the next 24 hours.</cap:description>
+    <cap:instruction>Avoid landslide-prone hill roads. Do not attempt river crossings.</cap:instruction>
+    <cap:web>https://mausam.imd.gov.in/imd_latest/contents/subdivisionwise-warning.php</cap:web>
+    <cap:area>
+      <cap:areaDesc>UTTARAKHAND</cap:areaDesc>
+      <cap:polygon>31.4,77.5 31.4,81.0 28.7,81.0 28.7,77.5 31.4,77.5</cap:polygon>
+    </cap:area>
+  </cap:info>
+</cap:alert>

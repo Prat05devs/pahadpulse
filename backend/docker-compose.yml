@@ -1,0 +1,20 @@
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-pahadpulse}
+      MYSQL_DATABASE: ${DB_NAME:-pahad_pulse}
+      MYSQL_USER: ${DB_USER:-pahad}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-pahad}
+    ports:
+      - '3306:3306'
+    command: ['--default-time-zone=+00:00']
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 5s
+      retries: 10
+
+volumes:
+  db_data:
