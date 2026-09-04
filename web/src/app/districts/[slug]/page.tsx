@@ -5,17 +5,18 @@ import { apiClient } from '@/lib/api';
 import { z } from 'zod';
 
 interface DistrictDetailPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export async function generateMetadata(
   { params }: DistrictDetailPageProps
 ): Promise<Metadata> {
   try {
+    const { slug } = await params;
     const district = await apiClient.get(
-      `/areas/districts/${params.slug}`,
+      `/areas/districts/${slug}`,
       z.any()
     );
     return {
@@ -29,11 +30,12 @@ export async function generateMetadata(
   }
 }
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export default async function DistrictDetailPage({
   params,
 }: DistrictDetailPageProps) {
+  const { slug } = await params;
   let district = null;
   let alerts = null;
   let indicators = null;
@@ -43,10 +45,10 @@ export default async function DistrictDetailPage({
   try {
     const [districtData, alertsData, indicatorsData, weatherData] =
       await Promise.all([
-        apiClient.get(`/areas/districts/${params.slug}`, z.any()),
-        apiClient.get(`/areas/${params.slug}/alerts`, z.any()).catch(() => null),
-        apiClient.get(`/areas/${params.slug}/indicators`, z.any()).catch(() => null),
-        apiClient.get(`/areas/${params.slug}/weather`, z.any()).catch(() => null),
+        apiClient.get(`/areas/districts/${slug}`, z.any()),
+        apiClient.get(`/areas/${slug}/alerts`, z.any()).catch(() => null),
+        apiClient.get(`/areas/${slug}/indicators`, z.any()).catch(() => null),
+        apiClient.get(`/areas/${slug}/weather`, z.any()).catch(() => null),
       ]);
 
     district = districtData;

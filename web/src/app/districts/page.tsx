@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Select District — Pahad Pulse',
 };
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export default async function DistrictsListPage() {
   let districts = null;

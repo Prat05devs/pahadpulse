@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: 'Real-time road closures, traffic status, and highway conditions in Uttarakhand.',
 };
 
-export const revalidate = 600;
+export const dynamic = 'force-dynamic';
 
 export default async function RoadsPage() {
   return (
