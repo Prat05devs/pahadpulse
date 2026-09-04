@@ -1,0 +1,65 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import url('https://fonts.googleapis.com/css2?family=Anek+Devanagari:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --font-anek-devanagari: 'Anek Devanagari', serif;
+  --font-ibm-plex-sans: 'IBM Plex Sans', sans-serif;
+  --font-ibm-plex-mono: 'IBM Plex Mono', monospace;
+
+  --color-bg-light: #FAF8F4;
+  --color-bg-dark: #10241D;
+  --color-text-light: #14201C;
+  --color-text-dark: #EAF0EC;
+  --color-accent: #E4681F;
+  --color-border: #D4CCBE;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F5F3F0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-bg: var(--color-bg-dark);
+    --color-text: var(--color-text-dark);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --color-bg: var(--color-bg-light);
+    --color-text: var(--color-text-light);
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-bg: var(--color-bg-dark);
+  --color-text: var(--color-text-dark);
+}
+
+:root[data-theme='light'] {
+  --color-bg: var(--color-bg-light);
+  --color-text: var(--color-text-light);
+}
+
+* {
+  @apply box-border;
+}
+
+body {
+  @apply font-sans bg-bg-light text-text-light;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition-property: background-color, border-color, color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
