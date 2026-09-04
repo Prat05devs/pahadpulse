@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": "^22.13.0 || >=24"
   },
   "volta": {
-    "node": "22.11.0"
+    "node": "22.20.0"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",

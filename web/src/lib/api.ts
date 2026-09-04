@@ -27,6 +27,21 @@ export class ApiError extends Error {
   }
 }
 
+async function readJsonBody(response: Response, url: string): Promise<unknown> {
+  const raw = await response.text();
+
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    // Non-JSON body: usually the wrong origin (e.g. the Next dev server) answered.
+    throw new ApiError(
+      10000,
+      `Expected JSON from ${url} but received ${response.headers.get('content-type') ?? 'an unknown content type'} (HTTP ${response.status}). Check NEXT_PUBLIC_API_URL points at the API server.`,
+      response.status
+    );
+  }
+}
+
 export const apiClient = {
   async get<T>(
     endpoint: string,
@@ -45,7 +60,7 @@ export const apiClient = {
         },
       });
 
-      const json = await response.json() as unknown;
+      const json = await readJsonBody(response, url);
 
       if (!response.ok) {
         const errorData = json as ApiErrorResponse;
@@ -100,7 +115,7 @@ export const apiClient = {
         body: JSON.stringify(body),
       });
 
-      const json = await response.json() as unknown;
+      const json = await readJsonBody(response, url);
 
       if (!response.ok) {
         const errorData = json as ApiErrorResponse;
