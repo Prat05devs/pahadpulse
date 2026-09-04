@@ -74,13 +74,13 @@ async function seedBoundaries(districts: DistrictRow[]): Promise<number> {
 
     await db.query<ResultSetHeader>(
       `INSERT INTO area_boundaries (area_id, geojson, simplified_geojson, is_placeholder, source_note)
-       VALUES (?, CAST(? AS JSON), CAST(? AS JSON), TRUE, ?) AS new
+       VALUES (?, CAST(? AS JSON), CAST(? AS JSON), TRUE, ?)
        ON DUPLICATE KEY UPDATE
-         geojson            = new.geojson,
-         simplified_geojson = new.simplified_geojson,
-         is_placeholder     = new.is_placeholder,
-         source_note        = new.source_note`,
-      [JSON.stringify(geometry), JSON.stringify(geometry), PLACEHOLDER_NOTE],
+         geojson            = VALUES(geojson),
+         simplified_geojson = VALUES(simplified_geojson),
+         is_placeholder     = VALUES(is_placeholder),
+         source_note        = VALUES(source_note)`,
+      [district.id, JSON.stringify(geometry), JSON.stringify(geometry), PLACEHOLDER_NOTE],
     );
     written += 1;
   }
@@ -100,8 +100,8 @@ async function seedDemoHierarchy(
       const tehsilSlug = `${district.slug}-demo-tehsil-${t}`;
 
       await db.query<ResultSetHeader>(
-        `INSERT INTO areas (type, code, slug, name_en, name_hi, parent_id) VALUES (?, ?, ?, ?, ?, ?) AS new
-         ON DUPLICATE KEY UPDATE slug = new.slug, name_en = new.name_en, name_hi = new.name_hi`,
+        `INSERT INTO areas (type, code, slug, name_en, name_hi, parent_id) VALUES (?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE slug = VALUES(slug), name_en = VALUES(name_en), name_hi = VALUES(name_hi)`,
         [
           AreaType.Tehsil,
           tehsilCode,
@@ -122,8 +122,8 @@ async function seedDemoHierarchy(
 
       for (let v = 1; v <= 4; v += 1) {
         await db.query<ResultSetHeader>(
-          `INSERT INTO areas (type, code, slug, name_en, name_hi, parent_id) VALUES (?, ?, ?, ?, ?, ?) AS new
-           ON DUPLICATE KEY UPDATE slug = new.slug, name_en = new.name_en, name_hi = new.name_hi`,
+          `INSERT INTO areas (type, code, slug, name_en, name_hi, parent_id) VALUES (?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE slug = VALUES(slug), name_en = VALUES(name_en), name_hi = VALUES(name_hi)`,
           [
             AreaType.Village,
             `DEMO-${district.code}-T${t}-V${v}`,
@@ -311,11 +311,10 @@ async function ensureDemoSource(): Promise<number> {
        (source_key, owner_module, department_en, department_hi, url, attribution, licence,
         access_method, cadence, may_redistribute, metadata_status, metadata_note, is_enabled)
      VALUES (?, 'indicators', ?, ?, ?, ?, ?, 'manual', 'static', TRUE, 'provisional', ?, FALSE)
-     AS new
      ON DUPLICATE KEY UPDATE
-       department_en = new.department_en, department_hi = new.department_hi,
-       url = new.url, attribution = new.attribution, licence = new.licence,
-       metadata_note = new.metadata_note`,
+       department_en = VALUES(department_en), department_hi = VALUES(department_hi),
+       url = VALUES(url), attribution = VALUES(attribution), licence = VALUES(licence),
+       metadata_note = VALUES(metadata_note)`,
     [
       DEMO_SOURCE_KEY,
       'Pahad Pulse (internal demo dataset)',
@@ -353,8 +352,7 @@ async function seedIndicatorDemoValues(
         await db.query<ResultSetHeader>(
           `INSERT INTO indicator_values (indicator_key, area_id, vintage, value, source_id, fetched_at)
            VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())
-           AS new
-           ON DUPLICATE KEY UPDATE value = new.value, source_id = new.source_id, fetched_at = new.fetched_at`,
+           ON DUPLICATE KEY UPDATE value = VALUES(value), source_id = VALUES(source_id), fetched_at = VALUES(fetched_at)`,
           [def.key, district.id, vintage, value, demoSourceId],
         );
         written += 1;
