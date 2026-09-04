@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
+import { z } from 'zod';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { apiClient } from '@/lib/api';
 import { DistrictSummarySchema } from '@/features/dashboard/schemas';
@@ -15,7 +16,7 @@ export default async function DistrictsListPage() {
   let error = null;
 
   try {
-    districts = await apiClient.get('/areas/districts', Array);
+    districts = await apiClient.get('/areas/districts', z.array(DistrictSummarySchema));
   } catch (err) {
     error = err instanceof Error ? err.message : 'Failed to load districts';
   }
