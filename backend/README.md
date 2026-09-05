@@ -1,151 +1,94 @@
-# Pahad Pulse — API
+# PahadPulse API
 
-Express 5 · TypeScript (ESM) · MySQL 8 · neverthrow · Zod
+Express 5 · TypeScript ESM · MySQL 8 · mysql2 · Zod · neverthrow
 
-Two modules are implemented:
+The API serves geography, district indicators, alerts, highway routes, and source metadata.
+See the [main README](../README.md) for current data coverage, frontend setup, and deployment.
 
-- **`geography`** — the area hierarchy every other module joins to.
-  [`project/modules/geography.md`](../project/modules/geography.md)
-- **`datasets`** — the source registry, ingestion runs, provenance and freshness.
-  [`project/modules/datasets.md`](../project/modules/datasets.md)
+## Local setup
 
----
-
-## Prerequisites
-
-|       |                                                                 |
-| ----- | --------------------------------------------------------------- |
-| Node  | 22 LTS (`.nvmrc`) — **not currently installed on this machine** |
-| MySQL | 8.0+ running locally, or `docker compose up -d db`              |
-
-## Setup
+Use Node.js 22 and Docker Compose. From this directory:
 
 ```bash
-cd backend
+cp .env.example .env
+docker compose up --build -d
+```
+
+Compose starts MySQL, runs migrations, and serves the API at `http://localhost:3000` with
+hot reload. After startup, load external data:
+
+```bash
+docker compose exec api npm run ingest -- --all
+```
+
+To run the API on the host instead, start only the database and use local dependencies:
+
+```bash
+docker compose up -d --wait db
 npm ci
-
-# create backend/.env from the template below, then:
-npm run db:migrate     # schema + the 13 districts + map layer registry
-npm run db:seed        # placeholder boundaries + demo tehsils/villages (dev only)
-npm run dev            # http://localhost:3000
+npm run db:migrate
+npm run dev
 ```
 
-### `.env`
-
-`.env.example` could not be written by the agent (blocked by a local permission rule).
-Create `backend/.env.example` and `backend/.env` with exactly these keys:
-
-```dotenv
-# App
-NODE_ENV=development
-APP_ENV=local
-PORT=3000
-SERVER_URL=http://localhost:3000
-LOG_LEVEL=debug
-
-# Database
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=pahad_pulse
-DB_POOL_LIMIT=20
-
-# CORS — comma separated
-CORS_ORIGIN=http://localhost:3001
-```
-
-Auth, mail and storage keys arrive with the `accounts` module. Never add a key here that
-no code reads — CI compares `.env.example` against `EnvSchema`.
-
-Create the database first:
-
-```sql
-CREATE DATABASE pahad_pulse CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-```
+Use either the container API or the host API to avoid a port 3000 conflict. Environment
+variables are documented in [.env.example](.env.example) and validated in
+[src/config/env.ts](src/config/env.ts). Local MySQL uses `DB_SSL=false`; managed MySQL can
+use `DB_SSL=true` with optional `DB_SSL_CA` PEM contents and enforced certificate/hostname
+verification.
 
 ## Commands
 
-| Intent             | Command                    |
-| ------------------ | -------------------------- |
-| Dev server         | `npm run dev`              |
-| Typecheck          | `npm run typecheck`        |
-| Lint               | `npm run lint`             |
-| Format             | `npm run format`           |
-| Tests              | `npm test`                 |
-| Integration only   | `npm run test:integration` |
-| Build              | `npm run build`            |
-| Migrate            | `npm run db:migrate`       |
-| Seed (dev)         | `npm run db:seed`          |
-| Everything CI runs | `npm run verify`           |
+Run these in `backend/` after `npm ci`, or prefix them with `docker compose exec api`:
 
-## API
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | API with hot reload |
+| `npm run build` | Compile the production API |
+| `npm start` | Run the compiled API |
+| `npm run db:migrate` | Apply unapplied SQL migrations |
+| `npm run ingest` | Inspect source and connector status |
+| `npm run ingest -- --all` | Run all available connectors |
+| `npm run ingest -- sachet-ndma` | Refresh SACHET alerts |
+| `npm run ingest -- imd-cap-alerts` | Refresh IMD CAP alerts |
+| `npm run ingest -- openstreetmap` | Refresh district boundaries and village data |
+| `npm run ingest -- openstreetmap-roads` | Refresh highway routes |
+| `npm run typecheck` | Check TypeScript |
+| `npm run lint` | Check code conventions |
+| `npm test -- --runInBand` | Run tests; use a local test database |
+| `npm run verify` | Typecheck, lint, formatting checks, and tests |
 
-All geography endpoints are public, read-only and cached for 24h — this data changes only
-by migration.
+`npm run db:seed` creates synthetic development data and refuses production. Normal setup
+uses migrations and ingestion instead. Ingestion requires upstream network access; inspect
+per-source results and freshness after a run. The data.gov.in connector remains unimplemented.
 
-| Method | Path                                             | Returns                                        |
-| ------ | ------------------------------------------------ | ---------------------------------------------- |
-| GET    | `/health`                                        | liveness                                       |
-| GET    | `/ready`                                         | readiness (pings MySQL)                        |
-| GET    | `/api/areas/districts`                           | all 13 districts with child counts             |
-| GET    | `/api/areas/districts/:slug`                     | district + tehsils + boundary                  |
-| GET    | `/api/areas/:slug`                               | any addressable area (state, district, tehsil) |
-| GET    | `/api/areas/:slug/boundary`                      | GeoJSON geometry                               |
-| GET    | `/api/areas/:slug/children?type=tehsil\|village` | child areas                                    |
-| GET    | `/api/map/layers`                                | map layer registry                             |
+## Public endpoints
 
-Both languages are always returned; the API does not negotiate locale:
+| GET endpoint | Returns |
+| --- | --- |
+| `/health` | Process liveness |
+| `/ready` | Database readiness |
+| `/api/areas/districts` | District records and child counts |
+| `/api/areas/districts/:slug` | District detail |
+| `/api/areas/:slug/boundary` | Area boundary geometry |
+| `/api/map/layers` | Map layer registry |
+| `/api/map/districts` | District GeoJSON collection |
+| `/api/map/alerts` | Mappable active alerts |
+| `/api/roads` | Highway network, not live closures |
+| `/api/alerts/active` | Active alert records |
+| `/api/alerts/summary` | Alert summary |
+| `/api/indicators` | Indicator catalogue |
+| `/api/indicators/population/ranking` | District population ranking |
+| `/api/sources` | Public source metadata |
 
-```json
-{
-  "success": true,
-  "message": "Districts fetched successfully",
-  "data": [
-    {
-      "id": 6,
-      "type": "district",
-      "code": "UK-DD",
-      "slug": "dehradun",
-      "name": { "en": "Dehradun", "hi": "देहरादून" },
-      "division": "garhwal",
-      "headquarters": { "en": "Dehradun", "hi": "देहरादून" },
-      "centroid": { "lat": 30.3165, "lng": 78.0322 },
-      "officialIds": { "lgd": null, "census2011": null },
-      "counts": { "tehsils": 3, "villages": 12 },
-      "hasBoundary": true
-    }
-  ],
-  "timestamp": "2026-09-03T00:00:00.000Z"
-}
-```
+API routes are mounted under `/api`; health endpoints are mounted at the application root.
+Operator ingestion HTTP endpoints remain deferred until authenticated operator accounts exist.
 
-## Ingestion
+## Production
 
-`datasets` owns where data came from and whether it can be trusted right now. No connector
-fetches anything yet — each declares itself unavailable with a reason, and the runner records
-a _skipped_ run rather than a failure, so the failure count stays meaningful.
+The [Render Blueprint](../render.yaml) runs migrations before API rollout and uses the same
+Docker image for ingestion jobs. Scripts require `tsx` and the source SQL migration files,
+so the image deliberately keeps devDependencies and source alongside the compiled server.
 
-```
-npm run ingest
-```
-
-prints every source with its freshness, last successful run, redistribution status and
-connector state. Adding a real source means writing one `fetch` method and adding a line to
-`src/services/ingestion/index.ts` — the runner, run tracking and freshness rules do not change.
-
-Operator HTTP endpoints (`/api/ops/ingestion/*`) are deferred until `accounts` exists; there is
-no way to authenticate an operator yet, and an interim auth scheme is not worth writing.
-
-## Data status
-
-| Data                                                  | Status                                                                           |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------- |
-| 13 districts, bilingual names, division, headquarters | administrative fact                                                              |
-| Centroids                                             | **approximate** — district headquarters coordinates, adequate for map placement  |
-| `lgd_code`, `census_2011_code`                        | **NULL** — reserved, backfilled when the official identifier system is confirmed |
-| Boundaries                                            | **placeholder hexagons** — `isPlaceholder: true` on every response               |
-| Tehsils, villages                                     | **demo only** — `DEMO-` code prefix, created by `db:seed`, never by a migration  |
-
-Population, literacy and area are deliberately absent: those are statistics and belong to
-the `indicators` module with full provenance. Geography holds only where things are.
+Configure all services against the same managed MySQL database, then run initial ingestion.
+See [deployment instructions](../README.md#deployment) and the
+[operations notes](../project/operations.md) for TLS, schedules, CORS, and post-deploy checks.
