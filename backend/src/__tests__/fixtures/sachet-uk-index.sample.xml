@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-stylesheet title="XSL_formatting" type="text/xsl" href="feed.xsl"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Uttarakhand: CAP Disaster Alert Feeds</title>
+    <description>CAP Integrated Alert System Warning Updates</description>
+    <language>en</language>
+    <link>https://sachet.ndma.gov.in/cap_public_website/rss/rss_uttarakhand.xml</link>
+    <atom:link href="https://sachet.ndma.gov.in/cap_public_website/rss/rss_uttarakhand.xml" rel="self" type="application/rss+xml"/>
+    <copyright>public domain</copyright>
+    <pubDate>Fri, 17 Jul 2026 10:46:39 GMT</pubDate>
+    <item>
+      <title>अगले 3 घंटे में, क्षेत्र में , कुछ स्थानों में गर्जन के साथ आकाशीय बिजली चमकने एवं वर्षा के तीव्र दौर होने की संभावना है |</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1788538983366009</link>
+      <author>controlroom@ndma.gov.in (IMD Dehradun)</author>
+      <guid isPermaLink="false">1788538983366009</guid>
+      <pubDate>Fri, 04 Sep 2026 16:25:13 GMT</pubDate>
+    </item>
+    <item>
+      <title>अगले 3 घंटो में आपके जनपद के कुछ क्षेत्र में कहीं हल्की से मध्यम वर्षा / गर्जन/ वर्षा के तीव्र दौर एवं आकाशीय बिजली चमकने होने की संभावना है |</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1788528949305009</link>
+      <author>controlroom@ndma.gov.in (IMD Dehradun)</author>
+      <guid isPermaLink="false">1788528949305009</guid>
+      <pubDate>Fri, 04 Sep 2026 13:38:28 GMT</pubDate>
+    </item>
+    <item>
+      <title>2026/09/04 18:52 IST: अगले 12 घंटों के दौरान आपके जनपद के कुछ जलग्रहण क्षेत्रों एवं उनसे लगे आसपास के स्थानों पर कहीं-कहीं निम्न से मध्यम स्तर के त्वरित बाढ़ का खतरा होने की संभावना हैं |</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1788528398258009</link>
+      <author>controlroom@ndma.gov.in (IMD Dehradun)</author>
+      <guid isPermaLink="false">1788528398258009</guid>
+      <pubDate>Fri, 04 Sep 2026 13:31:37 GMT</pubDate>
+    </item>
+    <item>
+      <title>अगले 3 घंटो -कहीं हल्की से मध्यम वर्षा / गर्जन/ वर्षा के तीव्र दौर एवं आकाशीय बिजली चमकने होने की संभावना है |</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1788517632163009</link>
+      <author>controlroom@ndma.gov.in (IMD Dehradun)</author>
+      <guid isPermaLink="false">1788517632163009</guid>
+      <pubDate>Fri, 04 Sep 2026 10:31:04 GMT</pubDate>
+    </item>
+    <item>
+      <title>अगले 24 घंटो में उक्त जनपदों में कहीं-कहीं गर्ज-चमक के साथ वर्षा के तीव्र / अति दौर होने की संभावना है |</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1788509732213009</link>
+      <author>controlroom@ndma.gov.in (IMD Dehradun)</author>
+      <guid isPermaLink="false">1788509732213009</guid>
+      <pubDate>Fri, 04 Sep 2026 08:17:41 GMT</pubDate>
+    </item>
+    <item>
+      <title>अगले 24 घंटो में उक्त जनपदों में कहीं-कहीं भारी वर्षा/ गर्जन के साथ आकाशीय बिजली चमकने एवं वर्षा के तीव्र से अति तीव्र दौर होने की संभावना है | |</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1788509731012009</link>
+      <author>controlroom@ndma.gov.in (IMD Dehradun)</author>
+      <guid isPermaLink="false">1788509731012009</guid>
+      <pubDate>Fri, 04 Sep 2026 08:17:11 GMT</pubDate>
+    </item>
+    <item>
+      <title>[2026/09/04 13:24] अगले 3 घंटे में, क्षेत्र में, कहीं-कहीं गर्जन के साथ आकाशीय बिजली चमकने/वर्षा के तीव्र दौर होने की संभावना है |</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1788508639078009</link>
+      <author>controlroom@ndma.gov.in (IMD Dehradun)</author>
+      <guid isPermaLink="false">1788508639078009</guid>
+      <pubDate>Fri, 04 Sep 2026 07:58:34 GMT</pubDate>
+    </item>
+    <item>
+      <title>[2026/09/04 12:09] अगले 3 घंटे में, क्षेत्र में, कहीं-कहीं गर्जन के साथ आकाशीय बिजली चमकने/वर्षा के तीव्र दौर होने की संभावना है |</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1788504177923009</link>
+      <author>controlroom@ndma.gov.in (IMD Dehradun)</author>
+      <guid isPermaLink="false">1788504177923009</guid>
+      <pubDate>Fri, 04 Sep 2026 06:46:47 GMT</pubDate>
+    </item>
+    <item>
+      <title>[2026/09/04 10:34] अगले 3 घंटे में, क्षेत्र में, कहीं-कहीं गर्जन के साथ आकाशीय बिजली चमकने/वर्षा के तीव्र दौर होने की संभावना है |</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1788498412787009</link>
+      <author>controlroom@ndma.gov.in (IMD Dehradun)</author>
+      <guid isPermaLink="false">1788498412787009</guid>
+      <pubDate>Fri, 04 Sep 2026 05:09:01 GMT</pubDate>
+    </item>
+    <item>
+      <title>[2026/09/04 10:21] अगले 3 घंटो के दौरान, आपके क्षेत्र में, कुछ स्थानों पर मध्यम वर्षा एवं कहीं-कहीं गर्जन के साथ आकाशीय बिजली चमकने/वर्षा के तीव्र से अति तीव्र दौर होने की संभावना हैं I</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1788497713898009</link>
+      <author>controlroom@ndma.gov.in (IMD Dehradun)</author>
+      <guid isPermaLink="false">1788497713898009</guid>
+      <pubDate>Fri, 04 Sep 2026 04:57:59 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

@@ -45,7 +45,7 @@ export default async function WeatherPage() {
             <div className="bg-surface border border-border rounded-lg p-6">
               <h2 className="font-display text-2xl font-bold mb-4">River Levels 🌊</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {rivers.map((river: any) => (
+                {rivers.map((river) => (
                   <div
                     key={river.station.id}
                     className="border border-border rounded-lg p-4 hover:bg-surface-hover transition"
@@ -61,8 +61,13 @@ export default async function WeatherPage() {
                       {river.latestLevel.delta !== null && (
                         <div className="flex justify-between">
                           <span>Change</span>
-                          <span className={river.latestLevel.delta > 0 ? 'text-red-600' : 'text-green-600'}>
-                            {river.latestLevel.delta > 0 ? '+' : ''}{river.latestLevel.delta.toFixed(2)}
+                          <span
+                            className={
+                              river.latestLevel.delta > 0 ? 'text-red-600' : 'text-green-600'
+                            }
+                          >
+                            {river.latestLevel.delta > 0 ? '+' : ''}
+                            {river.latestLevel.delta.toFixed(2)}
                           </span>
                         </div>
                       )}

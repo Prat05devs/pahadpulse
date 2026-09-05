@@ -3,6 +3,10 @@ import { err, ok, type Result } from 'neverthrow';
 import type { IngestionRun, Source, SourceForOperator } from '../models/source.model.js';
 import { SourceRepository } from '../repositories/source.repository.js';
 import { getConnector } from '../services/ingestion/connector.js';
+import {
+  fetchImdCapFeedStatus,
+  type ImdCapFeedStatus,
+} from '../services/ingestion/connectors/imd-cap.connector.js';
 import type { Paginated } from '../types/pagination.js';
 import type { RequestError } from '../utils/errors.js';
 
@@ -22,6 +26,12 @@ export async function getSourceByKey(
   now?: Date,
 ): Promise<Result<Source, RequestError>> {
   return SourceRepository.findByKey(key, now);
+}
+
+export async function getImdCapLiveStatus(
+  now?: Date,
+): Promise<Result<ImdCapFeedStatus, RequestError>> {
+  return fetchImdCapFeedStatus(now);
 }
 
 /**

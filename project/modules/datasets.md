@@ -1,12 +1,12 @@
 # Module: `datasets`
 
-| | |
-|---|---|
-| **Owner** | `<TBD>` |
-| **Status** | in progress — backend implemented, connectors stubbed, web not started |
+|             |                                                                                                                                        |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Owner**   | `<TBD>`                                                                                                                                |
+| **Status**  | in progress — backend implemented, connectors stubbed, web not started                                                                 |
 | **Backend** | `backend/src/{models,repositories,controllers,routes}/source*.ts`, `backend/src/services/ingestion/`, `backend/src/utils/freshness.ts` |
-| **Web** | `src/features/provenance/`, `src/features/ops/` |
-| **Mobile** | not in this repo |
+| **Web**     | `src/features/provenance/`, `src/features/ops/`                                                                                        |
+| **Mobile**  | not in this repo                                                                                                                       |
 
 ---
 
@@ -23,17 +23,20 @@ It stores no domain values itself. Domain modules own their tables; this module 
 ## 2. Boundaries
 
 **Owns**
+
 - The source registry: department, URL, attribution string, licence, expected cadence, access method
 - Ingestion runs: what ran, when, what it fetched, what failed
 - Freshness computation and the staleness contract
 - The connector interface every domain module's fetcher implements
 
 **Does not own**
+
 - Any domain value. `datasets` never writes to `indicators`, `alerts`, or any other module's
   tables — a connector belonging to those modules does, and reports back here.
 - Retry policy specific to one upstream's quirks — that belongs to the connector.
 
 **Used by other modules via**
+
 - `SourceRepository.findByIds` — hydrate provenance for a page of values
 - `IngestionRunner.record(runId, outcome)` — a connector reports its own outcome
 - `freshness(source, vintage, fetchedAt)` — pure function, the single definition of stale
@@ -46,19 +49,44 @@ Nothing.
 
 ### Entities
 
-| Entity | Key fields | Notes |
-|---|---|---|
-| Source | `id, key, department_en, department_hi, url, attribution, licence, access_method, cadence, may_redistribute` | `may_redistribute` is a legal fact per source, defaulting to `false` |
-| IngestionRun | `id, source_id, started_at, finished_at, status, rows_written, error_code, notes` | append-only audit trail |
+| Entity       | Key fields                                                                                                   | Notes                                                                |
+| ------------ | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| Source       | `id, key, department_en, department_hi, url, attribution, licence, access_method, cadence, may_redistribute` | `may_redistribute` is a legal fact per source, defaulting to `false` |
+| IngestionRun | `id, source_id, started_at, finished_at, status, rows_written, error_code, notes`                            | append-only audit trail                                              |
 
 ### Enums
 
 ```ts
-enum AccessMethod { Api = 'api', Feed = 'feed', Bulk = 'bulk', Manual = 'manual' }
-enum Cadence { Realtime = 'realtime', Hourly = 'hourly', Daily = 'daily', Monthly = 'monthly', Annual = 'annual', Static = 'static' }
-enum RunStatus { Running = 'running', Succeeded = 'succeeded', Failed = 'failed', PartialSuccess = 'partial_success' }
-enum Freshness { Fresh = 'fresh', Stale = 'stale', Expired = 'expired', Unknown = 'unknown' }
-enum MetadataStatus { Provisional = 'provisional', Verified = 'verified' }
+enum AccessMethod {
+  Api = "api",
+  Feed = "feed",
+  Bulk = "bulk",
+  Manual = "manual",
+}
+enum Cadence {
+  Realtime = "realtime",
+  Hourly = "hourly",
+  Daily = "daily",
+  Monthly = "monthly",
+  Annual = "annual",
+  Static = "static",
+}
+enum RunStatus {
+  Running = "running",
+  Succeeded = "succeeded",
+  Failed = "failed",
+  PartialSuccess = "partial_success",
+}
+enum Freshness {
+  Fresh = "fresh",
+  Stale = "stale",
+  Expired = "expired",
+  Unknown = "unknown",
+}
+enum MetadataStatus {
+  Provisional = "provisional",
+  Verified = "verified",
+}
 ```
 
 `AccessMethod.Manual` is deliberate: THDC and UJVNL publish PDFs, and a human entering a weekly
@@ -86,59 +114,60 @@ with freshness degraded.
 
 ### Rules
 
-| # | Rule |
-|---|---|
-| DS-1 | Every domain value stores `source_id`, `vintage` and `fetched_at`, all `NOT NULL`. A value that cannot name its source is not stored. |
-| DS-2 | `vintage` is the date the data *describes*; `fetched_at` is when we retrieved it. A 2011 census figure fetched today has vintage 2011. Conflating these is the module's core failure. |
-| DS-3 | Freshness is computed from cadence, never stored. Storing it guarantees it goes wrong. |
-| DS-4 | A failed run never removes data. Degrade to stale; never blank. |
-| DS-5 | Ingestion is idempotent. Re-running a source for the same vintage updates rows in place and must not duplicate them. |
-| DS-6 | Nothing is displayed publicly from a source with `may_redistribute = false`. Access is not redistribution. |
-| DS-7 | Every source has exactly one owning module. Two modules never ingest from the same source key. |
+| #    | Rule                                                                                                                                                                                                      |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DS-1 | Every domain value stores `source_id`, `vintage` and `fetched_at`, all `NOT NULL`. A value that cannot name its source is not stored.                                                                     |
+| DS-2 | `vintage` is the date the data _describes_; `fetched_at` is when we retrieved it. A 2011 census figure fetched today has vintage 2011. Conflating these is the module's core failure.                     |
+| DS-3 | Freshness is computed from cadence, never stored. Storing it guarantees it goes wrong.                                                                                                                    |
+| DS-4 | A failed run never removes data. Degrade to stale; never blank.                                                                                                                                           |
+| DS-5 | Ingestion is idempotent. Re-running a source for the same vintage updates rows in place and must not duplicate them.                                                                                      |
+| DS-6 | Nothing is displayed publicly from a source with `may_redistribute = false`. Access is not redistribution.                                                                                                |
+| DS-7 | Every source has exactly one owning module. Two modules never ingest from the same source key.                                                                                                            |
 | DS-8 | A connector with no credentials or unverified access records a **skipped** run, not a failed one. Burying "not built yet" inside the failure count destroys the signal the failure count exists to carry. |
-| DS-9 | A run left `running` past the timeout is expired, not treated as a lock. A crashed process must not hold a source hostage forever. |
+| DS-9 | A run left `running` past the timeout is expired, not treated as a lock. A crashed process must not hold a source hostage forever.                                                                        |
 
 ### Permissions
 
-| Action | Visitor | Officer | Operator |
-|---|---|---|---|
-| Read source attribution | ✅ | ✅ | ✅ |
-| Read run history / ingestion health | ❌ | ✅ | ✅ |
-| Trigger a run manually | ❌ | ❌ | ✅ |
-| Register / edit a source | ❌ | ❌ | ✅ |
+| Action                              | Visitor | Officer | Operator |
+| ----------------------------------- | ------- | ------- | -------- |
+| Read source attribution             | ✅      | ✅      | ✅       |
+| Read run history / ingestion health | ❌      | ✅      | ✅       |
+| Trigger a run manually              | ❌      | ❌      | ✅       |
+| Register / edit a source            | ❌      | ❌      | ✅       |
 
 ## 4. Data
 
-| Table | Purpose | Notes |
-|---|---|---|
-| `sources` | the registry | ~25 rows; cached in process |
-| `ingestion_runs` | audit trail | grows forever — partition or prune after `<TBD>` retention |
+| Table            | Purpose      | Notes                                                      |
+| ---------------- | ------------ | ---------------------------------------------------------- |
+| `sources`        | the registry | ~25 rows; cached in process                                |
+| `ingestion_runs` | audit trail  | grows forever — partition or prune after `<TBD>` retention |
 
 Both ship in migration `004`; the three self-serve sources are seeded by `005`, as a migration
 rather than a dev seed because domain rows will hold foreign keys to their ids.
 
 ### Indexes and why
 
-| Index | Serves |
-|---|---|
-| `uq_source_key (key)` | connectors resolve their own source by key at startup |
+| Index                                                 | Serves                                                                     |
+| ----------------------------------------------------- | -------------------------------------------------------------------------- |
+| `uq_source_key (key)`                                 | connectors resolve their own source by key at startup                      |
 | `idx_run_source_started (source_id, started_at DESC)` | "last successful run for this source" — the freshness query, on every page |
 
 ### Migrations
 
-| # | File | What |
-|---|---|---|
-| 004 | `004-create-sources.sql` | registry + runs |
-| 005 | `005-seed-sources.sql` | the three sources needing no government approval |
+| #   | File                     | What                                             |
+| --- | ------------------------ | ------------------------------------------------ |
+| 004 | `004-create-sources.sql` | registry + runs                                  |
+| 005 | `005-seed-sources.sql`   | the three sources needing no government approval |
 
 ## 5. API
 
-| Method | Path | Auth | Cache | Paginated | Status |
-|---|---|---|---|---|---|
-| GET | `/api/sources` | none | 1h | no | shipped |
-| GET | `/api/sources/:key` | none | 1h | no | shipped |
-| GET | `/api/ops/ingestion/runs` | operator | none | cursor | deferred — see §8 |
-| POST | `/api/ops/ingestion/:key/run` | operator | none | — | deferred — see §8 |
+| Method | Path                               | Auth     | Cache | Paginated | Status            |
+| ------ | ---------------------------------- | -------- | ----- | --------- | ----------------- |
+| GET    | `/api/sources`                     | none     | 1h    | no        | shipped           |
+| GET    | `/api/sources/imd-cap-alerts/live` | none     | 1m    | no        | shipped           |
+| GET    | `/api/sources/:key`                | none     | 1h    | no        | shipped           |
+| GET    | `/api/ops/ingestion/runs`          | operator | none  | cursor    | deferred — see §8 |
+| POST   | `/api/ops/ingestion/:key/run`      | operator | none  | —         | deferred — see §8 |
 
 ### `GET /api/sources`
 
@@ -146,52 +175,57 @@ Public, because the transparency promise requires that the source list itself be
 Returns department, URL, attribution, cadence and last-successful-run time. Never returns API
 keys, credentials, or endpoint paths.
 
+`GET /api/sources/imd-cap-alerts/live` performs a DB-independent request to the public IMD CAP
+index and returns connection metadata only: feed item count, latest publication time and check
+time. It deliberately does not return alert content while `may_redistribute` remains false.
+
 **Errors**
 
-| Constant | Code | HTTP | When |
-|---|---|---|---|
-| `SOURCE_NOT_FOUND` | `90001` | 404 | unknown key |
+| Constant           | Code    | HTTP | When        |
+| ------------------ | ------- | ---- | ----------- |
+| `SOURCE_NOT_FOUND` | `90001` | 404  | unknown key |
 
 ### Error code range
 
 `90xxx` — allocated to this module, covering upstream and ingestion failures.
 
-| Constant | Code | HTTP |
-|---|---|---|
-| `SOURCE_NOT_FOUND` | `90001` | 404 |
-| `UPSTREAM_UNAVAILABLE` | `90002` | 502 |
-| `UPSTREAM_RESPONSE_INVALID` | `90003` | 502 |
-| `UPSTREAM_RATE_LIMITED` | `90004` | 429 |
-| `INGESTION_RUN_IN_PROGRESS` | `90005` | 409 |
-| `SOURCE_NOT_REDISTRIBUTABLE` | `90006` | 403 |
-| `CONNECTOR_NOT_AVAILABLE` | `90007` | 501 |
+| Constant                     | Code    | HTTP |
+| ---------------------------- | ------- | ---- |
+| `SOURCE_NOT_FOUND`           | `90001` | 404  |
+| `UPSTREAM_UNAVAILABLE`       | `90002` | 502  |
+| `UPSTREAM_RESPONSE_INVALID`  | `90003` | 502  |
+| `UPSTREAM_RATE_LIMITED`      | `90004` | 429  |
+| `INGESTION_RUN_IN_PROGRESS`  | `90005` | 409  |
+| `SOURCE_NOT_REDISTRIBUTABLE` | `90006` | 403  |
+| `CONNECTOR_NOT_AVAILABLE`    | `90007` | 501  |
 
 ## 6. UI
 
-| Surface | Route | Rendering | Notes |
-|---|---|---|---|
-| Web | `/[locale]/sources` | Server Component + ISR | the public transparency page |
-| Web | — | — | `<SourceBadge>` renders inline beside every figure across the product |
-| Web | `/[locale]/ops/ingestion` | Client Component | operator health board, not indexed |
+| Surface | Route                     | Rendering              | Notes                                                                 |
+| ------- | ------------------------- | ---------------------- | --------------------------------------------------------------------- |
+| Web     | `/[locale]/sources`       | Server Component + ISR | the public transparency page                                          |
+| Web     | `/`                       | Server Component       | live IMD CAP connection status; no alert content                      |
+| Web     | —                         | —                      | `<SourceBadge>` renders inline beside every figure across the product |
+| Web     | `/[locale]/ops/ingestion` | Client Component       | operator health board, not indexed                                    |
 
 `<SourceBadge>` is the module's most important artifact. It appears on every dashboard, so it
 lives in `components/molecules/` and takes data via props — it never fetches.
 
 ### Data hooks
 
-| Hook | Query key | staleTime |
-|---|---|---|
-| `useSources` | `sourceKeys.all()` | 1h |
-| `useIngestionRuns` | `sourceKeys.runs(filters)` | 30s |
+| Hook               | Query key                  | staleTime |
+| ------------------ | -------------------------- | --------- |
+| `useSources`       | `sourceKeys.all()`         | 1h        |
+| `useIngestionRuns` | `sourceKeys.runs(filters)` | 30s       |
 
 ## 7. Failure modes
 
-| Failure | User sees | Handling |
-|---|---|---|
-| Upstream unreachable | last-good values with a "stale" badge and the last-updated time | run marked `failed`, logged, alert to operators after N consecutive failures |
-| Upstream schema changed | the same stale display | run marked `failed` with `UPSTREAM_RESPONSE_INVALID`; Zod parse failure is the detector |
-| A run hangs | subsequent scheduled run refuses to start | `INGESTION_RUN_IN_PROGRESS` plus a run timeout that marks it failed |
-| Source becomes non-redistributable | figures from it disappear from public pages | `may_redistribute` flips to false; queries exclude it. Must be a single switch, not a code change. |
+| Failure                            | User sees                                                       | Handling                                                                                           |
+| ---------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Upstream unreachable               | last-good values with a "stale" badge and the last-updated time | run marked `failed`, logged, alert to operators after N consecutive failures                       |
+| Upstream schema changed            | the same stale display                                          | run marked `failed` with `UPSTREAM_RESPONSE_INVALID`; Zod parse failure is the detector            |
+| A run hangs                        | subsequent scheduled run refuses to start                       | `INGESTION_RUN_IN_PROGRESS` plus a run timeout that marks it failed                                |
+| Source becomes non-redistributable | figures from it disappear from public pages                     | `may_redistribute` flips to false; queries exclude it. Must be a single switch, not a code change. |
 
 ## 8. Decisions
 
@@ -232,13 +266,13 @@ the three do.
 
 ## 9. Open questions
 
-- [ ] Retention for `ingestion_runs` — it grows unboundedly. — *owner:* `<TBD>`
+- [ ] Retention for `ingestion_runs` — it grows unboundedly. — _owner:_ `<TBD>`
 - [ ] Where does the scheduler run? In-process (`node-cron`, simple, single-instance only) or an
-      external job runner? Affects deployment topology. — *owner:* `<TBD>`
+      external job runner? Affects deployment topology. — _owner:_ `<TBD>`
 - [ ] **Per-source redistribution rights are unconfirmed for all three seeded sources.** All are
       `metadata_status = provisional`. IMD is `may_redistribute = false`, so alerts ingested from
       it could not be displayed — this is the blocking question for the `alerts` module, not just
-      a paperwork item. — *owner:* `<TBD>`
+      a paperwork item. — _owner:_ `<TBD>`
 - [ ] data.gov.in API key — free and instant, but not yet obtained. It is the single unlock for
-      four modules. — *owner:* `<TBD>`
-- [ ] Alerting channel and threshold for consecutive ingestion failures. — *owner:* `<TBD>`
+      four modules. — _owner:_ `<TBD>`
+- [ ] Alerting channel and threshold for consecutive ingestion failures. — _owner:_ `<TBD>`

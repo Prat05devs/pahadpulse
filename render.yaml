@@ -1,0 +1,130 @@
+# Render Blueprint — the API and the ingestion schedule.
+#
+# The web app is NOT here: it deploys to Vercel from `web/`, which is Next.js's native host.
+#
+# WHAT IS DELIBERATELY ABSENT: a database. Render has managed PostgreSQL, not managed MySQL,
+# and this project is MySQL 8 throughout — `mysql2`, MySQL-specific upserts (`ON DUPLICATE
+# KEY UPDATE`, row aliases) and JSON columns. The options, in order of preference:
+#
+#   1. An external managed MySQL (Aiven, Clever Cloud, PlanetScale). Backups, upgrades and
+#      failover are someone's job. Set the DB_* variables below to point at it.
+#   2. MySQL as a private service on Render with a persistent disk. It works, but nobody is
+#      managing backups or upgrades except you — for a platform carrying disaster alerts,
+#      that is a real operational commitment, not a detail.
+#
+# Porting to Postgres is not a small change: the connectors rely on MySQL upsert syntax in
+# several places, so treat that as a project, not a config switch.
+
+services:
+  # ---------------------------------------------------------------------------------------
+  # The API server.
+  # ---------------------------------------------------------------------------------------
+  - type: web
+    name: pahadpulse-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: singapore # Closest Render region to Uttarakhand; keeps DB round trips short.
+    # `/health`, not `/api/health` — the health route is mounted on the app root, above the
+    # /api router. Verified against the running server.
+    healthCheckPath: /health
+
+    # Migrations run on every deploy, before the new instance takes traffic. They are
+    # idempotent — `schema_migrations` records what has been applied, so a redeploy with no
+    # new files is a no-op.
+    preDeployCommand: npm run db:migrate
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENV
+        value: production
+      - key: PORT
+        value: '3000'
+      - key: LOG_LEVEL
+        value: info
+
+      # Must include the Vercel domain, or every browser request fails CORS. Vercel gives
+      # each branch its own preview URL, so add those deliberately rather than wildcarding.
+      - key: CORS_ORIGIN
+        sync: false
+      - key: SERVER_URL
+        sync: false
+
+      # `sync: false` means Render prompts for the value and never stores it in this file.
+      # Database credentials must not live in the repository.
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false # Use the provider's port, which may differ from 3306.
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_SSL
+        value: 'true'
+      # Optional: add DB_SSL_CA in the dashboard if the provider supplies a private CA.
+      # Serverless would need this near 1; a long-lived container can hold a real pool.
+      - key: DB_POOL_LIMIT
+        value: '10'
+
+  # ---------------------------------------------------------------------------------------
+  # Ingestion.
+  #
+  # This is why the API is not on Vercel. Ingestion is a CLI, a full run takes well over a
+  # minute (the OSM boundary and village pass alone took ~80s), and the HTTP trigger
+  # endpoints are deferred until `accounts` exists (datasets.md §8). A scheduled container
+  # running the same command a developer runs is the whole mechanism.
+  # ---------------------------------------------------------------------------------------
+
+  # Alerts, every 15 minutes. SACHET publishes 3-hour nowcasts, so a slower cadence would
+  # routinely show warnings that have already expired.
+  - type: cron
+    name: pahadpulse-ingest-alerts
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: singapore
+    schedule: '*/15 * * * *'
+    dockerCommand: npm run ingest -- sachet-ndma
+    envVars: &ingest_env
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_SSL
+        value: 'true'
+      # Optional: add DB_SSL_CA to BOTH cron services as well as the API.
+      # A cron container is short-lived and single-purpose; it needs very few connections.
+      - key: DB_POOL_LIMIT
+        value: '4'
+
+  # Reference geography and the highway network. Weekly: OSM boundaries and highway numbers
+  # change on the timescale of government notifications, not minutes, and Overpass is a
+  # volunteer-run service that should not be polled hard.
+  - type: cron
+    name: pahadpulse-ingest-reference
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: singapore
+    schedule: '30 20 * * 6' # Saturday 20:30 UTC = Sunday 02:00 IST.
+    dockerCommand: npm run ingest -- --all
+    envVars: *ingest_env

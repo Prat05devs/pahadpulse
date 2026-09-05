@@ -3,7 +3,7 @@ import { apiClient } from '@/lib/api';
 import { RiverLevelSchema, WeatherDataSchema } from './schemas';
 
 export async function fetchWeatherForArea(slug: string) {
-  return apiClient.get(`/areas/${slug}/weather`, z.any());
+  return apiClient.get(`/areas/${slug}/weather`, WeatherDataSchema);
 }
 
 export async function fetchRiverLevels() {

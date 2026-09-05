@@ -35,6 +35,12 @@ const mockAreaRepo: jest.Mocked<IAreaRepository> = {
   listMapLayers: jest.fn(),
   countByType: jest.fn(),
   resolveToDistricts: jest.fn(),
+  listDistrictBoundaries: jest.fn(),
+  listDistrictNames: jest.fn(),
+  upsertBoundary: jest.fn(),
+  listTehsils: jest.fn(),
+  listVillagesByTehsil: jest.fn(),
+  replaceIngestedVillages: jest.fn(),
 };
 const mockSourceRepo: jest.Mocked<ISourceRepository> = {
   listAll: jest.fn(),
@@ -98,6 +104,8 @@ function alert(overrides: Partial<Alert> = {}): Alert {
     language: 'en',
     authority: 'IMD',
     webUrl: null,
+    geometry: null,
+    centroid: null,
     issuedAt: '2026-09-03 07:00:00',
     effectiveFrom: null,
     expiresAt: '2026-09-04 07:00:00',

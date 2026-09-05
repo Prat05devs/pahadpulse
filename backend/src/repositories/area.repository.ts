@@ -10,6 +10,10 @@ import {
   type AreaBoundaryRow,
   type AreaCountRow,
   type AreaRow,
+  type DistrictBoundary,
+  type DistrictBoundaryRow,
+  type DistrictName,
+  type DistrictNameRow,
   type DistrictSummary,
   type DistrictWithCountsRow,
   type MapLayer,
@@ -82,6 +86,57 @@ export interface IAreaRepository {
    * "Used by other modules via".
    */
   resolveToDistricts(names: readonly string[]): Promise<Result<Area[], RequestError>>;
+  /**
+   * Every district with its simplified boundary, for the map's district layer. Bounded at 13
+   * rows by definition, so unpaginated — one request draws the whole state.
+   */
+  listDistrictBoundaries(): Promise<Result<DistrictBoundary[], RequestError>>;
+  /** The district reference names a connector matches free-text alert prose against. */
+  listDistrictNames(): Promise<Result<DistrictName[], RequestError>>;
+  /**
+   * Replaces one area's boundary. Idempotent by area id (DS-5): re-running the boundary
+   * connector updates in place and never accumulates rows.
+   */
+  upsertBoundary(input: UpsertBoundaryInput): Promise<Result<void, RequestError>>;
+  /** Every tehsil with the district it belongs to, for placing ingested villages. */
+  listTehsils(): Promise<Result<TehsilRef[], RequestError>>;
+  /**
+   * Village names grouped by their tehsil, for one district. One query rather than N —
+   * a district has up to ~1,500 villages across a dozen tehsils and per-tehsil queries
+   * would be the classic N+1 on the busiest page in the product (Q5).
+   */
+  listVillagesByTehsil(districtId: number): Promise<Result<Map<number, string[]>, RequestError>>;
+  /**
+   * Replaces every ingested village in one transaction. Ingested places are identified by an
+   * `OSM-` code prefix so a re-run never touches curated rows (DS-5).
+   */
+  replaceIngestedVillages(villages: readonly IngestedVillage[]): Promise<Result<number, RequestError>>;
+}
+
+export interface TehsilRef {
+  id: number;
+  slug: string;
+  nameEn: string;
+}
+
+export interface IngestedVillage {
+  code: string;
+  slug: string;
+  nameEn: string;
+  nameHi: string | null;
+  parentId: number;
+  lat: number;
+  lng: number;
+}
+
+export interface UpsertBoundaryInput {
+  areaId: number;
+  /** Full precision, as fetched. Stored but never served. */
+  geojson: unknown;
+  /** What the API serves to the map. */
+  simplifiedGeojson: unknown;
+  isPlaceholder: boolean;
+  sourceNote: string;
 }
 
 class AreaRepositoryImpl implements IAreaRepository {
@@ -238,6 +293,171 @@ class AreaRepositoryImpl implements IAreaRepository {
       return ok(rows.map(toArea));
     } catch (error) {
       logger.error('resolveToDistricts failed', { names, error });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  async listDistrictBoundaries(): Promise<Result<DistrictBoundary[], RequestError>> {
+    try {
+      const [rows] = await db.query<DistrictBoundaryRow[]>(
+        `SELECT a.id, a.slug, a.name_en, a.name_hi, a.division,
+                a.centroid_lat, a.centroid_lng,
+                COALESCE(b.simplified_geojson, b.geojson) AS geojson,
+                b.is_placeholder, b.source_note
+           FROM ${AREAS_TABLE} a
+           JOIN ${AREA_BOUNDARIES_TABLE} b ON b.area_id = a.id
+          WHERE a.type = ?
+          ORDER BY a.name_en ASC, a.id ASC`,
+        [AreaType.District],
+      );
+
+      return ok(
+        rows.map((row) => ({
+          areaId: row.id,
+          slug: row.slug,
+          name: { en: row.name_en, hi: row.name_hi },
+          division: row.division,
+          centroid:
+            row.centroid_lat !== null && row.centroid_lng !== null
+              ? { lat: Number(row.centroid_lat), lng: Number(row.centroid_lng) }
+              : null,
+          geojson: typeof row.geojson === 'string' ? (JSON.parse(row.geojson) as unknown) : row.geojson,
+          isPlaceholder: Boolean(row.is_placeholder),
+          sourceNote: row.source_note,
+        })),
+      );
+    } catch (error) {
+      logger.error('listDistrictBoundaries failed', { error });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  async listDistrictNames(): Promise<Result<DistrictName[], RequestError>> {
+    try {
+      const [rows] = await db.query<DistrictNameRow[]>(
+        `SELECT id, name_en, name_hi FROM ${AREAS_TABLE} WHERE type = ? ORDER BY id ASC`,
+        [AreaType.District],
+      );
+      return ok(rows.map((row) => ({ id: row.id, nameEn: row.name_en, nameHi: row.name_hi })));
+    } catch (error) {
+      logger.error('listDistrictNames failed', { error });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  async listTehsils(): Promise<Result<TehsilRef[], RequestError>> {
+    try {
+      const [rows] = await db.query<AreaRow[]>(
+        `SELECT id, slug, name_en FROM ${AREAS_TABLE} WHERE type = ? ORDER BY id ASC`,
+        [AreaType.Tehsil],
+      );
+      return ok(rows.map((row) => ({ id: row.id, slug: row.slug, nameEn: row.name_en })));
+    } catch (error) {
+      logger.error('listTehsils failed', { error });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  async listVillagesByTehsil(districtId: number): Promise<Result<Map<number, string[]>, RequestError>> {
+    try {
+      const [rows] = await db.query<AreaRow[]>(
+        `SELECT v.parent_id, v.name_en, v.name_hi, v.id, v.type, v.code, v.slug,
+                v.division, v.headquarters_en, v.headquarters_hi,
+                v.centroid_lat, v.centroid_lng, v.lgd_code, v.census_2011_code
+           FROM ${AREAS_TABLE} v
+           JOIN ${AREAS_TABLE} t ON t.id = v.parent_id AND t.type = ?
+          WHERE v.type = ? AND t.parent_id = ?
+          ORDER BY v.name_en ASC`,
+        [AreaType.Tehsil, AreaType.Village, districtId],
+      );
+
+      const grouped = new Map<number, string[]>();
+      for (const row of rows) {
+        const parentId = row.parent_id;
+        if (parentId === null) continue;
+        const list = grouped.get(parentId) ?? [];
+        list.push(row.name_en);
+        grouped.set(parentId, list);
+      }
+      return ok(grouped);
+    } catch (error) {
+      logger.error('listVillagesByTehsil failed', { districtId, error });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  async replaceIngestedVillages(
+    villages: readonly IngestedVillage[],
+  ): Promise<Result<number, RequestError>> {
+    if (villages.length === 0) return ok(0);
+
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // Only ingested rows are cleared. A curated village added by hand would not carry the
+      // OSM prefix and must survive a re-run untouched.
+      await connection.query(
+        `DELETE FROM ${AREAS_TABLE} WHERE type = ? AND code LIKE 'OSM-V-%'`,
+        [AreaType.Village],
+      );
+
+      // Chunked: a single 13,000-row INSERT exceeds max_allowed_packet on a default MySQL.
+      const CHUNK = 1000;
+      for (let i = 0; i < villages.length; i += CHUNK) {
+        const chunk = villages.slice(i, i + CHUNK);
+        await connection.query(
+          `INSERT INTO ${AREAS_TABLE} (type, code, slug, name_en, name_hi, parent_id, centroid_lat, centroid_lng)
+           VALUES ?`,
+          [
+            chunk.map((village) => [
+              AreaType.Village,
+              village.code,
+              village.slug,
+              village.nameEn,
+              village.nameHi,
+              village.parentId,
+              village.lat,
+              village.lng,
+            ]),
+          ],
+        );
+      }
+
+      await connection.commit();
+      return ok(villages.length);
+    } catch (error) {
+      await connection.rollback();
+      logger.error('replaceIngestedVillages failed', { count: villages.length, error });
+      return err(ERRORS.DATABASE_ERROR);
+    } finally {
+      connection.release();
+    }
+  }
+
+  async upsertBoundary(input: UpsertBoundaryInput): Promise<Result<void, RequestError>> {
+    try {
+      await db.query(
+        `INSERT INTO ${AREA_BOUNDARIES_TABLE}
+           (area_id, geojson, simplified_geojson, is_placeholder, source_note)
+         VALUES (?, ?, ?, ?, ?)
+         AS new
+         ON DUPLICATE KEY UPDATE
+           geojson            = new.geojson,
+           simplified_geojson = new.simplified_geojson,
+           is_placeholder     = new.is_placeholder,
+           source_note        = new.source_note`,
+        [
+          input.areaId,
+          JSON.stringify(input.geojson),
+          JSON.stringify(input.simplifiedGeojson),
+          input.isPlaceholder,
+          input.sourceNote,
+        ],
+      );
+      return ok(undefined);
+    } catch (error) {
+      logger.error('upsertBoundary failed', { areaId: input.areaId, error });
       return err(ERRORS.DATABASE_ERROR);
     }
   }

@@ -7,11 +7,20 @@ build/
 .next/
 .expo/
 out/
+storybook-static/
+
+# Local deployment state (including downloaded environment values)
+.vercel/
+
+# Tool caches
+.cache/
+.eslintcache
 
 # Test output
 coverage/
 .nyc_output/
 playwright-report/
+test-results/
 cypress/screenshots/
 cypress/videos/
 
@@ -26,12 +35,22 @@ yarn-error.log*
 !.env.example
 *.pem
 *.key
+*.p12
+*.pfx
 secrets/
 
 # Local database data — NEVER commit a database data directory
-database/db_data/
+db_data/
+backups/
+*.sql.gz
+*.sql.bak
+*.dump
 *.sqlite
 *.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
 
 # OS / editor
 .DS_Store
@@ -43,3 +62,6 @@ Thumbs.db
 
 # Claude Code local overrides
 .claude/settings.local.json
+
+# TypeScript incremental build cache — a machine-local artefact, never shared.
+*.tsbuildinfo

@@ -7,11 +7,14 @@ interface AlertCardProps {
   alert: Alert;
 }
 
-const SEVERITY_COLORS = {
+// `unknown` is a real CAP severity, not a gap: a source may issue a warning without
+// grading it, and that must render as neutral rather than crash the card.
+const SEVERITY_COLORS: Record<string, string> = {
   minor: 'bg-blue-50 border-blue-200 text-blue-800',
   moderate: 'bg-yellow-50 border-yellow-200 text-yellow-800',
   severe: 'bg-orange-50 border-orange-200 text-orange-800',
   extreme: 'bg-red-50 border-red-200 text-red-800',
+  unknown: 'bg-gray-50 border-gray-200 text-gray-800',
 };
 
 const TYPE_ICONS = {

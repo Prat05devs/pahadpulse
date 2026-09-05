@@ -1,16 +1,20 @@
 import React from 'react';
 import type { Metadata } from 'next';
+import { AlertCircle, Database } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
+import { TerrainMap, fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
 import {
-  LiveCounters,
-  StateOverviewCard,
-  QuickAccessGrid,
   DistrictOverviewGrid,
+  LiveCounters,
+  QuickAccessGrid,
+  SourceStatusPanel,
+  StateOverviewCard,
 } from '@/features/dashboard/components';
 import {
+  fetchAllDistricts,
+  fetchImdCapLiveStatus,
   fetchLiveCounters,
   fetchStateOverview,
-  fetchAllDistricts,
 } from '@/features/dashboard/services';
 
 export const metadata: Metadata = {
@@ -25,90 +29,144 @@ export default async function HomePage() {
   let overview = null;
   let districts = null;
   let error = null;
+  let imdStatus = null;
+  let imdStatusError = null;
+  let districtFeatures = null;
+  let alertFeatures = null;
+  let mapError: string | null = null;
 
-  try {
-    const [c, o, d] = await Promise.all([
-      fetchLiveCounters(),
-      fetchStateOverview(),
-      fetchAllDistricts(),
-    ]);
-    counters = c;
-    overview = o;
-    districts = d;
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load dashboard data';
-    console.error('Dashboard data fetch error:', err);
+  const [dashboardResult, imdStatusResult, mapResult] = await Promise.allSettled([
+    Promise.all([fetchLiveCounters(), fetchStateOverview(), fetchAllDistricts()]),
+    fetchImdCapLiveStatus(),
+    // Settled independently: the map failing must not take the dashboard's figures with it.
+    Promise.all([fetchDistrictFeatures(), fetchAlertFeatures()]),
+  ]);
+
+  if (mapResult.status === 'fulfilled') {
+    [districtFeatures, alertFeatures] = mapResult.value;
+  } else {
+    const caughtError = mapResult.reason;
+    mapError = caughtError instanceof Error ? caughtError.message : 'map data unavailable';
   }
 
-  if (error || !counters || !overview || !districts) {
-    return (
-      <DashboardLayout>
-        <div className="min-h-screen bg-bg-light">
-          <div className="bg-bg-dark text-text-dark py-8 px-6">
-            <h1 className="font-display text-4xl font-bold">Uttarakhand Home Dashboard</h1>
-            <p className="text-text-dark/70 mt-2">
-              Live state-level overview with interactive map and key metrics
-            </p>
-          </div>
+  if (dashboardResult.status === 'fulfilled') {
+    [counters, overview, districts] = dashboardResult.value;
+  } else {
+    const caughtError = dashboardResult.reason;
+    error =
+      caughtError instanceof Error
+        ? caughtError.message
+        : 'Dashboard data is temporarily unavailable.';
+  }
 
-          <div className="p-6">
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              <p className="font-semibold">Unable to load dashboard</p>
-              <p className="text-sm mt-1">
-                {error || 'Please ensure the API server is running at http://localhost:3000/api'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
+  if (imdStatusResult.status === 'fulfilled') {
+    imdStatus = imdStatusResult.value;
+  } else {
+    const caughtError = imdStatusResult.reason;
+    imdStatusError =
+      caughtError instanceof Error
+        ? caughtError.message
+        : 'The IMD CAP live source check is temporarily unavailable.';
   }
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-bg-light">
-        {/* Header */}
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">Uttarakhand Home Dashboard</h1>
-          <p className="text-text-dark/70 mt-2">
-            Live state-level overview with interactive map and key metrics
-          </p>
-        </div>
-
-        {/* Live Counters */}
-        <LiveCounters data={counters} />
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-          {/* State Overview - larger on left */}
-          <div className="lg:col-span-2">
-            <StateOverviewCard data={overview} />
-          </div>
-
-          {/* Placeholder for interactive map */}
-          <div className="bg-surface border border-border rounded-lg p-6 shadow-sm flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-5xl mb-4">🗺️</div>
-              <h3 className="font-bold mb-2">Uttarakhand Map</h3>
-              <p className="text-xs text-text-light/60">
-                Interactive district map with data layers coming soon
-              </p>
+      <div className="min-h-full">
+        <header className="border-b border-border bg-surface">
+          <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-6 lg:px-8">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="mb-1.5 text-sm font-medium text-muted-foreground">
+                  Uttarakhand overview
+                </p>
+                <h1 className="font-display text-3xl font-semibold leading-tight tracking-[-0.025em] text-text-light md:text-4xl">
+                  Uttarakhand, at a glance
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                  Current weather, alerts, mobility and district indicators, with a clear source
+                  behind every figure.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-success" aria-hidden="true" /> Public
+                  access
+                </span>
+                <span className="flex items-center gap-2">
+                  <Database className="size-3.5" aria-hidden="true" /> Government sources
+                </span>
+              </div>
             </div>
           </div>
+        </header>
+
+        <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 sm:px-6 md:space-y-12 md:py-8 lg:px-8">
+          {!counters || !overview || !districts ? (
+            <section
+              className="surface-card flex flex-col items-start gap-4 p-6 sm:flex-row"
+              role="alert"
+            >
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-danger-soft text-danger">
+                <AlertCircle className="size-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold">Live data is taking longer than expected</h2>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                  {error ||
+                    'The dashboard could not reach the data service. Please try again shortly.'}
+                </p>
+              </div>
+            </section>
+          ) : (
+            <>
+              {/* The map leads, with the live tally beside it and the state profile beneath.
+                  The arrangement is the argument: these figures describe the place the map is
+                  showing, so they sit around it rather than in a separate section above. */}
+              <section aria-label="Uttarakhand overview map and live figures">
+                {/* The map speaks for itself, so it carries no heading. The failure notice
+                    stays: silence is fine when the map is there, never when it is missing. */}
+                {mapError !== null && (
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    Map data unavailable — {mapError}
+                  </p>
+                )}
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                  <div className="lg:col-span-9">
+                    <TerrainMap
+                      districts={districtFeatures}
+                      alerts={alertFeatures}
+                      className="h-[460px] sm:h-[540px] lg:h-[640px]"
+                    />
+                  </div>
+                  {/* The rail matches the map's height on desktop so the two read as one
+                      object, and falls back to a 2-up grid under it on narrow screens. */}
+                  <div className="lg:col-span-3 lg:h-[640px]">
+                    <LiveCounters data={counters} orientation="rail" />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <StateOverviewCard data={overview} />
+                </div>
+              </section>
+
+              <QuickAccessGrid />
+              <DistrictOverviewGrid districts={districts} />
+
+              {/* Connection health sits after the data it describes: it explains where the
+                  figures above came from, so leading with it buried the dashboard. */}
+              <SourceStatusPanel status={imdStatus} error={imdStatusError} />
+            </>
+          )}
         </div>
 
-        {/* Quick Access Grid */}
-        <QuickAccessGrid />
-
-        {/* All Districts Overview */}
-        <DistrictOverviewGrid districts={districts} />
-
-        {/* Footer */}
-        <div className="bg-bg-light border-t border-border p-6 text-center text-sm text-text-light/60">
-          <p>
-            Data from government sources — see each figure's attribution on district pages
-          </p>
-        </div>
+        <footer className="border-t border-border">
+          <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-muted-foreground sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+            <p>Official sources are shown alongside every published figure.</p>
+            <p>Built for residents, travellers and journalists.</p>
+          </div>
+        </footer>
       </div>
     </DashboardLayout>
   );

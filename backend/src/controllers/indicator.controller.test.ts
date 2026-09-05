@@ -26,6 +26,12 @@ const mockAreaRepo: jest.Mocked<IAreaRepository> = {
   listMapLayers: jest.fn(),
   countByType: jest.fn(),
   resolveToDistricts: jest.fn(),
+  listDistrictBoundaries: jest.fn(),
+  listDistrictNames: jest.fn(),
+  upsertBoundary: jest.fn(),
+  listTehsils: jest.fn(),
+  listVillagesByTehsil: jest.fn(),
+  replaceIngestedVillages: jest.fn(),
 };
 
 const mockIndicatorRepo: jest.Mocked<IIndicatorRepository> = {

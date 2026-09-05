@@ -32,6 +32,7 @@ const logger = createLogger('@alert.repository');
 const ALERT_SELECT = `
   SELECT a.id, a.source_id, a.source_alert_id, a.type, a.severity, a.urgency, a.certainty,
          a.status, a.headline, a.body, a.instruction, a.language, a.authority, a.web_url,
+         a.geometry, a.centroid_lat, a.centroid_lng,
          a.issued_at, a.effective_from, a.expires_at, a.fetched_at,
          COALESCE(
            (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', ar.id, 'slug', ar.slug, 'name_en', ar.name_en, 'name_hi', ar.name_hi))
@@ -60,6 +61,13 @@ export interface UpsertAlertInput {
   effectiveFrom: string | null;
   expiresAt: string | null;
   areaIds: readonly number[];
+  /**
+   * GeoJSON Polygon/MultiPolygon of the affected area, already simplified for display.
+   * Null for the many sources that state their area only in prose (migration 010).
+   */
+  geometry?: unknown;
+  centroidLat?: number | null;
+  centroidLng?: number | null;
 }
 
 export interface ActiveAlertFilters {
@@ -108,14 +116,17 @@ class AlertRepositoryImpl implements IAlertRepository {
         `INSERT INTO ${ALERTS_TABLE}
            (source_id, source_alert_id, type, severity, urgency, certainty, status,
             headline, body, instruction, language, authority, web_url,
+            geometry, centroid_lat, centroid_lng,
             issued_at, effective_from, expires_at, fetched_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())
+         VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())
          AS new
          ON DUPLICATE KEY UPDATE
            type = new.type, severity = new.severity, urgency = new.urgency,
            certainty = new.certainty, status = 'active',
            headline = new.headline, body = new.body, instruction = new.instruction,
            language = new.language, authority = new.authority, web_url = new.web_url,
+           geometry = new.geometry,
+           centroid_lat = new.centroid_lat, centroid_lng = new.centroid_lng,
            issued_at = new.issued_at, effective_from = new.effective_from,
            expires_at = new.expires_at, fetched_at = new.fetched_at`,
         [
@@ -131,6 +142,11 @@ class AlertRepositoryImpl implements IAlertRepository {
           input.language,
           input.authority,
           input.webUrl,
+          input.geometry === undefined || input.geometry === null
+            ? null
+            : JSON.stringify(input.geometry),
+          input.centroidLat ?? null,
+          input.centroidLng ?? null,
           input.issuedAt,
           input.effectiveFrom,
           input.expiresAt,

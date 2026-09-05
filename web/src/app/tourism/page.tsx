@@ -45,7 +45,7 @@ export default async function TourismPage() {
             <div className="bg-surface border border-border rounded-lg p-6">
               <h2 className="font-display text-2xl font-bold mb-4">🏛️ Char Dham Sites</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {destinations.map((dest: any) => {
+                {destinations.map((dest) => {
                   const loadColor =
                     dest.loadState === 'at_capacity'
                       ? 'bg-red-50 border-red-200'
@@ -56,10 +56,7 @@ export default async function TourismPage() {
                           : 'bg-green-50 border-green-200';
 
                   return (
-                    <div
-                      key={dest.id}
-                      className={`border rounded-lg p-4 ${loadColor}`}
-                    >
+                    <div key={dest.id} className={`border rounded-lg p-4 ${loadColor}`}>
                       <p className="font-bold mb-2">{dest.name.en}</p>
                       <p className="text-xs text-text-light/60 mb-3">{dest.name.hi}</p>
 
@@ -81,11 +78,7 @@ export default async function TourismPage() {
                             <div className="flex justify-between">
                               <span>Load</span>
                               <span className="font-semibold">
-                                {(
-                                  (dest.latestCount.count / dest.dailyCapacity) *
-                                  100
-                                ).toFixed(0)}
-                                %
+                                {((dest.latestCount.count / dest.dailyCapacity) * 100).toFixed(0)}%
                               </span>
                             </div>
                           </>
@@ -111,8 +104,8 @@ export default async function TourismPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
             <h3 className="font-bold text-blue-900 mb-2">Peak Season</h3>
             <p className="text-blue-800 text-sm">
-              The Char Dham yatra (pilgrimage) typically sees peak loads during:
-              May-June (summer), August-September (monsoon), October-November (autumn)
+              The Char Dham yatra (pilgrimage) typically sees peak loads during: May-June (summer),
+              August-September (monsoon), October-November (autumn)
             </p>
           </div>
         </div>

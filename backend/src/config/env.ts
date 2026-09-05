@@ -14,6 +14,14 @@ const EnvSchema = z.object({
   DB_PASSWORD: z.string(),
   DB_NAME: z.string().min(1),
   DB_POOL_LIMIT: z.coerce.number().int().positive().default(20),
+  DB_SSL: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+  DB_SSL_CA: z
+    .string()
+    .default('')
+    .transform((value) => value.replace(/\\n/g, '\n')),
 
   CORS_ORIGIN: z
     .string()

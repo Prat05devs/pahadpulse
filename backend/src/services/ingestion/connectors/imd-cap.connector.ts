@@ -29,6 +29,44 @@ type ItemOutcome =
   | { kind: 'filtered' }
   | { kind: 'notUttarakhand' };
 
+export interface ImdCapFeedStatus {
+  sourceKey: 'imd-cap-alerts';
+  status: 'connected';
+  itemCount: number;
+  latestPublishedAt: string | null;
+  checkedAt: string;
+  mayRedistribute: false;
+  displayNotice: string;
+}
+
+/**
+ * Performs the public, DB-independent part of the connector for the dashboard health panel.
+ * Alert content is deliberately omitted while IMD redistribution rights remain unconfirmed.
+ */
+export async function fetchImdCapFeedStatus(
+  now = new Date(),
+): Promise<Result<ImdCapFeedStatus, RequestError>> {
+  const indexText = await fetchText(IMD_CAP.INDEX_URL, {
+    timeoutMs: IMD_CAP.FETCH_TIMEOUT_MS,
+    retries: IMD_CAP.FETCH_RETRIES,
+  });
+  if (indexText.isErr()) return err(indexText.error);
+
+  const items = parseCapIndex(indexText.value);
+  if (items.isErr()) return err(items.error);
+
+  return ok({
+    sourceKey: 'imd-cap-alerts',
+    status: 'connected',
+    itemCount: items.value.length,
+    latestPublishedAt: items.value[0]?.pubDate ?? null,
+    checkedAt: now.toISOString(),
+    mayRedistribute: false,
+    displayNotice:
+      'Live feed connected. Alert content is held until redistribution rights are confirmed.',
+  });
+}
+
 /**
  * IMD CAP alert feed — public, no key, no IP whitelist. Endpoint verified reachable and
  * returning real CAP 1.2 documents on 2026-09-03 (see the fixtures in

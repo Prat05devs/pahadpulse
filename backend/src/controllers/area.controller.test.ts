@@ -15,6 +15,12 @@ const mockRepo: jest.Mocked<IAreaRepository> = {
   listMapLayers: jest.fn(),
   countByType: jest.fn(),
   resolveToDistricts: jest.fn(),
+  listDistrictBoundaries: jest.fn(),
+  listDistrictNames: jest.fn(),
+  upsertBoundary: jest.fn(),
+  listTehsils: jest.fn(),
+  listVillagesByTehsil: jest.fn(),
+  replaceIngestedVillages: jest.fn(),
 };
 
 jest.unstable_mockModule('../repositories/area.repository.js', () => ({
@@ -46,6 +52,9 @@ const boundary: AreaBoundary = {
 
 beforeEach(() => {
   for (const fn of Object.values(mockRepo)) fn.mockReset();
+  // Villages are an enrichment on the district detail, not a precondition. Defaulting to an
+  // empty map keeps these tests about the district/tehsil/boundary assembly they cover.
+  mockRepo.listVillagesByTehsil.mockResolvedValue(ok(new Map<number, string[]>()));
 });
 
 describe('getAreaBySlug', () => {

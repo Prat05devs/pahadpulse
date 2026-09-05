@@ -2,6 +2,8 @@ import { registerConnector } from './connector.js';
 import { dataGovInConnector } from './connectors/data-gov-in.connector.js';
 import { imdCapConnector } from './connectors/imd-cap.connector.js';
 import { openStreetMapConnector } from './connectors/openstreetmap.connector.js';
+import { osmRoadsConnector } from './connectors/osm-roads.connector.js';
+import { sachetConnector } from './connectors/sachet.connector.js';
 
 /**
  * The one place connectors are registered.
@@ -13,6 +15,8 @@ import { openStreetMapConnector } from './connectors/openstreetmap.connector.js'
 registerConnector(dataGovInConnector);
 registerConnector(imdCapConnector);
 registerConnector(openStreetMapConnector);
+registerConnector(osmRoadsConnector);
+registerConnector(sachetConnector);
 
 export { getConnector, listConnectors, type SourceConnector } from './connector.js';
 export { runSource, type RunReport } from './runner.js';

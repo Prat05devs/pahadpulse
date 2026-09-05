@@ -1,56 +1,92 @@
 import React from 'react';
 import type { Metadata } from 'next';
+import { Route } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
+import { fetchDistrictFeatures } from '@/features/map';
+import { fetchRoadNetwork } from '@/features/roads/services';
+import { HighwayExplorer } from '@/features/roads/components/highway-explorer';
 
 export const metadata: Metadata = {
-  title: 'Roads & Traffic — Pahad Pulse',
-  description: 'Real-time road closures, traffic status, and highway conditions in Uttarakhand.',
+  title: 'Roads & Highways — Pahad Pulse',
+  description: 'National and State Highways running through Uttarakhand, drawn over terrain.',
 };
 
 export const dynamic = 'force-dynamic';
 
 export default async function RoadsPage() {
+  let network = null;
+  let districts = null;
+  let error: string | null = null;
+
+  const [networkResult, districtResult] = await Promise.allSettled([
+    fetchRoadNetwork(),
+    fetchDistrictFeatures(),
+  ]);
+
+  if (networkResult.status === 'fulfilled') {
+    network = networkResult.value;
+  } else {
+    const caught = networkResult.reason;
+    error = caught instanceof Error ? caught.message : 'Road network unavailable';
+  }
+
+  if (districtResult.status === 'fulfilled') districts = districtResult.value;
+
+  const attribution =
+    network?.national[0]?.provenance ?? network?.state[0]?.provenance ?? null;
+
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-bg-light">
-        {/* Header */}
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">Roads & Traffic</h1>
-          <p className="text-text-dark/70 mt-2">
-            Highway closures, traffic status, and navigation conditions
-          </p>
-        </div>
+      <div className="min-h-full">
+        <header className="border-b border-border bg-surface">
+          <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-6 lg:px-8">
+            <p className="mb-1.5 text-sm font-medium text-muted-foreground">Live systems</p>
+            <h1 className="flex items-center gap-2 font-display text-3xl font-semibold leading-tight tracking-[-0.025em] text-text-light">
+              <Route className="size-6 text-accent" strokeWidth={1.8} aria-hidden="true" />
+              Roads &amp; highways
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              The highway network drawn over the terrain it crosses. National highways in
+              blue, state highways in gold.
+            </p>
+          </div>
+        </header>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-            <h2 className="font-bold text-yellow-900 mb-2">🛣️ Road Status</h2>
-            <p className="text-yellow-800">
-              Integrating live road closure data from PWD and NHAI. View road status by district.
+        <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+          {/* Stated up front, not in a footnote. A traveller arriving on a roads page is
+              looking for whether a road is passable, and this page cannot answer that — so
+              it says so before they read anything else. */}
+          <div className="rounded-lg border border-warning/40 bg-warning-soft/60 px-4 py-3">
+            <p className="text-sm text-text-light">
+              <span className="font-semibold">This map shows which highways exist, not
+              whether they are open.</span>{' '}
+              Closures and landslide blocks are reported manually by district officials and
+              have no live feed yet, so none are shown here. Check current road status with
+              the district administration before travelling.
             </p>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h2 className="font-bold text-blue-900 mb-2">📡 Live Traffic</h2>
-            <p className="text-blue-800">
-              Live traffic data via Google Maps is rendered client-side and updated in real-time.
+          {error !== null && (
+            <p className="text-sm text-muted-foreground">Road network unavailable — {error}</p>
+          )}
+
+          <HighwayExplorer network={network} districts={districts} />
+
+          {attribution !== null && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Highway references from{' '}
+              <a
+                href={attribution.url ?? 'https://www.openstreetmap.org'}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="underline underline-offset-2 hover:text-text-light"
+              >
+                {attribution.department.en}
+              </a>
+              , read {attribution.vintage}. This is a crowd-sourced map, not an NHAI or PWD
+              register — a highway may be missing or newly renumbered.
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-surface border border-border rounded-lg p-4">
-              <h3 className="font-bold mb-2">National Highways (NH)</h3>
-              <p className="text-sm text-text-light/60">Major routes through Uttarakhand</p>
-            </div>
-            <div className="bg-surface border border-border rounded-lg p-4">
-              <h3 className="font-bold mb-2">State Highways (SH)</h3>
-              <p className="text-sm text-text-light/60">Regional connectivity</p>
-            </div>
-          </div>
-
-          <div className="text-center py-8 text-text-light/60">
-            <p>Road closures for your district appear on its detail page</p>
-          </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

@@ -8,9 +8,14 @@ import { ERRORS, type RequestError } from '../utils/errors.js';
 /** Area types a client may address by slug. Villages are addressed through their tehsil. */
 const PUBLIC_AREA_TYPES: readonly AreaType[] = [AreaType.State, AreaType.District, AreaType.Tehsil];
 
+export interface TehsilWithVillages extends Area {
+  /** Village names inside this tehsil, alphabetical. Empty where none are mapped yet. */
+  villages: string[];
+}
+
 export interface DistrictDetail {
   district: Area;
-  tehsils: Area[];
+  tehsils: TehsilWithVillages[];
   boundary: AreaBoundary | null;
 }
 
@@ -49,6 +54,11 @@ export async function getDistrictDetail(
   const tehsils = await AreaRepository.listChildren(district.id, AreaType.Tehsil);
   if (tehsils.isErr()) return err(tehsils.error);
 
+  // Villages are best-effort: a failure here must not cost the page its tehsils, which are
+  // curated reference data and always present.
+  const villages = await AreaRepository.listVillagesByTehsil(district.id);
+  const villagesByTehsil = villages.isOk() ? villages.value : new Map<number, string[]>();
+
   const boundary = await AreaRepository.findBoundaryByAreaId(district.id);
   if (boundary.isErr() && boundary.error.code !== ERRORS.BOUNDARY_NOT_AVAILABLE.code) {
     return err(boundary.error);
@@ -56,7 +66,10 @@ export async function getDistrictDetail(
 
   return ok({
     district,
-    tehsils: tehsils.value,
+    tehsils: tehsils.value.map((tehsil) => ({
+      ...tehsil,
+      villages: villagesByTehsil.get(tehsil.id) ?? [],
+    })),
     boundary: boundary.isOk() ? boundary.value : null,
   });
 }

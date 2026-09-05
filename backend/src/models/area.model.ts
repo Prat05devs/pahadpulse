@@ -51,6 +51,30 @@ export interface AreaCountRow extends RowDataPacket {
   total: number;
 }
 
+/**
+ * A district joined to its boundary, for the map's one-request district layer.
+ * Only the simplified geometry is selected — the full-precision column is never sent (GEO-5).
+ */
+export interface DistrictBoundaryRow extends RowDataPacket {
+  id: number;
+  slug: string;
+  name_en: string;
+  name_hi: string;
+  division: Division | null;
+  centroid_lat: string | null;
+  centroid_lng: string | null;
+  geojson: unknown;
+  is_placeholder: number;
+  source_note: string;
+}
+
+/** The reference names an alert connector matches free text against. */
+export interface DistrictNameRow extends RowDataPacket {
+  id: number;
+  name_en: string;
+  name_hi: string;
+}
+
 /** Row returned by the district list, which counts children in one query rather than N. */
 export interface DistrictWithCountsRow extends AreaRow {
   tehsil_count: number;
@@ -102,4 +126,23 @@ export interface MapLayer {
   displayOrder: number;
   isDefaultVisible: boolean;
   isAvailable: boolean;
+}
+
+/** One district as the map consumes it: simplified geometry plus what a label needs. */
+export interface DistrictBoundary {
+  areaId: number;
+  slug: string;
+  name: LocalisedText;
+  division: Division | null;
+  centroid: { lat: number; lng: number } | null;
+  geojson: unknown;
+  /** TRUE while this is generated placeholder geometry rather than official boundary data. */
+  isPlaceholder: boolean;
+  sourceNote: string;
+}
+
+export interface DistrictName {
+  id: number;
+  nameEn: string;
+  nameHi: string;
 }

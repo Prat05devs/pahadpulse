@@ -17,6 +17,12 @@ const mockAreaRepo: jest.Mocked<IAreaRepository> = {
   listMapLayers: jest.fn(),
   countByType: jest.fn(),
   resolveToDistricts: jest.fn(),
+  listDistrictBoundaries: jest.fn(),
+  listDistrictNames: jest.fn(),
+  upsertBoundary: jest.fn(),
+  listTehsils: jest.fn(),
+  listVillagesByTehsil: jest.fn(),
+  replaceIngestedVillages: jest.fn(),
 };
 const mockAlertRepo: jest.Mocked<IAlertRepository> = {
   upsert: jest.fn(),
@@ -35,7 +41,7 @@ jest.unstable_mockModule('../../../repositories/alert.repository.js', () => ({
   AlertRepository: mockAlertRepo,
 }));
 
-const { imdCapConnector } = await import('./imd-cap.connector.js');
+const { fetchImdCapFeedStatus, imdCapConnector } = await import('./imd-cap.connector.js');
 
 const INDEX_URL = 'https://cap-sources.s3.amazonaws.com/in-imd-en/rss.xml';
 
@@ -118,6 +124,31 @@ const context = {
   runId: 1,
   now: new Date('2026-09-03T12:00:00Z'),
 };
+
+describe('fetchImdCapFeedStatus', () => {
+  it('reports live feed metadata without exposing alert content', async () => {
+    mockFetchRouter({
+      [INDEX_URL]: indexXmlWith([
+        { link: 'https://x/1.xml', guid: 'g1' },
+        { link: 'https://x/2.xml', guid: 'g2' },
+      ]),
+    });
+
+    const result = await fetchImdCapFeedStatus(new Date('2026-09-04T16:48:00.000Z'));
+
+    expect(result._unsafeUnwrap()).toEqual({
+      sourceKey: 'imd-cap-alerts',
+      status: 'connected',
+      itemCount: 2,
+      latestPublishedAt: 'Thu, 03 Sep 2026 07:21:21 +0000',
+      checkedAt: '2026-09-04T16:48:00.000Z',
+      mayRedistribute: false,
+      displayNotice:
+        'Live feed connected. Alert content is held until redistribution rights are confirmed.',
+    });
+    expect(mockFetchText).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('imdCapConnector.fetch', () => {
   it('propagates a failure to fetch the RSS index', async () => {

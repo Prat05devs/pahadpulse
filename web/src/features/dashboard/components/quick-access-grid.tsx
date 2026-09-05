@@ -2,89 +2,103 @@
 
 import React from 'react';
 import Link from 'next/link';
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  CloudRain,
+  GitCompareArrows,
+  MapPinned,
+  Mountain,
+  Route,
+  type LucideIcon,
+} from 'lucide-react';
 
 interface QuickAccessItem {
   label: string;
   href: string;
-  icon: string;
+  icon: LucideIcon;
   description: string;
 }
 
 const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   {
-    label: 'Live Alerts',
+    label: 'Live alerts',
     href: '/alerts',
-    icon: '🚨',
-    description: 'Weather, disaster & road alerts',
+    icon: AlertTriangle,
+    description: 'Weather, disaster and road warnings',
   },
   {
-    label: 'District Details',
+    label: 'District details',
     href: '/districts',
-    icon: '📍',
-    description: 'Full dashboard for any district',
+    icon: MapPinned,
+    description: 'A complete view of every district',
   },
   {
-    label: 'Compare Districts',
+    label: 'Compare districts',
     href: '/compare',
-    icon: '⚖️',
-    description: 'Side-by-side comparison',
+    icon: GitCompareArrows,
+    description: 'Benchmark areas side by side',
   },
   {
-    label: 'Tourism Live',
+    label: 'Tourism live',
     href: '/tourism',
-    icon: '🏛️',
-    description: 'Char Dham & tourist load',
+    icon: Mountain,
+    description: 'Char Dham and visitor load',
   },
   {
-    label: 'Weather & Rivers',
+    label: 'Weather & rivers',
     href: '/hydromet',
-    icon: '🌧️',
-    description: 'Temperature, rainfall, levels',
+    icon: CloudRain,
+    description: 'Rainfall, forecasts and river levels',
   },
   {
-    label: 'Roads & Traffic',
+    label: 'Roads & traffic',
     href: '/roads',
-    icon: '🛣️',
-    description: 'Closures and traffic status',
-  },
-  {
-    label: 'Migration Tracker',
-    href: '/migration',
-    icon: '👥',
-    description: 'Ghost villages & trends',
-  },
-  {
-    label: 'Connectivity Map',
-    href: '/connectivity',
-    icon: '📡',
-    description: 'Internet speed & coverage',
-  },
-  {
-    label: 'Sector Intelligence',
-    href: '/intelligence',
-    icon: '📊',
-    description: 'Health, education, economy',
+    icon: Route,
+    description: 'Closures and route conditions',
   },
 ];
 
 export function QuickAccessGrid() {
   return (
-    <div className="p-6">
-      <h2 className="font-display text-2xl font-bold mb-6">Quick Access</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {QUICK_ACCESS_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="group bg-surface border border-border rounded-lg p-4 hover:border-accent hover:shadow-md transition-all hover:bg-surface-hover"
-          >
-            <div className="text-4xl mb-3">{item.icon}</div>
-            <h3 className="font-bold text-sm group-hover:text-accent transition-colors">{item.label}</h3>
-            <p className="text-xs text-text-light/60 mt-1">{item.description}</p>
-          </Link>
-        ))}
+    <section aria-labelledby="quick-access-heading">
+      <div className="mb-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          Explore
+        </p>
+        <h2 id="quick-access-heading" className="mt-1 text-xl font-semibold tracking-tight">
+          Quick access
+        </h2>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {QUICK_ACCESS_ITEMS.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="interactive-card group flex min-h-28 items-start gap-4 rounded-lg border border-transparent p-5"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-accent">
+                <Icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 font-semibold">
+                  {item.label}
+                  <ArrowUpRight
+                    className="size-3.5 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
+                </span>
+                <span className="mt-1.5 block text-sm leading-relaxed text-muted-foreground">
+                  {item.description}
+                </span>
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 }

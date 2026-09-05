@@ -1,0 +1,63 @@
+<cap:alert xmlns:cap="urn:oasis:names:tc:emergency:cap:1.2">
+<cap:identifier>IN-1788538983366009_9</cap:identifier>
+<cap:sender>Uttarakhand-SDMA</cap:sender>
+<cap:sent>2026-09-04T21:55:10+05:30</cap:sent>
+<cap:status>Actual</cap:status>
+<cap:msgType>Update</cap:msgType>
+<cap:scope>Public</cap:scope>
+<cap:restriction/>
+<cap:addresses/>
+<cap:note/>
+<cap:references>IMD-Dehradun,IN-1788538983366009_65,2026-09-04T21:52:14+05:30</cap:references>
+<cap:incidents/>
+<cap:info>
+<cap:language>en-IN</cap:language>
+<cap:category>Met</cap:category>
+<cap:event>Thunder shower</cap:event>
+<cap:urgency>Expected</cap:urgency>
+<cap:severity>Moderate</cap:severity>
+<cap:certainty>Possible</cap:certainty>
+<cap:audience>1</cap:audience>
+<cap:effective>2026-09-04T21:48:00+05:30</cap:effective>
+<cap:onset>2026-09-04T21:55:10+05:30</cap:onset>
+<cap:expires>2026-09-05T00:48:00+05:30</cap:expires>
+<cap:headline>Thunder shower / Thunder accompanied with intense spell of rain and lightning is likely to occur at a few places over Uttarkashi, Almora, Bageshwar, Chamoli, Champawat, Haridwar, Nainital, Pauri Garhwal, Pithoragarh, Udham Singh Nagar in next 3 hours.</cap:headline>
+<cap:description/>
+<cap:instruction>Please follow SDMA guidelines.</cap:instruction>
+<cap:contact/>
+<cap:parameter>
+<cap:valueName>Polygon URL</cap:valueName>
+<cap:value>https://sachet.ndma.gov.in/cap_public_website/FetchPolygonXMLFile?identifier=1788538983366009</cap:value>
+</cap:parameter>
+<cap:area>
+<cap:areaDesc>districts of uttarakhand</cap:areaDesc>
+<cap:altitude>0</cap:altitude>
+<cap:ceiling>0</cap:ceiling>
+</cap:area>
+</cap:info>
+<cap:info>
+<cap:language>HI</cap:language>
+<cap:category>Met</cap:category>
+<cap:event>Thunder shower</cap:event>
+<cap:urgency>Expected</cap:urgency>
+<cap:severity>Moderate</cap:severity>
+<cap:certainty>Possible</cap:certainty>
+<cap:audience>1</cap:audience>
+<cap:effective>2026-09-04T21:48:00+05:30</cap:effective>
+<cap:onset>2026-09-04T21:55:10+05:30</cap:onset>
+<cap:expires>2026-09-05T00:48:00+05:30</cap:expires>
+<cap:headline>अगले 3 घंटे में, क्षेत्र में , कुछ स्थानों में गर्जन के साथ आकाशीय बिजली चमकने एवं वर्षा के तीव्र दौर होने की संभावना है |</cap:headline>
+<cap:description/>
+<cap:instruction>Please follow SDMA guidelines.</cap:instruction>
+<cap:contact/>
+<cap:parameter>
+<cap:valueName>Polygon URL</cap:valueName>
+<cap:value>https://sachet.ndma.gov.in/cap_public_website/FetchPolygonXMLFile?identifier=1788538983366009</cap:value>
+</cap:parameter>
+<cap:area>
+<cap:areaDesc>districts of uttarakhand</cap:areaDesc>
+<cap:altitude>0</cap:altitude>
+<cap:ceiling>0</cap:ceiling>
+</cap:area>
+</cap:info>
+</cap:alert>

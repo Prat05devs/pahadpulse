@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { AlertCard } from '@/features/alerts/components';
 import { fetchActiveAlerts } from '@/features/alerts/services';
+import { TerrainMap, fetchAlertFeatures } from '@/features/map';
 
 export const metadata: Metadata = {
   title: 'Live Alerts — Pahad Pulse',
@@ -13,14 +14,27 @@ export const dynamic = 'force-dynamic';
 
 export default async function AlertsPage() {
   let alerts = null;
+  let alertFeatures = null;
   let error = null;
 
-  try {
-    alerts = await fetchActiveAlerts(undefined, 50);
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load alerts';
-    console.error('Alerts fetch error:', err);
+  const [listResult, mapResult] = await Promise.allSettled([
+    fetchActiveAlerts(undefined, 50),
+    fetchAlertFeatures(),
+  ]);
+
+  if (listResult.status === 'fulfilled') {
+    alerts = listResult.value;
+  } else {
+    const caught = listResult.reason;
+    error = caught instanceof Error ? caught.message : 'Failed to load alerts';
   }
+
+  // The map is settled separately: geometry failing must never cost the reader the warnings
+  // themselves, which are the safety-critical half of this page.
+  if (mapResult.status === 'fulfilled') alertFeatures = mapResult.value;
+
+  const mappedCount = alertFeatures?.features.length ?? 0;
+  const listedCount = alerts?.length ?? 0;
 
   return (
     <DashboardLayout>
@@ -42,7 +56,35 @@ export default async function AlertsPage() {
             </div>
           )}
 
-          {!alerts || alerts.data.length === 0 ? (
+          {/* The warnings on the terrain they cover.
+              No district layer here: on this page the subject is the warning, and filled
+              districts underneath would compete with it — and make a district look alerted
+              when it is not. Clicking a warning opens its detail; nothing navigates away. */}
+          {alertFeatures !== null && mappedCount > 0 && (
+            <div className="mb-6">
+              <TerrainMap
+                districts={null}
+                alerts={alertFeatures}
+                showDistricts={false}
+                navigateOnClick={false}
+                fitToAlerts
+              />
+              <p className="mt-2 text-xs text-text-light/50">
+                Select a highlighted area for that warning&rsquo;s details. Shaded areas are the
+                extent the issuing authority published — they are not district boundaries.
+                {mappedCount < listedCount && (
+                  <>
+                    {' '}
+                    {listedCount - mappedCount} further alert
+                    {listedCount - mappedCount !== 1 ? 's are' : ' is'} active but state their
+                    area only in words, so they appear in the list below and not on the map.
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
+          {!alerts || alerts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-2xl mb-2">✨</p>
               <p className="font-semibold text-text-dark mb-1">No active alerts</p>
@@ -51,22 +93,15 @@ export default async function AlertsPage() {
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-text-light/70">
-                Showing {alerts.data.length} active alert{alerts.data.length !== 1 ? 's' : ''}
+                Showing {alerts.length} active alert{alerts.length !== 1 ? 's' : ''}
               </p>
 
               <div className="space-y-3">
-                {alerts.data.map((alert) => (
+                {alerts.map((alert) => (
                   <AlertCard key={alert.id} alert={alert} />
                 ))}
               </div>
 
-              {alerts.pagination.hasMore && (
-                <div className="text-center pt-4">
-                  <button className="bg-accent text-bg-dark px-6 py-2 rounded font-semibold hover:opacity-90 transition-opacity">
-                    Load More
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </div>
