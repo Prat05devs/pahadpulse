@@ -1,21 +1,32 @@
-# Render Blueprint — the API and the ingestion schedule.
-#
-# The web app is NOT here: it deploys to Vercel from `web/`, which is Next.js's native host.
-#
-# WHAT IS DELIBERATELY ABSENT: a database. Render has managed PostgreSQL, not managed MySQL,
-# and this project is MySQL 8 throughout — `mysql2`, MySQL-specific upserts (`ON DUPLICATE
-# KEY UPDATE`, row aliases) and JSON columns. The options, in order of preference:
-#
-#   1. An external managed MySQL (Aiven, Clever Cloud, PlanetScale). Backups, upgrades and
-#      failover are someone's job. Set the DB_* variables below to point at it.
-#   2. MySQL as a private service on Render with a persistent disk. It works, but nobody is
-#      managing backups or upgrades except you — for a platform carrying disaster alerts,
-#      that is a real operational commitment, not a detail.
-#
-# Porting to Postgres is not a small change: the connectors rely on MySQL upsert syntax in
-# several places, so treat that as a project, not a config switch.
+# PahadPulse on Render: private MySQL, API, and ingestion jobs in Singapore.
+# The Next.js web app deploys separately to Vercel from web/.
+# MySQL is self-managed: arrange off-service logical backups and tested restores.
+# Generated passwords stay in Render; do not rotate MYSQL_* by editing env vars alone
+# after disk initialization. Existing MySQL users must be changed with SQL as well.
 
 services:
+  - type: pserv
+    name: pahadpulse-mysql
+    runtime: image
+    image:
+      url: docker.io/library/mysql:8.0
+    plan: 1c-2g # 2 GB RAM for MySQL; review compute and disk charges before applying.
+    region: singapore
+    dockerCommand: mysqld --default-time-zone=+00:00
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+    envVars:
+      - key: MYSQL_DATABASE
+        value: pahad_pulse
+      - key: MYSQL_USER
+        value: pahad
+      - key: MYSQL_PASSWORD
+        generateValue: true
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+
   # ---------------------------------------------------------------------------------------
   # The API server.
   # ---------------------------------------------------------------------------------------
@@ -24,7 +35,7 @@ services:
     runtime: docker
     rootDir: backend
     dockerfilePath: ./Dockerfile
-    plan: starter
+    plan: 0.5c-512mb
     region: singapore # Closest Render region to Uttarakhand; keeps DB round trips short.
     # `/health`, not `/api/health` — the health route is mounted on the app root, above the
     # /api router. Verified against the running server.
@@ -52,21 +63,32 @@ services:
       - key: SERVER_URL
         sync: false
 
-      # `sync: false` means Render prompts for the value and never stores it in this file.
-      # Database credentials must not live in the repository.
+      # Resolve the private host and application credentials from the MySQL service.
       - key: DB_HOST
-        sync: false
+        fromService:
+          type: pserv
+          name: pahadpulse-mysql
+          property: host
       - key: DB_PORT
-        sync: false # Use the provider's port, which may differ from 3306.
+        value: '3306'
       - key: DB_USER
-        sync: false
+        fromService:
+          type: pserv
+          name: pahadpulse-mysql
+          envVarKey: MYSQL_USER
       - key: DB_PASSWORD
-        sync: false
+        fromService:
+          type: pserv
+          name: pahadpulse-mysql
+          envVarKey: MYSQL_PASSWORD
       - key: DB_NAME
-        sync: false
+        fromService:
+          type: pserv
+          name: pahadpulse-mysql
+          envVarKey: MYSQL_DATABASE
+      # Private-network MySQL only; no public endpoint. Public external DBs need verified TLS.
       - key: DB_SSL
-        value: 'true'
-      # Optional: add DB_SSL_CA in the dashboard if the provider supplies a private CA.
+        value: 'false'
       # Serverless would need this near 1; a long-lived container can hold a real pool.
       - key: DB_POOL_LIMIT
         value: '10'
@@ -87,7 +109,7 @@ services:
     runtime: docker
     rootDir: backend
     dockerfilePath: ./Dockerfile
-    plan: starter
+    plan: 0.5c-512mb
     region: singapore
     schedule: '*/15 * * * *'
     dockerCommand: npm run ingest -- sachet-ndma
@@ -99,18 +121,30 @@ services:
       - key: LOG_LEVEL
         value: info
       - key: DB_HOST
-        sync: false
+        fromService:
+          type: pserv
+          name: pahadpulse-mysql
+          property: host
       - key: DB_PORT
-        sync: false
+        value: '3306'
       - key: DB_USER
-        sync: false
+        fromService:
+          type: pserv
+          name: pahadpulse-mysql
+          envVarKey: MYSQL_USER
       - key: DB_PASSWORD
-        sync: false
+        fromService:
+          type: pserv
+          name: pahadpulse-mysql
+          envVarKey: MYSQL_PASSWORD
       - key: DB_NAME
-        sync: false
+        fromService:
+          type: pserv
+          name: pahadpulse-mysql
+          envVarKey: MYSQL_DATABASE
+      # Private-network MySQL only; no public endpoint. Public external DBs need verified TLS.
       - key: DB_SSL
-        value: 'true'
-      # Optional: add DB_SSL_CA to BOTH cron services as well as the API.
+        value: 'false'
       # A cron container is short-lived and single-purpose; it needs very few connections.
       - key: DB_POOL_LIMIT
         value: '4'
@@ -123,7 +157,7 @@ services:
     runtime: docker
     rootDir: backend
     dockerfilePath: ./Dockerfile
-    plan: starter
+    plan: 0.5c-512mb
     region: singapore
     schedule: '30 20 * * 6' # Saturday 20:30 UTC = Sunday 02:00 IST.
     dockerCommand: npm run ingest -- --all

@@ -29,8 +29,7 @@ is scaffolded but not implemented.
 - **Web:** Next.js 15, React 19, TypeScript, Tailwind CSS, TanStack Query, MapLibre GL.
 - **API:** Express 5, TypeScript ESM, Zod, and mysql2.
 - **Database:** MySQL 8, with SQL migrations and source ingestion CLIs.
-- **Deployment:** Render for the API and scheduled jobs; Vercel for the web app; external
-  managed MySQL, with the provider still undecided.
+- **Deployment:** Render for private MySQL, the API, and scheduled jobs; Vercel for the web app.
 
 ## Local setup
 
@@ -120,22 +119,36 @@ Your local database is **not** copied to production when you push to GitHub.
 
 ### MySQL and Render
 
-1. Provision a managed MySQL 8 database. Keep the provider hostname, port, database name,
-   credentials, and any CA certificate available for configuration.
-2. Push this repository to GitHub, then create a Render Blueprint using
-   [render.yaml](render.yaml).
-3. Set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME` on all three services,
-   pointing to the same database. The Blueprint enables `DB_SSL=true`; certificate and
-   hostname verification stay enabled. If the provider supplies a private CA, add its PEM
-   contents as `DB_SSL_CA` on all three services. Otherwise leave it unset.
-4. Set the API's `SERVER_URL` to its public HTTPS origin and `CORS_ORIGIN` to the Vercel
-   origin, without a trailing slash. Multiple allowed origins are comma-separated.
-5. Confirm the API's pre-deploy migration command succeeds. Then manually trigger the
-   reference ingestion job once so maps and roads do not wait for the weekly schedule.
-   Inspect the ingestion logs and trigger the alert job if needed.
+1. Push this repository, then create a Render Blueprint from [render.yaml](render.yaml).
+   It creates a private MySQL 8.0 service, the API, and two ingestion jobs in Singapore.
+2. Review the service charges before applying: MySQL requests 1 CPU / 2 GB RAM and a
+   10 GB persistent disk. The other three services request 0.5 CPU / 512 MB each.
+3. Render generates separate MySQL application and root passwords. The API and jobs
+   automatically reference the private hostname and application credentials; no database
+   passwords are committed. MySQL data is stored at `/var/lib/mysql` on the attached disk.
+4. Set `SERVER_URL` to the API's public HTTPS origin and `CORS_ORIGIN` to the Vercel origin,
+   without a trailing slash. During initial creation, if the URLs are not assigned yet,
+   use `http://localhost:3000` and `http://localhost:3001` respectively, then update them
+   once both deployments have their URLs. Multiple allowed CORS origins are comma-separated.
+5. Wait for MySQL initialization and successful API migrations. If migrations ran before
+   MySQL was ready, redeploy the API once MySQL is running. Manually trigger the reference
+   job once, inspect per-source results, and trigger the alert job if needed.
+
+The database has no public endpoint. `DB_SSL=false` is scoped to this Render private-network
+connection; verified TLS support remains available for external databases. Keep all four
+services in the same Render workspace and region, with private networking permitted between
+them. Vercel connects to the public API, never directly to MySQL.
+
+This MySQL service is self-managed. Configure regular logical backups to separate storage
+and test restoration before relying on it for production. Disk snapshots alone are not a
+MySQL backup strategy. See [the backup runbook](project/operations.md#mysql-backups-and-recovery).
+
+If you previously connected an external database, this Blueprint switches the applications
+to a new database; it does not transfer the previous database's rows.
 
 | Render service | Purpose | Schedule |
 | --- | --- | --- |
+| `pahadpulse-mysql` | Private MySQL 8.0 with persistent disk | Long-running service |
 | `pahadpulse-api` | API, with migrations before rollout | Long-running service |
 | `pahadpulse-ingest-alerts` | SACHET alert ingestion | Every 15 minutes |
 | `pahadpulse-ingest-reference` | All available connectors | Sunday 02:00 IST |

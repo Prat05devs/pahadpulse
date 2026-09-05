@@ -89,6 +89,8 @@ The [Render Blueprint](../render.yaml) runs migrations before API rollout and us
 Docker image for ingestion jobs. Scripts require `tsx` and the source SQL migration files,
 so the image deliberately keeps devDependencies and source alongside the compiled server.
 
-Configure all services against the same managed MySQL database, then run initial ingestion.
+The Blueprint creates private MySQL with a persistent disk and automatically wires the API
+and jobs to its application credentials. It uses `DB_SSL=false` for this private connection.
+After MySQL initialization and migrations, run initial ingestion.
 See [deployment instructions](../README.md#deployment) and the
 [operations notes](../project/operations.md) for TLS, schedules, CORS, and post-deploy checks.

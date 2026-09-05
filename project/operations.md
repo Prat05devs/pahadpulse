@@ -31,24 +31,33 @@ fix this section.
 
 ### Render API and ingestion, Vercel web
 
-The deployment configuration is in [`render.yaml`](../render.yaml). Deployment is pending;
-the external managed MySQL provider is undecided. The Git remote already points to
-`git@github.com:Prat05devs/pahadpulse.git`.
+The deployment configuration is in [`render.yaml`](../render.yaml). The selected database
+is MySQL 8.0 on a Render private service, with 2 GB RAM and a 10 GB disk mounted at
+`/var/lib/mysql`. MySQL, the API, and both cron jobs must share a workspace and the Singapore
+region. Live provisioning has not been verified.
 
-1. Provision a MySQL 8 service compatible with the migrations in `backend/`. Record its
-   hostname, port, database, username, password, and any CA certificate it supplies.
-2. Push the reviewed changes, then create a Render Blueprint from the repository.
-3. Enter the same `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME` for all three
-   services. `DB_SSL=true` enables certificate and hostname verification. If the provider
-   supplies a private CA, add `DB_SSL_CA` to all three services in Render's dashboard, using
-   the PEM contents (actual newlines or literal `\n` escapes). Otherwise leave it unset to
-   use Node's trusted CAs. Use the provider's hostname, not a custom alias.
-4. Set the API's `SERVER_URL` to its public HTTPS origin and `CORS_ORIGIN` to the Vercel
-   origin, with no trailing slash. Multiple allowed origins are comma-separated.
-5. On Vercel choose root directory `web`, use npm with `package-lock.json`, and set
+1. Push the reviewed Blueprint and create or sync it in Render. Review compute and disk
+   charges before applying. The Blueprint generates separate application and root passwords
+   and wires the three consumers to the application's private database connection.
+2. Set the API's `SERVER_URL` to its public HTTPS origin and `CORS_ORIGIN` to the Vercel
+   origin, with no trailing slash. Multiple allowed origins are comma-separated. Temporary
+   localhost values can be used during creation and replaced after the URLs are assigned.
+3. On Vercel choose root directory `web`, use npm with `package-lock.json`, and set
    `NEXT_PUBLIC_API_URL=https://<render-host>/api` before building.
-6. Confirm the API pre-deploy migration succeeds before triggering the first ingestion
-   runs. Check `/health`, `/ready`, `/api/roads`, and `/api/map/layers` after deployment.
+4. Wait for MySQL initialization and successful API migrations before triggering ingestion.
+   If initial migrations fail because MySQL is starting, redeploy the API once MySQL is ready.
+5. Trigger both ingestion jobs and inspect their source results. Check `/health`, `/ready`,
+   `/api/roads`, and `/api/map/districts`, then verify the live web app.
+
+`DB_SSL=false` applies to the Render private MySQL connection only; it does not traverse the
+public internet. The MySQL service has no public endpoint. External database connections
+should use `DB_SSL=true`, with `DB_SSL_CA` if needed. Do not expose this MySQL instance as a
+web service. Ensure environment isolation rules permit the API and cron jobs to reach it.
+
+Switching an existing deployment to this Blueprint does not transfer external database data.
+The `MYSQL_*` initialization variables create users only on an empty disk. To rotate a
+password later, change it in MySQL and update the corresponding Render environment variable,
+then sync the Blueprint to propagate the value. Never delete the disk to reset credentials.
 
 Alerts run every 15 minutes. Reference ingestion (`--all`, which also includes alerts)
 runs at Saturday 20:30 UTC, or Sunday 02:00 IST. Render cron schedules use
@@ -121,3 +130,20 @@ One entry per alert: what it means, how to confirm, how to mitigate.
 | Rotation | `<who / schedule>` |
 | Escalation | `<path>` |
 | Paging | `<tool>` |
+
+## MySQL backups and recovery
+
+**Not yet configured:** automated logical backups, separate backup storage, retention,
+monitoring of backup failures, and a verified restore. Assign these before production use.
+Render disk snapshots are not a substitute for a consistent MySQL backup; see
+[Render's MySQL backup guidance](https://render.com/docs/deploy-mysql#backups).
+
+- Run `mysqldump` using `--single-transaction --quick --no-tablespaces` for the application
+  schema from a trusted host on the private network. Avoid schema changes during the dump.
+  Supply credentials through a protected client option file, not command-line arguments.
+- Store encrypted backups outside the database service and its disk. Restrict access and
+  configure retention with the selected storage provider.
+- Restore into a separate MySQL 8.0 instance and verify the migration ledger, row counts,
+  API readiness, district geometry, and road data before any production cutover.
+- Before MySQL image upgrades, create and verify a logical backup. Test the upgrade on a
+  restored copy; do not assume downgrading the image can reverse an on-disk format change.
