@@ -97,7 +97,7 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
           <h1 className="mt-0.5 font-display text-lg font-semibold tracking-tight text-text-light sm:mt-1 sm:text-xl lg:text-2xl">
             Uttarakhand, at a glance
           </h1>
-          <div className="mt-2 grid grid-cols-4 gap-2 sm:mt-3 sm:gap-3">
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 sm:mt-3 sm:grid-cols-4 sm:gap-3">
             <Figure
               value={format(overview.population, (v) => `${(v / 1_000_000).toFixed(1)}M`)}
               label="Population"
@@ -118,7 +118,7 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
       </div>
 
       {/* Bottom: the three things worth acting on. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex snap-x snap-mandatory gap-3 overflow-x-auto p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:p-4 lg:grid lg:max-w-[64rem] lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:p-5">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex snap-x snap-mandatory gap-3 overflow-x-auto p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:p-4 lg:grid lg:max-w-[64rem] lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:p-5">
         {/* Alerts first, and styled to stand out when there are any. This is an emergency
             -facing product; the warning card is the one that must not blend in. */}
         <article

@@ -189,16 +189,40 @@ export function TerrainMap({
     [districts, focusSlug]
   );
 
+  /**
+   * Padding for the bounds fit, in CSS pixels.
+   *
+   * In stage mode the floating cards cover roughly 130px at the top and 176px at the
+   * bottom of a phone screen. Fitting to the raw viewport would centre the state correctly
+   * and then hide its top and bottom edges under those cards, so the fit is told about
+   * them and frames the state in the clear band between.
+   */
+  const fitPadding = useCallback(() => {
+    if (!stage) return 24;
+    return { top: 150, bottom: 190, left: 16, right: 16 };
+  }, [stage]);
+
   useEffect(() => {
     if (containerRef.current === null || mapRef.current !== null) return;
 
+    const isNarrow = window.innerWidth < 1024;
     let map: maplibregl.Map;
     try {
       map = new maplibregl.Map({
         container: containerRef.current,
         style: BASEMAP_STYLE as unknown as StyleSpecification,
-        center: UTTARAKHAND_CENTER,
-        zoom: DEFAULT_VIEW.zoom,
+        /**
+         * Desktop keeps its tuned centre and zoom. Narrower screens fit the state's bounds
+         * instead, because a FIXED zoom cannot be right at every width: 7.35 was chosen
+         * against a wide viewport, and the same zoom on a phone shows far less ground
+         * horizontally, so Uttarakhand arrived already cropped and unrecognisable.
+         *
+         * `bounds` asks MapLibre to compute whatever zoom actually fits, which is correct
+         * at any size and needs no per-device guessing. The desktop path is untouched.
+         */
+        ...(isNarrow
+          ? { bounds: UTTARAKHAND_BOUNDS, fitBoundsOptions: { padding: fitPadding() } }
+          : { center: UTTARAKHAND_CENTER, zoom: DEFAULT_VIEW.zoom }),
         // Flat and north-up on load, to match the 2D default above.
         pitch: 0,
         bearing: 0,
@@ -712,6 +736,32 @@ export function TerrainMap({
     }
   }, [alerts, ready]);
 
+  /**
+   * Re-fit on resize and rotation, below `lg` only.
+   *
+   * A fit computed for a portrait phone frames the state wrongly once the device is turned
+   * landscape — the aspect ratio it was solved against no longer exists. Desktop is left
+   * alone, and a view the user has panned or zoomed to themselves is only reset when the
+   * viewport itself changes, never spontaneously.
+   */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null || !ready) return undefined;
+
+    const refit = () => {
+      if (window.innerWidth >= 1024) return;
+      map.fitBounds(UTTARAKHAND_BOUNDS, { padding: fitPadding(), duration: 0 });
+    };
+
+    window.addEventListener('orientationchange', refit);
+    window.addEventListener('resize', refit);
+    return () => {
+      window.removeEventListener('orientationchange', refit);
+      window.removeEventListener('resize', refit);
+    };
+  }, [ready, fitPadding]);
+
+
   useEffect(() => {
     const map = mapRef.current;
     if (map === null || !ready) return;
@@ -756,7 +806,9 @@ export function TerrainMap({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-lg border border-border ${className ?? 'h-[360px] sm:h-[460px] md:h-[620px]'}`}
+      className={`relative overflow-hidden rounded-lg border border-border ${
+        stage ? 'pp-map-stage' : ''
+      } ${className ?? 'h-[360px] sm:h-[460px] md:h-[620px]'}`}
     >
       <div ref={containerRef} className="h-full w-full" />
 
@@ -769,8 +821,10 @@ export function TerrainMap({
       {/* Controls. Kept to the two toggles that change what the map means, rather than a
           full layer panel for layers that have no data behind them yet. */}
       <div
-        className={`absolute z-10 flex flex-col gap-1.5 ${
-          stage ? 'right-3 top-9' : 'left-3 top-3'
+        className={`absolute z-10 flex gap-1.5 ${
+          stage
+            ? 'bottom-[11.5rem] left-3 flex-row sm:bottom-[12.5rem] lg:bottom-auto lg:left-auto lg:right-3 lg:top-9 lg:flex-col'
+            : 'left-3 top-3 flex-col'
         }`}
       >
         <button
@@ -809,7 +863,7 @@ export function TerrainMap({
       {alertsOn && activeAlertCount > 0 && selected === null && (
         <div
           className={`absolute z-10 rounded-md border border-border bg-surface/95 px-3 py-2 shadow-card backdrop-blur ${
-            stage ? 'right-3 top-32' : 'bottom-10 left-3'
+            stage ? 'hidden lg:block lg:right-3 lg:top-32' : 'bottom-10 left-3'
           }`}
         >
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -831,8 +885,8 @@ export function TerrainMap({
 
       {selected !== null && (
         <div
-          className={`absolute right-3 z-20 max-w-sm rounded-lg border border-border bg-surface/97 p-4 shadow-card-hover backdrop-blur ${
-            stage ? 'top-32' : 'bottom-3'
+          className={`absolute z-20 max-w-sm rounded-lg border border-border bg-surface/97 p-4 shadow-card-hover backdrop-blur ${
+            stage ? 'inset-x-3 bottom-[11.5rem] lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-32' : 'bottom-3 right-3'
           }`}
         >
           <div className="mb-2 flex items-start justify-between gap-3">
@@ -875,7 +929,7 @@ export function TerrainMap({
 
       <div
         className={`absolute right-0 z-10 bg-surface/90 px-2 py-0.5 text-[10px] text-muted-foreground ${
-          stage ? 'top-0 rounded-bl' : 'bottom-0 rounded-tl'
+          stage ? 'bottom-0 rounded-tl lg:bottom-auto lg:top-0 lg:rounded-bl lg:rounded-tl-none' : 'bottom-0 rounded-tl'
         }`}
       >
         {ATTRIBUTION}

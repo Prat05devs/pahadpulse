@@ -242,3 +242,19 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+/**
+ * The map's own zoom and scale controls, on a phone, in stage mode.
+ *
+ * Hidden below `lg` because the stage's floating cards occupy the bottom of a phone screen
+ * and these land on top of them. Nothing is lost: pinch-to-zoom and two-finger pan are the
+ * gestures people actually use on a touch map, and the buttons return as soon as there is
+ * room for them.
+ */
+@media (max-width: 1023px) {
+  .pp-map-stage .maplibregl-ctrl-bottom-right,
+  .pp-map-stage .maplibregl-ctrl-bottom-left,
+  .pp-map-stage .maplibregl-ctrl-top-right {
+    display: none;
+  }
+}
