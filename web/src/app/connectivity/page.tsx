@@ -11,12 +11,12 @@ export default function ConnectivityPage() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-bg-light">
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">Internet Connectivity</h1>
+        <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Internet Connectivity</h1>
           <p className="text-text-dark/70 mt-2">Broadband coverage and speed monitoring across districts</p>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="space-y-5 px-4 py-5 sm:px-6 md:py-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
             <h2 className="font-bold text-blue-900 mb-2">📡 Connectivity Status</h2>
             <p className="text-blue-800 text-sm">

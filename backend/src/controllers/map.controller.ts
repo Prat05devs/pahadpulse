@@ -4,6 +4,7 @@ import type { Geometry } from '../utils/geojson.js';
 import type { RequestError } from '../utils/errors.js';
 import { AreaRepository } from '../repositories/area.repository.js';
 import type { AlertOut } from '../models/alert.model.js';
+import type { DistrictBoundary } from '../models/area.model.js';
 import type { Division } from '../types/area.js';
 import { listActive } from './alert.controller.js';
 
@@ -47,7 +48,23 @@ export interface AlertFeatureProperties {
   /** Which districts the alert names, so clicking a district can filter to its alerts. */
   areaSlugs: string[];
   attribution: string | null;
+  /**
+   * How precisely this shape describes the affected area. The map MUST caption itself from
+   * this rather than assuming, because the three are very different claims:
+   *
+   *   `published` — the polygon the issuing authority published. What we want.
+   *   `district`  — the boundaries of the districts the alert names. Correct about which
+   *                 districts, wrong about the shape within them: a warning for a river
+   *                 valley is drawn over the whole district including ridges it excludes.
+   *   `point`     — a single centroid. "Somewhere around here."
+   *
+   * Captioning a `district` extent as the authority's own published area would overstate
+   * the warning's reach, which on a safety map is the expensive direction to be wrong in.
+   */
+  extent: AlertExtent;
 }
+
+export type AlertExtent = 'published' | 'district' | 'point';
 
 export interface PointGeometry {
   type: 'Point';
@@ -130,12 +147,21 @@ export async function getAlertFeatures(
   const page = await listActive({ cursor: Number.MAX_SAFE_INTEGER, limit: 200 }, now);
   if (page.isErr()) return err(page.error);
 
+  // Fetched once for the whole collection, not per alert. Needed only for the district
+  // fallback below, but a warning that names nine districts would otherwise re-read the
+  // same 13 boundary rows nine times (Q5).
+  const boundaries = await AreaRepository.listDistrictBoundaries();
+  const boundaryBySlug = new Map(
+    boundaries.isOk() ? boundaries.value.map((b) => [b.slug, b]) : [],
+  );
+
   const features: GeoFeature<AlertFeatureProperties>[] = [];
   const attribution = new Set<string>();
 
   for (const alert of page.value.data) {
-    const geometry = toGeometry(alert);
-    if (geometry === null) continue;
+    const placed = toGeometry(alert, boundaryBySlug);
+    if (placed === null) continue;
+    const { geometry, extent } = placed;
 
     if (alert.provenance !== null) attribution.add(alert.provenance.attribution);
 
@@ -155,6 +181,7 @@ export async function getAlertFeatures(
         expiresAt: alert.expiresAt,
         areaSlugs: alert.areas.map((area) => area.slug),
         attribution: alert.provenance?.attribution ?? null,
+        extent,
       },
     });
   }
@@ -163,18 +190,76 @@ export async function getAlertFeatures(
 }
 
 /**
- * Prefers the real affected-area polygon, falling back to the centroid as a point.
+ * Places an alert on the map, in descending order of precision.
  *
- * A point is genuinely worse than a polygon — "somewhere around here" rather than "this
- * valley" — but it is far better than omitting an active warning from the map, so the two
- * are distinguishable by geometry type and the renderer styles them differently.
+ *   1. the authority's own published polygon
+ *   2. the districts the alert names, merged into one MultiPolygon
+ *   3. a centroid point
+ *
+ * Step 2 exists because SACHET's `FetchPolygonXMLFile` endpoint began returning 403 to
+ * every request, headers or not. Without a fallback, every alert lost its geometry AND its
+ * centroid (the centroid is derived from the polygon), so the alerts map went completely
+ * blank while the warnings themselves were arriving fine — the worst outcome, because an
+ * empty map reads as "nothing to worry about" rather than as missing data.
+ *
+ * District extent is a real degradation and is labelled as one: it is correct about WHICH
+ * districts are affected and wrong about the shape within them. The `extent` property
+ * carries that distinction to the renderer so the caption can tell the truth.
  */
-function toGeometry(alert: AlertOut): MapGeometry | null {
+function toGeometry(
+  alert: AlertOut,
+  boundaryBySlug: Map<string, DistrictBoundary>,
+): { geometry: MapGeometry; extent: AlertExtent } | null {
   if (alert.geometry !== null && alert.geometry !== undefined) {
-    return alert.geometry as Geometry;
+    return { geometry: alert.geometry as Geometry, extent: 'published' };
   }
+
+  const districtGeometry = mergeDistrictBoundaries(alert, boundaryBySlug);
+  if (districtGeometry !== null) {
+    return { geometry: districtGeometry, extent: 'district' };
+  }
+
   if (alert.centroid !== null) {
-    return { type: 'Point', coordinates: [alert.centroid.lng, alert.centroid.lat] };
+    return {
+      geometry: { type: 'Point', coordinates: [alert.centroid.lng, alert.centroid.lat] },
+      extent: 'point',
+    };
   }
   return null;
+}
+
+/**
+ * The alert's named districts as one MultiPolygon.
+ *
+ * A true geometric union would need a polygon-clipping library to dissolve the shared
+ * borders. This just collects the rings, which renders identically at any zoom the map
+ * offers — the internal borders are invisible under a single fill — and adds no dependency
+ * for a difference nobody can see (common/01: no new abstraction for one call site).
+ *
+ * The state row is skipped. Every SACHET alert is attached to the state by definition, so
+ * including it would paint all of Uttarakhand for a warning about one valley.
+ */
+function mergeDistrictBoundaries(
+  alert: AlertOut,
+  boundaryBySlug: Map<string, DistrictBoundary>,
+): MapGeometry | null {
+  const polygons: unknown[] = [];
+
+  for (const area of alert.areas) {
+    const boundary = boundaryBySlug.get(area.slug);
+    if (boundary === undefined) continue;
+
+    const geojson = boundary.geojson as Geometry | null;
+    if (geojson === null) continue;
+
+    if (geojson.type === 'Polygon') {
+      polygons.push(geojson.coordinates);
+    } else if (geojson.type === 'MultiPolygon') {
+      polygons.push(...geojson.coordinates);
+    }
+  }
+
+  if (polygons.length === 0) return null;
+
+  return { type: 'MultiPolygon', coordinates: polygons } as MapGeometry;
 }

@@ -41,21 +41,26 @@ export default async function AlertsPage() {
   const seismic = seismicResult.status === 'fulfilled' ? seismicResult.value : null;
 
   const mappedCount = alertFeatures?.features.length ?? 0;
+  // Any feature drawn at district precision changes what the map is allowed to claim.
+  const anyDistrictExtent =
+    alertFeatures?.features.some((feature) => feature.properties.extent === 'district') ?? false;
   const listedCount = alerts?.length ?? 0;
 
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-bg-light">
         {/* Header */}
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">Live Alerts</h1>
-          <p className="text-text-dark/70 mt-2">
-            Weather, disaster, road & river alerts across Uttarakhand
+        <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">
+            Live Alerts
+          </h1>
+          <p className="mt-1.5 text-sm text-text-dark/70 sm:mt-2 sm:text-base">
+            Weather, disaster, road &amp; river alerts across Uttarakhand
           </p>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="px-4 py-5 sm:px-6 md:py-6">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
               <p className="font-semibold">Unable to load alerts</p>
@@ -76,9 +81,24 @@ export default async function AlertsPage() {
                 navigateOnClick={false}
                 fitToAlerts
               />
-              <p className="mt-2 text-xs text-text-light/50">
-                Select a highlighted area for that warning&rsquo;s details. Shaded areas are the
-                extent the issuing authority published — they are not district boundaries.
+              <p className="mt-2 text-xs leading-relaxed text-text-light/60">
+                Select a highlighted area for that warning&rsquo;s details.{' '}
+                {/* Captioned from the data, never assumed. Describing district extent as the
+                    authority's published polygon would overstate a warning's reach, which on
+                    a safety map is the expensive direction to be wrong in. */}
+                {anyDistrictExtent ? (
+                  <>
+                    Shaded areas are the <strong>districts</strong> each warning names, not the
+                    precise area the authority published — a warning for one valley is drawn
+                    over the whole district. SACHET&rsquo;s polygon service is currently
+                    unavailable.
+                  </>
+                ) : (
+                  <>
+                    Shaded areas are the extent the issuing authority published — they are not
+                    district boundaries.
+                  </>
+                )}
                 {mappedCount < listedCount && (
                   <>
                     {' '}
@@ -91,11 +111,26 @@ export default async function AlertsPage() {
             </div>
           )}
 
-          {!alerts || alerts.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-2xl mb-2">✨</p>
-              <p className="font-semibold text-text-dark mb-1">No active alerts</p>
-              <p className="text-text-light/60">All systems normal across Uttarakhand</p>
+          {alerts === null ? (
+            /* A failed fetch is NOT an all-clear. This block used to render "No active
+               alerts / All systems normal" whenever `alerts` was null — which is exactly
+               what happens when the API is unreachable. During an outage the public alerts
+               page was telling people there were no warnings. Never merge these two states. */
+            <div className="rounded-lg border border-warning/50 bg-warning-soft/60 px-4 py-5">
+              <p className="font-semibold text-text-light">Alerts could not be loaded</p>
+              <p className="mt-1 text-sm leading-relaxed text-text-light/80">
+                This is a problem with this page, not an all-clear. There may be active
+                warnings that are not shown here. Check SACHET (sachet.ndma.gov.in) or your
+                district administration before making any decision.
+              </p>
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="py-10 text-center sm:py-12">
+              <p className="mb-2 text-2xl" aria-hidden="true">✨</p>
+              <p className="mb-1 font-semibold text-text-light">No active alerts</p>
+              <p className="text-sm text-text-light/60">
+                No warnings are currently in force across Uttarakhand.
+              </p>
             </div>
           ) : (
             <div className="space-y-4">

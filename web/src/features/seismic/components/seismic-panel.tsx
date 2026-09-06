@@ -34,7 +34,7 @@ function EventRow({
 
   return (
     <li
-      className="pp-rise flex items-center gap-4 border-b border-border py-3 last:border-b-0"
+      className="pp-rise flex items-center gap-2.5 border-b border-border py-3 last:border-b-0 sm:gap-4"
       style={{ '--pp-delay': `${Math.min(index * 55, 600)}ms` } as React.CSSProperties}
     >
       {/* The ripple runs three times then stops, and only on the largest event. A ripple
@@ -48,15 +48,23 @@ function EventRow({
         />
       </span>
 
-      <span className="w-14 shrink-0 font-mono text-lg font-semibold tabular-nums">
+      <span className="w-10 shrink-0 font-mono text-lg font-semibold tabular-nums sm:w-14">
         {event.magnitude.toFixed(1)}
       </span>
 
-      <span className={`w-24 shrink-0 text-xs font-medium ${style.text}`}>{style.label}</span>
+      {/* Hidden on the narrowest screens, where roughly 190px of fixed columns would leave
+          the place name barely readable. The band is still conveyed by the coloured dot and
+          the magnitude itself, and it returns as soon as there is room. */}
+      <span className={`hidden w-24 shrink-0 text-xs font-medium sm:inline ${style.text}`}>
+        {style.label}
+      </span>
 
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm text-text-light">{event.place}</span>
         <span className="block text-xs text-muted-foreground">
+          {/* The band label reappears here when the column above is hidden, so the
+              information is never actually lost on a phone. */}
+          <span className={`sm:hidden ${style.text}`}>{style.label} · </span>
           {formatWhen(event.occurredAt)} IST
           {event.depthKm !== null && ` · ${event.depthKm.toFixed(0)} km deep`}
           {event.magnitudeType !== null && ` · ${event.magnitudeType}`}
@@ -74,7 +82,7 @@ export function SeismicPanel({ data }: { data: RecentSeismic }) {
 
   return (
     <section className="surface-card pp-rise overflow-hidden" aria-labelledby="seismic-heading">
-      <div className="border-b border-border px-5 py-5 sm:px-6">
+      <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
@@ -91,7 +99,7 @@ export function SeismicPanel({ data }: { data: RecentSeismic }) {
         </div>
 
         {/* The answer first, in a sentence, before the list. */}
-        <p className="pp-fade mt-3 text-lg leading-relaxed text-text-light">
+        <p className="pp-fade mt-3 text-base leading-relaxed text-text-light sm:text-lg">
           {countLast30Days === 0 ? (
             <>No earthquakes recorded in Uttarakhand in the last 30 days.</>
           ) : (
@@ -118,11 +126,11 @@ export function SeismicPanel({ data }: { data: RecentSeismic }) {
       </div>
 
       {events.length === 0 ? (
-        <p className="px-5 py-6 text-sm text-muted-foreground sm:px-6">
+        <p className="px-4 py-6 text-sm text-muted-foreground sm:px-6">
           Nothing recorded in this period.
         </p>
       ) : (
-        <ul className="px-5 sm:px-6">
+        <ul className="px-4 sm:px-6">
           {events.map((event, index) => (
             <EventRow
               key={event.id}
@@ -135,7 +143,7 @@ export function SeismicPanel({ data }: { data: RecentSeismic }) {
       )}
 
       {data.source !== null && (
-        <p className="border-t border-border px-5 py-3 text-[0.68rem] text-muted-foreground/70 sm:px-6">
+        <p className="border-t border-border px-4 py-3 text-[0.68rem] text-muted-foreground/70 sm:px-6">
           {data.source.attribution}
         </p>
       )}

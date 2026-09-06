@@ -62,8 +62,17 @@ export const AlertFeatureSchema = z.object({
     authority: z.string(),
     issuedAt: z.string(),
     expiresAt: z.string().nullable(),
-    areaSlugs: z.array(z.string()),
+      areaSlugs: z.array(z.string()),
     attribution: z.string().nullable(),
+    /**
+     * How precisely the shape describes the affected area. The caption must be written
+     * from this: `published` is the authority's own polygon, `district` is only the
+     * districts named, `point` is a single location.
+     *
+     * Optional so an older API that does not send it still parses; absent is treated as
+     * the least confident reading, never as `published`.
+     */
+    extent: z.enum(['published', 'district', 'point']).optional(),
   }),
 });
 

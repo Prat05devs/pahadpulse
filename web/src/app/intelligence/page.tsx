@@ -57,15 +57,15 @@ export default function IntelligencePage() {
     <DashboardLayout>
       <div className="min-h-screen bg-bg-light">
         {/* Header */}
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">Sector Intelligence</h1>
+        <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Sector Intelligence</h1>
           <p className="text-text-dark/70 mt-2">
             Consolidated analytics across six development sectors
           </p>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="space-y-5 px-4 py-5 sm:px-6 md:py-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {sectors.map((sector) => {
               const Icon = sector.icon;

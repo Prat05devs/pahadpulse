@@ -25,13 +25,13 @@ export default async function DistrictsListPage() {
     <DashboardLayout>
       <div className="min-h-screen bg-bg-light">
         {/* Header */}
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">Districts</h1>
+        <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Districts</h1>
           <p className="text-text-dark/70 mt-2">Select a district to view detailed information</p>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="px-4 py-5 sm:px-6 md:py-6">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
               <p className="font-semibold">Unable to load districts</p>

@@ -12,14 +12,14 @@ export default function MigrationPage() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-bg-light">
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">Palayan — Migration Tracker</h1>
+        <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Palayan — Migration Tracker</h1>
           <p className="text-text-dark/70 mt-2">
             Understanding rural-to-urban migration in hill villages
           </p>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="space-y-5 px-4 py-5 sm:px-6 md:py-6">
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
             <h2 className="mb-2 flex items-center gap-2 font-bold text-amber-900">
               <Clock3 className="size-5" strokeWidth={1.8} aria-hidden="true" />

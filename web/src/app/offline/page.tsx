@@ -12,14 +12,14 @@ export default function OfflinePage() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-bg-light">
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">Offline Mode</h1>
+        <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Offline Mode</h1>
           <p className="text-text-dark/70 mt-2">
             Download data for access in low-connectivity areas
           </p>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="space-y-5 px-4 py-5 sm:px-6 md:py-6">
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
             <h2 className="mb-2 flex items-center gap-2 font-bold text-yellow-900">
               <RefreshCw className="size-5" strokeWidth={1.8} aria-hidden="true" />

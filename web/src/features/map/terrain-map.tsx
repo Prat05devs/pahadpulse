@@ -724,7 +724,7 @@ export function TerrainMap({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-lg border border-border ${className ?? 'h-[520px] md:h-[620px]'}`}
+      className={`relative overflow-hidden rounded-lg border border-border ${className ?? 'h-[360px] sm:h-[460px] md:h-[620px]'}`}
     >
       <div ref={containerRef} className="h-full w-full" />
 

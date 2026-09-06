@@ -24,15 +24,15 @@ export default async function TourismPage() {
     <DashboardLayout>
       <div className="min-h-screen bg-bg-light">
         {/* Header */}
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">Tourism & Pilgrim Load</h1>
+        <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Tourism & Pilgrim Load</h1>
           <p className="text-text-dark/70 mt-2">
             Real-time visitor tracking for Char Dham and tourist destinations
           </p>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="space-y-5 px-4 py-5 sm:px-6 md:py-6">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
               <p className="font-semibold">Unable to load data</p>
