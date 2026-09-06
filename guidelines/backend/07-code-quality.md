@@ -181,7 +181,7 @@ A controller function longer than 50 lines is usually two use cases. Split it.
 
 ---
 
-## 6. TypeScript specifics for MySQL
+## 6. TypeScript specifics for Postgres
 
 ```ts
 // Always type the query result

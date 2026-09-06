@@ -112,8 +112,9 @@ and recorded as an ingestion run.
 | Table | Purpose | Notes |
 |---|---|---|
 | `stations` | station registry | small |
-| `observations` | time series | highest-growth table in the product |
-| `station_thresholds` | warning/danger levels | rarely changes |
+| `observations` | raw time series | pruned to 90 days by the nightly rollup |
+| `observations_daily` | daily min/max/mean per station and metric | kept indefinitely; what makes multi-year history affordable |
+| `station_thresholds` | warning/danger levels | not created yet — see the status note |
 | `forecasts` | forward-looking values | superseded on each run |
 
 ### Indexes and why
@@ -124,19 +125,24 @@ and recorded as an ingestion run.
 | `idx_obs_station_metric_time (station_id, metric, observed_at DESC)` | "latest reading" and the chart series — the two queries that exist |
 | `idx_station_area_type (area_id, type)` | district dashboard: stations in this district |
 
-`observations` needs a retention or rollup policy before launch — see Open questions.
+Retention is decided and implemented — see Open questions. `idx_obs_observed_at` exists solely to keep the nightly sweep off a full scan.
 
 ### Migrations
 
 | # | File | What |
 |---|---|---|
-| 019 | `019-create-hydromet.sql` | stations, observations, forecasts |
-| 020 | `020-seed-open-meteo-source.sql` | the Open-Meteo registry row |
-| 021 | `021-seed-weather-stations.sql` | one weather station per district, at its headquarters |
+| 006 | `006-hydromet.sql` | stations, observations, `observations_daily`, forecasts |
+| 024 | `024-seed-open-meteo-source.sql` | the Open-Meteo registry row |
+| 034 | `034-seed-weather-stations.sql` | one weather station per district, at its headquarters |
 
-These were numbered 008/009 in the original plan. Those numbers were taken by the alerts
-tables before hydromet was built, so the tables landed at 019–021 and this table was
-corrected rather than the migration history rewritten.
+Renumbered by the PostgreSQL migration: the twenty-seven MySQL files were collapsed into a
+single readable baseline rather than translated one by one, since no live MySQL database's
+history needed preserving and every row was re-ingestible. The old files remain in git
+history at commit `b97d944`.
+
+`stations.location` and `areas.centroid` are PostGIS `geography(Point, 4326)` rather than
+lat/lng column pairs. The repositories project them back to `lat`/`lng` on read, so the
+change stops at the data layer.
 
 `station_thresholds` is not created yet — see the status note at the top.
 
@@ -307,9 +313,21 @@ a bug and needs explaining in the UI.
 
 ## 9. Open questions
 
-- [ ] Retention and rollup for `observations`. At 10-minute granularity across all stations this
-      table outgrows everything else. Raw for 90 days then hourly rollups? Needs a decision
-      before the first migration. — *owner:* `<TBD>`
+- [x] **Retention and rollup for `observations` — decided 2026-09-07.** Raw rows for 90
+      days, daily aggregates kept indefinitely in `observations_daily`, swept nightly by
+      `npm run db:rollup`.
+
+      The measured write rate is 169 rows an hour (78 weather + 91 air quality), which is
+      1.48 million rows a year and roughly 249 MB in Postgres. Against Supabase's 500 MB
+      free tier that is comfortable for about eighteen months and then is not — and a hard
+      ceiling reached without a plan is an outage, not a decision. Steady state under this
+      policy is roughly 74 MB and flat.
+
+      What is lost: hourly detail older than 90 days. What survives is the daily minimum,
+      maximum and mean per station and metric — min and max rather than a single average
+      because "how hot did it get" and "how cold overnight" are the questions a daily
+      summary is asked, and a mean answers neither. Anyone needing hourly history beyond 90
+      days needs a different policy and should change `scripts/rollup-observations.ts`.
 - [ ] Does CWC or India-WRIS expose JSON behind the dashboard? An hour with the network tab
       decides between a connector and a scraper. — *owner:* `<TBD>`
 - [ ] Which river stations matter for v1? The spec names Ganga and Alaknanda; the full CWC

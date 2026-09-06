@@ -9,11 +9,16 @@ const EnvSchema = z.object({
   SERVER_URL: z.url().default('http://localhost:3000'),
 
   DB_HOST: z.string().min(1),
-  DB_PORT: z.coerce.number().int().positive().default(3306),
+  DB_PORT: z.coerce.number().int().positive().default(5432),
   DB_USER: z.string().min(1),
   DB_PASSWORD: z.string(),
   DB_NAME: z.string().min(1),
-  DB_POOL_LIMIT: z.coerce.number().int().positive().default(20),
+  /*
+   * Supabase's free tier allows 60 direct connections across everything that connects.
+   * The API plus five ingestion crons must fit inside that together, so the default is
+   * deliberately modest — a pool sized for a dedicated server will exhaust a shared one.
+   */
+  DB_POOL_LIMIT: z.coerce.number().int().positive().default(10),
   DB_SSL: z
     .enum(['true', 'false'])
     .default('false')

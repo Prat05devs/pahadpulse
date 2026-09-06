@@ -1,5 +1,3 @@
-import type { RowDataPacket } from 'mysql2';
-
 import type {
   AlertCertainty,
   AlertSeverity,
@@ -12,7 +10,7 @@ import type { Provenance } from './source.model.js';
 export const ALERTS_TABLE = 'alerts';
 export const ALERT_AREAS_TABLE = 'alert_areas';
 
-export interface AlertRow extends RowDataPacket {
+export interface AlertRow {
   id: number;
   source_id: number;
   source_alert_id: string;
@@ -49,7 +47,7 @@ export interface AlertWithAreasRow extends AlertRow {
 }
 
 /** Result of a bare `COUNT(*)` aggregate. */
-export interface AlertCountRow extends RowDataPacket {
+export interface AlertCountRow {
   total: number;
 }
 

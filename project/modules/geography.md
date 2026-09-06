@@ -178,7 +178,7 @@ consumer would be that module. The schema and endpoints exist now; only the data
 
 ## 8. Decisions
 
-### 2026-09-03 — Store boundaries as GeoJSON in a `JSON` column, not as MySQL `GEOMETRY`
+### 2026-09-03 — Store boundaries as GeoJSON in a `JSON` column, not as Postgres `GEOMETRY`
 
 **Context:** this doc originally specified a `GEOMETRY` column. The v1 endpoints are
 list districts, get district, get boundary, get layers — none of which is a spatial query.

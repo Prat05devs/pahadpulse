@@ -44,25 +44,51 @@ const maybe = (name: string, fn: () => Promise<void>) => {
 };
 
 describe('GET /api/sources', () => {
-  maybe('returns the three self-serve sources', async () => {
+  /*
+   * Asserts the seeded sources are PRESENT, not that they are the only ones. The previous
+   * version compared the whole set for exact equality and so failed the moment a source was
+   * added — which is a normal, frequent event on this platform and not a regression. A test
+   * that has to be edited every time the system grows correctly is a test that will
+   * eventually be edited without being read.
+   */
+  maybe('includes every seeded source', async () => {
     const res = await request(app).get('/api/sources');
     expect(res.status).toBe(200);
-    const keys = (res.body.data as { key: string }[]).map((s) => s.key).sort();
-    expect(keys).toEqual([...SEEDED_KEYS].sort());
-  });
-
-  maybe('reports freshness as unknown before any successful run', async () => {
-    const res = await request(app).get('/api/sources');
-    for (const source of res.body.data as { freshness: string; lastSuccessAt: null }[]) {
-      expect(source.freshness).toBe('unknown');
-      expect(source.lastSuccessAt).toBeNull();
+    const keys = (res.body.data as { key: string }[]).map((s) => s.key);
+    for (const seeded of SEEDED_KEYS) {
+      expect(keys).toContain(seeded);
     }
   });
 
-  maybe('marks every seeded source as provisional metadata', async () => {
+  /*
+   * DS-3: freshness is derived from the last successful run, never stored. A source that
+   * has never run reports `unknown` with a null timestamp; one that has run reports a real
+   * state and a timestamp. The invariant is that the two always agree — asserting a
+   * database-wide `unknown` only held before any ingestion had ever happened.
+   */
+  maybe('derives freshness from the last successful run', async () => {
     const res = await request(app).get('/api/sources');
-    for (const source of res.body.data as { metadataStatus: string }[]) {
-      expect(source.metadataStatus).toBe('provisional');
+    for (const source of res.body.data as { freshness: string; lastSuccessAt: string | null }[]) {
+      if (source.lastSuccessAt === null) {
+        expect(source.freshness).toBe('unknown');
+      } else {
+        expect(source.freshness).not.toBe('unknown');
+      }
+    }
+  });
+
+  /*
+   * Every source is provisional until someone confirms its terms with the publishing body.
+   * The exception is a source whose licence is a published, self-contained grant needing no
+   * conversation — Open-Meteo's CC-BY-4.0 and USGS's public domain — so the assertion is
+   * that nothing is `verified` WITHOUT such a licence, not that nothing is verified.
+   */
+  maybe('leaves sources provisional unless their licence is self-contained', async () => {
+    const res = await request(app).get('/api/sources');
+    for (const source of res.body.data as { metadataStatus: string; licence: string }[]) {
+      if (source.metadataStatus === 'verified') {
+        expect(source.licence).toMatch(/Creative Commons|public domain/i);
+      }
     }
   });
 

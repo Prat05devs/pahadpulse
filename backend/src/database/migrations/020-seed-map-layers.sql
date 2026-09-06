@@ -22,14 +22,13 @@ VALUES
   ('education',    'indicators', 'Educational institutions', 'शैक्षणिक संस्थान', 100, FALSE, FALSE),
   ('connectivity', 'indicators', 'Connectivity',         'कनेक्टिविटी',       110, FALSE, FALSE),
   ('migration',    'migration',  'Migration',            'पलायन',             120, FALSE, FALSE)
-AS new
-ON DUPLICATE KEY UPDATE
-  owner_module       = new.owner_module,
-  name_en            = new.name_en,
-  name_hi            = new.name_hi,
-  display_order      = new.display_order,
-  is_default_visible = new.is_default_visible,
-  is_available       = new.is_available;
+ON CONFLICT (layer_key) DO UPDATE SET
+  owner_module       = EXCLUDED.owner_module,
+  name_en            = EXCLUDED.name_en,
+  name_hi            = EXCLUDED.name_hi,
+  display_order      = EXCLUDED.display_order,
+  is_default_visible = EXCLUDED.is_default_visible,
+  is_available       = EXCLUDED.is_available;
 
 -- ROLLBACK
 -- DELETE FROM map_layers;

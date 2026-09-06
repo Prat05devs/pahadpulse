@@ -39,13 +39,24 @@ export interface IRoadRepository {
 class RoadRepositoryImpl implements IRoadRepository {
   async listRoutes(): Promise<Result<RoadRoute[], RequestError>> {
     try {
-      const [rows] = await db.query<RoadRouteRow[]>(
+      const { rows } = await db.query<RoadRouteRow>(
+        /*
+         * The envelope is projected back to the four numbers the model expects, so the
+         * change to a geometry column stops at this repository.
+         *
+         * `CAST(... AS UNSIGNED)` was MySQL; Postgres spells it `::integer`. The regex
+         * guard matters — `route_number` holds values like `109A`, and casting that would
+         * raise rather than sort, which is exactly the kind of break a straight dialect
+         * swap hides until a specific highway appears in the data.
+         */
         `SELECT id, ref, network, route_number, segment_count,
-                min_lat, min_lng, max_lat, max_lng,
+                ST_YMin(bounds) AS min_lat, ST_XMin(bounds) AS min_lng,
+                ST_YMax(bounds) AS max_lat, ST_XMax(bounds) AS max_lng,
                 source_id, vintage, fetched_at
            FROM ${ROAD_ROUTES_TABLE}
           ORDER BY network ASC,
-                   CAST(route_number AS UNSIGNED) ASC,
+                   CASE WHEN route_number ~ '^[0-9]+$'
+                        THEN route_number::integer ELSE NULL END ASC NULLS LAST,
                    route_number ASC`
       );
       return ok(rows.map(toRoadRoute));
@@ -69,44 +80,65 @@ class RoadRepositoryImpl implements IRoadRepository {
   ): Promise<Result<number, RequestError>> {
     if (routes.length === 0) return ok(0);
 
-    const connection = await db.getConnection();
+    const client = await db.connect();
     try {
-      await connection.beginTransaction();
+      await client.query('BEGIN');
 
-      await connection.query(`DELETE FROM ${ROAD_ROUTES_TABLE} WHERE source_id = ?`, [sourceId]);
+      await client.query(`DELETE FROM ${ROAD_ROUTES_TABLE} WHERE source_id = $1`, [sourceId]);
 
-      const now = new Date();
-      const values = routes.map((route) => [
-        route.ref,
-        route.network,
-        route.routeNumber,
-        route.segmentCount,
-        route.bounds?.[1] ?? null,
-        route.bounds?.[0] ?? null,
-        route.bounds?.[3] ?? null,
-        route.bounds?.[2] ?? null,
-        route.sourceId,
-        route.vintage,
-        now,
-      ]);
+      /*
+       * The four bounds columns became one `geometry(Polygon)`. `ST_MakeEnvelope` builds
+       * the box from the same west/south/east/north values the connector already produces,
+       * which means the extent can be indexed and queried spatially instead of being four
+       * numbers the application has to reassemble.
+       *
+       * Built by hand rather than with `bulkValues` because that slot is a constructed
+       * geometry wrapping four placeholders, not a placeholder of its own — and it is NULL
+       * for a route whose ways could not be assembled.
+       */
+      const params: unknown[] = [];
+      const tuples: string[] = [];
 
-      await connection.query(
+      for (const route of routes) {
+        const base = params.length;
+        params.push(
+          route.ref,
+          route.network,
+          route.routeNumber,
+          route.segmentCount,
+          route.bounds?.[0] ?? null,
+          route.bounds?.[1] ?? null,
+          route.bounds?.[2] ?? null,
+          route.bounds?.[3] ?? null,
+          route.sourceId,
+          route.vintage,
+        );
+        const p = (offset: number) => `$${base + offset}`;
+        tuples.push(
+          `(${p(1)}, ${p(2)}, ${p(3)}, ${p(4)}, ` +
+            `CASE WHEN ${p(5)}::double precision IS NULL THEN NULL ` +
+            `ELSE ST_MakeEnvelope(${p(5)}::double precision, ${p(6)}::double precision, ` +
+            `${p(7)}::double precision, ${p(8)}::double precision, 4326) END, ` +
+            `${p(9)}, ${p(10)}, (now() AT TIME ZONE 'utc'))`,
+        );
+      }
+
+      await client.query(
         `INSERT INTO ${ROAD_ROUTES_TABLE}
-           (ref, network, route_number, segment_count,
-            min_lat, min_lng, max_lat, max_lng,
+           (ref, network, route_number, segment_count, bounds,
             source_id, vintage, fetched_at)
-         VALUES ?`,
-        [values]
+         VALUES ${tuples.join(', ')}`,
+        params,
       );
 
-      await connection.commit();
+      await client.query('COMMIT');
       return ok(routes.length);
     } catch (error) {
-      await connection.rollback();
+      await client.query('ROLLBACK');
       logger.error('replaceRoutes failed', { sourceId, error });
       return err(ERRORS.DATABASE_ERROR);
     } finally {
-      connection.release();
+      client.release();
     }
   }
 }

@@ -268,8 +268,14 @@ SELECT 'tehsil', t.code, t.slug, t.name_en, t.name_hi, d.id, d.division
     SELECT 'UK-UT-T08' AS code, 'uttarkashi-purola' AS slug, 'Purola' AS name_en, 'पुरोला' AS name_hi, 'uttarkashi' AS district_slug
   ) t
   JOIN areas d ON d.slug = t.district_slug AND d.type = 'district'
-ON DUPLICATE KEY UPDATE
-  name_en = t.name_en, name_hi = t.name_hi, parent_id = d.id, division = d.division;
+-- Postgres's upsert refers to the rejected row as EXCLUDED rather than to the source
+-- query's aliases, so the SET list cannot reference `t` or `d` here.
+ON CONFLICT (type, code) DO UPDATE SET
+  slug      = EXCLUDED.slug,
+  name_en   = EXCLUDED.name_en,
+  name_hi   = EXCLUDED.name_hi,
+  parent_id = EXCLUDED.parent_id,
+  division  = EXCLUDED.division;
 
 -- ROLLBACK
 -- DELETE FROM areas WHERE type = 'tehsil' AND code REGEXP '^UK-[A-Z]{2}-T[0-9]{2}$';

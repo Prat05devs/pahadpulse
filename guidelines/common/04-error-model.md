@@ -1,6 +1,6 @@
 # 04 — Error Model
 
-One error model, end to end. A failure that starts in a MySQL driver arrives at a React
+One error model, end to end. A failure that starts in a Postgres driver arrives at a React
 component as the *same* shape, with the *same* code, and can be handled without string matching.
 
 ---

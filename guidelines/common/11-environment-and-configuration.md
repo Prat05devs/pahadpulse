@@ -92,7 +92,7 @@ Note that the error message **lists key names only, never values**.
 ```ts
 import { env } from '@config/env.ts';
 
-export const db = mysql.createPool({
+export const db = postgres.createPool({
   host: env.DB_HOST,
   port: env.DB_PORT,
   user: env.DB_USER,

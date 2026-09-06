@@ -11,7 +11,7 @@ Jest (ESM) + supertest + Testcontainers. Three levels, each with a fixed shape.
 | Repository unit | `repositories/x.repository.test.ts` | SQL construction + Result mapping | `db` | ms |
 | Controller unit | `controllers/x.controller.test.ts` | business rules | repositories, services | ms |
 | Route unit | `routes/x.route.test.ts` | wiring, validation, status mapping | controllers, cache | ms |
-| Integration | `__tests__/integration/x.test.ts` | router → controller → repository → **real MySQL** | nothing (except 3rd-party services) | seconds |
+| Integration | `__tests__/integration/x.test.ts` | router → controller → repository → **real Postgres** | nothing (except 3rd-party services) | seconds |
 
 Every domain has all four.
 
@@ -214,7 +214,7 @@ Every route with a body must have a rejection test per validation rule.
 
 ## 6. Integration tests (Testcontainers)
 
-Real MySQL, real router, real repository. This is what proves the SQL actually works.
+Real Postgres, real router, real repository. This is what proves the SQL actually works.
 
 ```ts
 // src/__tests__/integration/articles.test.ts
@@ -227,11 +227,11 @@ let app: Application;
 jest.unstable_mockModule('@database/db.ts', () => ({ get db() { return pool; } }));
 
 beforeAll(async () => {
-  container = await new MySqlContainer('mysql:8.4')
+  container = await new MySqlContainer('postgres:8.4')
     .withDatabase('test_db').withUsername('test').withUserPassword('test')
     .start();
 
-  pool = mysql.createPool({
+  pool = postgres.createPool({
     host: container.getHost(),
     port: container.getMappedPort(3306),
     user: 'test', password: 'test', database: 'test_db',
@@ -260,7 +260,7 @@ beforeEach(async () => { await truncateAll(pool); await seedFixtures(pool); });
 | I4 | Name the files `*.test.ts` so the default pattern picks them up. |
 | I5 | Test what unit tests can't: real SQL, FK constraints, transactions/rollback, cursor pagination across pages, `ON DUPLICATE KEY`, `FULLTEXT` search, enum coercion. |
 | I6 | Mock only genuinely external services (SMTP, blob storage), never our own layers. |
-| I7 | Pin the image tag (`mysql:8.4`), never `latest` — `latest` makes CI non-reproducible. |
+| I7 | Pin the image tag (`postgres:8.4`), never `latest` — `latest` makes CI non-reproducible. |
 | I8 | `jest.setTimeout(60_000)` at the top of the file. |
 
 What every integration suite must cover: create → read round trip, list pagination

@@ -24,7 +24,7 @@ known problem. Each item lists the fix.
 | B9 | Winston writes to `error.log` at level `debug`, and the file is committed. | Console transport only; JSON in prod; gitignore and delete the file. | High |
 | B10 | `console.log` used in `app.ts`, `db.ts`, and `utils/error.ts`. | Use the logger. Enable `no-console`. | Medium |
 | B11 | ESLint disables `no-explicit-any` and `no-unused-vars`. | Enable both as `error`; add type-aware rules. | High |
-| B12 | `database/db_data/` (a full MySQL data dir, including `*.pem` private keys) is present in the repo tree. | Named Docker volume; gitignore; purge from history and rotate any real keys. | Critical |
+| B12 | `database/db_data/` (a full Postgres data dir, including `*.pem` private keys) is present in the repo tree. | Named Docker volume; gitignore; purge from history and rotate any real keys. | Critical |
 | B13 | Both `package-lock.json` and `yarn.lock` are committed. | Keep `package-lock.json`, delete `yarn.lock`. | Medium |
 | B14 | `Dockerfile` uses `npm install`, copies all source, runs as root, and starts `npm run dev`. | Multi-stage build, `npm ci`, `USER node`, `node dist/app.js`. | High |
 | B15 | `testcontainers`, `ts-node`, `nodemon`, `ts-node-dev` are in `dependencies`, not `devDependencies`. | Move to `devDependencies`; drop `nodemon`/`ts-node-dev` in favour of `tsx watch`. | Medium |

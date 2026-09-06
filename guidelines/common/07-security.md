@@ -45,12 +45,12 @@ const column = SORTABLE[sort];              // undefined if not whitelisted
 if (!column) return err(ERRORS.INVALID_QUERY_PARAMETER);
 ```
 
-`LIMIT`/`OFFSET` are still parameters — mysql2 supports `LIMIT ?` with the number in the array.
+`LIMIT`/`OFFSET` are still parameters — pg supports `LIMIT ?` with the number in the array.
 
 **Command injection:** no `child_process` with interpolated input. If unavoidable, use
 `execFile` with an argument array.
 
-**NoSQL/ORM:** not applicable today (raw MySQL), but the same rule holds if introduced.
+**NoSQL/ORM:** not applicable today (raw Postgres), but the same rule holds if introduced.
 
 ---
 

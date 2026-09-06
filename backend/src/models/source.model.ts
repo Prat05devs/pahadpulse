@@ -1,5 +1,3 @@
-import type { RowDataPacket } from 'mysql2';
-
 import type {
   AccessMethod,
   Cadence,
@@ -11,7 +9,7 @@ import type {
 export const SOURCES_TABLE = 'sources';
 export const INGESTION_RUNS_TABLE = 'ingestion_runs';
 
-export interface SourceRow extends RowDataPacket {
+export interface SourceRow {
   id: number;
   source_key: string;
   owner_module: string;
@@ -37,7 +35,7 @@ export interface SourceWithRunRow extends SourceRow {
   last_run_at: string | null;
 }
 
-export interface IngestionRunRow extends RowDataPacket {
+export interface IngestionRunRow {
   id: number;
   source_id: number;
   source_key: string;

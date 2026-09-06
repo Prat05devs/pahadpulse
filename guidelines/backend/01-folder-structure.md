@@ -1,6 +1,6 @@
 # Backend — 01 Folder Structure
 
-Express + TypeScript (ESM) + MySQL. **Layered**, not feature-sliced. The layer boundary is the
+Express + TypeScript (ESM) + Postgres. **Layered**, not feature-sliced. The layer boundary is the
 architecture; the folder tree makes it visible.
 
 ---
@@ -70,7 +70,7 @@ backend/
 │   │   └── password.ts
 │   │
 │   └── __tests__/
-│       ├── integration/            # Testcontainers: real router + real MySQL
+│       ├── integration/            # Testcontainers: real router + real Postgres
 │       │   └── articles.test.ts
 │       ├── factories/              # test data builders
 │       └── helpers/                # container setup, auth token helpers

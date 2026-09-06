@@ -66,10 +66,10 @@ class IndicatorRepositoryImpl implements IIndicatorRepository {
   async listCatalogue(category?: string): Promise<Result<Indicator[], RequestError>> {
     try {
       const filterByCategory = category !== undefined;
-      const [rows] = await db.query<IndicatorRow[]>(
+      const { rows } = await db.query<IndicatorRow>(
         `SELECT ${INDICATOR_COLUMNS}
            FROM ${INDICATORS_TABLE} i
-          ${filterByCategory ? 'WHERE i.category = ?' : ''}
+          ${filterByCategory ? 'WHERE i.category = $1' : ''}
           ORDER BY i.category ASC, i.indicator_key ASC`,
         filterByCategory ? [category] : [],
       );
@@ -82,8 +82,8 @@ class IndicatorRepositoryImpl implements IIndicatorRepository {
 
   async findByKey(key: string): Promise<Result<Indicator, RequestError>> {
     try {
-      const [rows] = await db.query<IndicatorRow[]>(
-        `SELECT ${INDICATOR_COLUMNS} FROM ${INDICATORS_TABLE} i WHERE i.indicator_key = ? LIMIT 1`,
+      const { rows } = await db.query<IndicatorRow>(
+        `SELECT ${INDICATOR_COLUMNS} FROM ${INDICATORS_TABLE} i WHERE i.indicator_key = $1 LIMIT 1`,
         [key],
       );
       const row = rows[0];
@@ -108,17 +108,17 @@ class IndicatorRepositoryImpl implements IIndicatorRepository {
    */
   async latestValuesForArea(areaId: number): Promise<Result<AreaIndicatorValue[], RequestError>> {
     try {
-      const [rows] = await db.query<IndicatorWithValueRow[]>(
+      const { rows } = await db.query<IndicatorWithValueRow>(
         `SELECT ${INDICATOR_COLUMNS}, v.value, v.vintage, v.source_id, v.fetched_at
            FROM ${INDICATORS_TABLE} i
            JOIN ${INDICATOR_VALUES_TABLE} v ON v.indicator_key = i.indicator_key
            JOIN (
              SELECT indicator_key, MAX(vintage) AS max_vintage
                FROM ${INDICATOR_VALUES_TABLE}
-              WHERE area_id = ?
+              WHERE area_id = $1
               GROUP BY indicator_key
            ) latest ON latest.indicator_key = v.indicator_key AND latest.max_vintage = v.vintage
-          WHERE v.area_id = ?
+          WHERE v.area_id = $2
           ORDER BY i.category ASC, i.indicator_key ASC`,
         [areaId, areaId],
       );
@@ -134,10 +134,10 @@ class IndicatorRepositoryImpl implements IIndicatorRepository {
     areaId: number,
   ): Promise<Result<SeriesPoint[], RequestError>> {
     try {
-      const [rows] = await db.query<SeriesPointRow[]>(
+      const { rows } = await db.query<SeriesPointRow>(
         `SELECT value, vintage, source_id, fetched_at
            FROM ${INDICATOR_VALUES_TABLE}
-          WHERE indicator_key = ? AND area_id = ?
+          WHERE indicator_key = $1 AND area_id = $2
           ORDER BY vintage ASC`,
         [indicatorKey, areaId],
       );
@@ -158,8 +158,8 @@ class IndicatorRepositoryImpl implements IIndicatorRepository {
   /** The most recent vintage that has at least one value for this indicator, or null. */
   async latestVintageFor(indicatorKey: string): Promise<Result<string | null, RequestError>> {
     try {
-      const [rows] = await db.query<MaxVintageRow[]>(
-        `SELECT MAX(vintage) AS max_vintage FROM ${INDICATOR_VALUES_TABLE} WHERE indicator_key = ?`,
+      const { rows } = await db.query<MaxVintageRow>(
+        `SELECT MAX(vintage) AS max_vintage FROM ${INDICATOR_VALUES_TABLE} WHERE indicator_key = $1`,
         [indicatorKey],
       );
       return ok(rows[0]?.max_vintage ?? null);
@@ -184,12 +184,12 @@ class IndicatorRepositoryImpl implements IIndicatorRepository {
     page: RankingCursor,
   ): Promise<Result<RankingPage, RequestError>> {
     try {
-      const [rows] = await db.query<RankingRow[]>(
+      const { rows } = await db.query<RankingRow>(
         `SELECT v.area_id, a.slug AS area_slug, a.name_en AS area_name_en, a.name_hi AS area_name_hi,
                 v.value, v.vintage, v.source_id, v.fetched_at
            FROM ${INDICATOR_VALUES_TABLE} v
-           JOIN areas a ON a.id = v.area_id AND a.type = ?
-          WHERE v.indicator_key = ? AND v.vintage = ?`,
+           JOIN areas a ON a.id = v.area_id AND a.type = $1
+          WHERE v.indicator_key = $2 AND v.vintage = $3`,
         [indicator.scope, indicator.key, vintage],
       );
 

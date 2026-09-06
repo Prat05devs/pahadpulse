@@ -9,7 +9,7 @@ The exact shape of every file you will write. Copy these skeletons.
 Row type, table name, DDL. No behaviour, no imports from other layers.
 
 ```ts
-import type { RowDataPacket } from 'mysql2';
+import type { RowDataPacket } from 'pg';
 
 import { Category } from '@types/category.ts';
 import { Region } from '@types/region.ts';
@@ -50,7 +50,7 @@ constant from the model **only** if integration tests need to build the table.
 The only place SQL exists. Interface first, implementation second, singleton export last.
 
 ```ts
-import type { ResultSetHeader } from 'mysql2';
+import type { ResultSetHeader } from 'pg';
 import { err, ok, type Result } from 'neverthrow';
 
 import { db } from '@database/db.ts';

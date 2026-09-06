@@ -1,10 +1,8 @@
-import type { RowDataPacket } from 'mysql2';
-
 import { toIsoUtc } from '../utils/datetime.js';
 
 export const SEISMIC_EVENTS_TABLE = 'seismic_events';
 
-export interface SeismicEventRow extends RowDataPacket {
+export interface SeismicEventRow {
   id: number;
   source_id: number;
   source_event_id: string;

@@ -1,4 +1,3 @@
-import type { ResultSetHeader } from 'mysql2';
 import { err, ok, type Result } from 'neverthrow';
 
 import { INGESTION_RUN_TIMEOUT_SECONDS } from '../config/constants.js';
@@ -116,7 +115,7 @@ export interface ISourceRepository {
 class SourceRepositoryImpl implements ISourceRepository {
   async listAll(now: Date = new Date()): Promise<Result<Source[], RequestError>> {
     try {
-      const [rows] = await db.query<SourceWithRunRow[]>(
+      const { rows } = await db.query<SourceWithRunRow>(
         `SELECT ${SOURCE_COLUMNS}, ${LAST_RUN_COLUMNS}
            FROM ${SOURCES_TABLE} s
           ORDER BY s.owner_module ASC, s.source_key ASC`,
@@ -130,9 +129,9 @@ class SourceRepositoryImpl implements ISourceRepository {
 
   async findByKey(key: string, now: Date = new Date()): Promise<Result<Source, RequestError>> {
     try {
-      const [rows] = await db.query<SourceWithRunRow[]>(
+      const { rows } = await db.query<SourceWithRunRow>(
         `SELECT ${SOURCE_COLUMNS}, ${LAST_RUN_COLUMNS}
-           FROM ${SOURCES_TABLE} s WHERE s.source_key = ? LIMIT 1`,
+           FROM ${SOURCES_TABLE} s WHERE s.source_key = $1 LIMIT 1`,
         [key],
       );
       const row = rows[0];
@@ -146,8 +145,8 @@ class SourceRepositoryImpl implements ISourceRepository {
 
   async findRowByKey(key: string): Promise<Result<SourceRow, RequestError>> {
     try {
-      const [rows] = await db.query<SourceRow[]>(
-        `SELECT ${SOURCE_COLUMNS} FROM ${SOURCES_TABLE} s WHERE s.source_key = ? LIMIT 1`,
+      const { rows } = await db.query<SourceRow>(
+        `SELECT ${SOURCE_COLUMNS} FROM ${SOURCES_TABLE} s WHERE s.source_key = $1 LIMIT 1`,
         [key],
       );
       const row = rows[0];
@@ -169,9 +168,9 @@ class SourceRepositoryImpl implements ISourceRepository {
   ): Promise<Result<Map<number, Source>, RequestError>> {
     if (ids.length === 0) return ok(new Map());
     try {
-      const [rows] = await db.query<SourceWithRunRow[]>(
+      const { rows } = await db.query<SourceWithRunRow>(
         `SELECT ${SOURCE_COLUMNS}, ${LAST_RUN_COLUMNS}
-           FROM ${SOURCES_TABLE} s WHERE s.id IN (?)`,
+           FROM ${SOURCES_TABLE} s WHERE s.id = ANY($1::integer[])`,
         [[...ids]],
       );
       return ok(new Map(rows.map((row) => [row.id, toSource(row, now)])));
@@ -186,46 +185,50 @@ class SourceRepositoryImpl implements ISourceRepository {
    * Guard and insert are one transaction so two schedulers cannot both start.
    */
   async startRun(sourceId: number, triggeredBy: string): Promise<Result<number, RequestError>> {
-    const connection = await db.getConnection();
+    const client = await db.connect();
     try {
-      await connection.beginTransaction();
+      await client.query('BEGIN');
 
-      const [running] = await connection.query<IngestionRunRow[]>(
+      const { rows: running } = await client.query<IngestionRunRow>(
         `SELECT id FROM ${INGESTION_RUNS_TABLE}
-          WHERE source_id = ? AND status = ?
-            AND started_at > (UTC_TIMESTAMP() - INTERVAL ? SECOND)
+          WHERE source_id = $1 AND status = $2
+            AND started_at > ((now() AT TIME ZONE 'utc') - ($3 * INTERVAL '1 second'))
           FOR UPDATE`,
         [sourceId, RunStatus.Running, INGESTION_RUN_TIMEOUT_SECONDS],
       );
       if (running.length > 0) {
-        await connection.rollback();
+        await client.query('ROLLBACK');
         return err(ERRORS.INGESTION_RUN_IN_PROGRESS);
       }
 
-      const [result] = await connection.query<ResultSetHeader>(
+      const result = await client.query<{ id: number }>(
         `INSERT INTO ${INGESTION_RUNS_TABLE} (source_id, status, triggered_by, started_at)
-         VALUES (?, ?, ?, UTC_TIMESTAMP())`,
+         VALUES ($1, $2, $3, (now() AT TIME ZONE 'utc'))
+         RETURNING id`,
         [sourceId, RunStatus.Running, triggeredBy],
       );
 
-      await connection.commit();
-      return ok(result.insertId);
+      const id = result.rows[0]?.id;
+      if (id === undefined) throw new Error('insert did not return an id');
+
+      await client.query('COMMIT');
+      return ok(id);
     } catch (error) {
-      await connection.rollback();
+      await client.query('ROLLBACK');
       logger.error('startRun failed', { sourceId, error });
       return err(ERRORS.DATABASE_ERROR);
     } finally {
-      connection.release();
+      client.release();
     }
   }
 
   async completeRun(input: CompleteRunInput): Promise<Result<void, RequestError>> {
     try {
-      await db.query<ResultSetHeader>(
+      await db.query(
         `UPDATE ${INGESTION_RUNS_TABLE}
-            SET status = ?, rows_written = ?, rows_rejected = ?,
-                error_code = ?, notes = ?, vintage = ?, finished_at = UTC_TIMESTAMP()
-          WHERE id = ?`,
+            SET status = $1, rows_written = $2, rows_rejected = $3,
+                error_code = $4, notes = $5, vintage = $6, finished_at = (now() AT TIME ZONE 'utc')
+          WHERE id = $7`,
         [
           input.status,
           input.rowsWritten,
@@ -250,15 +253,17 @@ class SourceRepositoryImpl implements ISourceRepository {
   ): Promise<Result<Paginated<IngestionRun>, RequestError>> {
     try {
       const filterByKey = sourceKey !== undefined;
-      const [rows] = await db.query<IngestionRunRow[]>(
+      const { rows } = await db.query<IngestionRunRow>(
         `SELECT r.id, r.source_id, s.source_key, r.started_at, r.finished_at, r.status,
                 r.rows_written, r.rows_rejected, r.error_code, r.notes, r.vintage, r.triggered_by
            FROM ${INGESTION_RUNS_TABLE} r
            JOIN ${SOURCES_TABLE} s ON s.id = r.source_id
-          WHERE r.id < ?
-            ${filterByKey ? 'AND s.source_key = ?' : ''}
+          WHERE r.id < $1::bigint
+            ${filterByKey ? 'AND s.source_key = $2' : ''}
           ORDER BY r.id DESC
-          LIMIT ?`,
+          -- The limit's position depends on whether the optional filter added a parameter,
+          -- so it is numbered from the actual argument count rather than hardcoded.
+          LIMIT $${filterByKey ? 3 : 2}`,
         filterByKey ? [cursor, sourceKey, limit + 1] : [cursor, limit + 1],
       );
       return ok(toPage(rows.map(toRun), limit));
@@ -274,12 +279,12 @@ class SourceRepositoryImpl implements ISourceRepository {
    */
   async expireStuckRuns(): Promise<Result<number, RequestError>> {
     try {
-      const [result] = await db.query<ResultSetHeader>(
+      const result = await db.query(
         `UPDATE ${INGESTION_RUNS_TABLE}
-            SET status = ?, finished_at = UTC_TIMESTAMP(), error_code = ?,
+            SET status = $1, finished_at = (now() AT TIME ZONE 'utc'), error_code = $2,
                 notes = 'Run abandoned - exceeded the run timeout and was expired.'
-          WHERE status = ?
-            AND started_at <= (UTC_TIMESTAMP() - INTERVAL ? SECOND)`,
+          WHERE status = $3
+            AND started_at <= ((now() AT TIME ZONE 'utc') - INTERVAL $4 SECOND)`,
         [
           RunStatus.Failed,
           ERRORS.UPSTREAM_UNAVAILABLE.code,
@@ -287,7 +292,7 @@ class SourceRepositoryImpl implements ISourceRepository {
           INGESTION_RUN_TIMEOUT_SECONDS,
         ],
       );
-      return ok(result.affectedRows);
+      return ok(result.rowCount ?? 0);
     } catch (error) {
       logger.error('expireStuckRuns failed', { error });
       return err(ERRORS.DATABASE_ERROR);

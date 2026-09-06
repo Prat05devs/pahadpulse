@@ -43,15 +43,14 @@ VALUES
 
   ('internet_penetration_pct', 'connectivity', 'district',
    'Internet Penetration', 'इंटरनेट प्रवेश', 'percent', 1, TRUE)
-AS new
-ON DUPLICATE KEY UPDATE
-  category         = new.category,
-  scope            = new.scope,
-  label_en         = new.label_en,
-  label_hi         = new.label_hi,
-  unit             = new.unit,
-  decimals         = new.decimals,
-  higher_is_better = new.higher_is_better;
+ON CONFLICT (indicator_key) DO UPDATE SET
+  category         = EXCLUDED.category,
+  scope            = EXCLUDED.scope,
+  label_en         = EXCLUDED.label_en,
+  label_hi         = EXCLUDED.label_hi,
+  unit             = EXCLUDED.unit,
+  decimals         = EXCLUDED.decimals,
+  higher_is_better = EXCLUDED.higher_is_better;
 
 -- ROLLBACK
 -- DELETE FROM indicators WHERE indicator_key IN (

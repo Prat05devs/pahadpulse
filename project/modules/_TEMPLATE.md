@@ -49,7 +49,7 @@ Being explicit here is what keeps modules independent.
 
 ### Enums
 
-Each value exists identically in the TypeScript enum, the Zod schema, and the MySQL `ENUM`.
+Each value exists identically in the TypeScript enum, the Zod schema, and the Postgres `ENUM`.
 Changing one means changing all three plus a migration.
 
 ```ts

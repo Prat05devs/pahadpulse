@@ -1,12 +1,10 @@
-import type { RowDataPacket } from 'mysql2';
-
 import type { Provenance } from './source.model.js';
 
 export const ROAD_ROUTES_TABLE = 'road_routes';
 
 export type RoadNetwork = 'NH' | 'SH';
 
-export interface RoadRouteRow extends RowDataPacket {
+export interface RoadRouteRow {
   id: number;
   ref: string;
   network: RoadNetwork;

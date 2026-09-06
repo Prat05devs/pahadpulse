@@ -33,10 +33,10 @@ from a source or it does not exist.
 
 | Layer   | Stack                                                                    | Location   |
 | ------- | ------------------------------------------------------------------------ | ---------- |
-| API     | Express 5 · TypeScript ESM · MySQL 8 · neverthrow · Zod                  | `backend/` |
+| API     | Express 5 · TypeScript ESM · PostgreSQL 16 · neverthrow · Zod                  | `backend/` |
 | Web     | Next.js 15 App Router · React 19 · TanStack Query · Tailwind v4 · shadcn | `web/`     |
 | Mobile  | **Not in this repo.** Deferred; no work started.                         | —          |
-| Hosting | Planned: Render Singapore (private MySQL + API + cron), Vercel (web) | `render.yaml` |
+| Hosting | Planned: Render Singapore (private Postgres + API + cron), Vercel (web) | `render.yaml` |
 
 Deviations from `guidelines/common/13-approved-libraries.md`, each needing a logged decision in
 the module doc that introduces it:
@@ -135,7 +135,7 @@ Neither has a module doc yet. Write one from `_TEMPLATE.md` when work starts.
 ```mermaid
 flowchart LR
   Web[Next.js web] -->|HTTPS/JSON| API
-  API --> DB[(MySQL 8)]
+  API --> DB[(PostgreSQL 16)]
   Jobs[Ingestion scheduler] --> DB
   Jobs --> GOV[data.gov.in]
   Jobs --> IMD[IMD API + CAP feed]
@@ -270,7 +270,7 @@ Things that shape decisions across every module.
       Outbound, and confirm IMD accepts those ranges before filing the whitelisting request.
       Render's default egress uses shared regional ranges, not a dedicated static IP.
       See [Render outbound IP documentation](https://render.com/docs/outbound-ip-addresses).
-      MySQL will run as a Render private service; backup storage and restore verification remain open. — _owner:_ `<TBD>`
+      Postgres will run as a Render private service; backup storage and restore verification remain open. — _owner:_ `<TBD>`
 - [ ] Default locale: `hi` or `en`? Recommend `hi` for a resident-facing state portal, with
       `/en` available. Affects the root redirect and SEO canonical URLs. — _owner:_ `<TBD>`
 - [ ] Is there a state-government stakeholder who can shorten the departmental data requests?

@@ -33,7 +33,7 @@
 
 -- Census 2011 state totals.
 INSERT INTO indicator_values (indicator_key, area_id, vintage, value, source_id, fetched_at)
-SELECT v.indicator_key, a.id, v.vintage, v.value, s.id, UTC_TIMESTAMP()
+SELECT v.indicator_key, a.id, v.vintage, v.value, s.id, (now() AT TIME ZONE 'utc')
   FROM (
     SELECT 'state_population'    AS indicator_key, DATE '2011-03-01' AS vintage, 10086292 AS value
     UNION ALL
@@ -45,21 +45,21 @@ SELECT v.indicator_key, a.id, v.vintage, v.value, s.id, UTC_TIMESTAMP()
   ) AS v
   JOIN areas a   ON a.type = 'state' AND a.code = 'UK'
   JOIN sources s ON s.source_key = 'census-2011'
-ON DUPLICATE KEY UPDATE
-  value      = v.value,
-  source_id  = s.id,
-  fetched_at = UTC_TIMESTAMP();
+ON CONFLICT (indicator_key, area_id, vintage) DO UPDATE SET
+  value      = EXCLUDED.value,
+  source_id  = EXCLUDED.source_id,
+  fetched_at = (now() AT TIME ZONE 'utc');
 
 -- Forest cover, ISFR 2019. Vintage is the assessment year, not the publication date.
 INSERT INTO indicator_values (indicator_key, area_id, vintage, value, source_id, fetched_at)
-SELECT 'state_forest_cover_pct', a.id, DATE '2019-01-01', 45.44, s.id, UTC_TIMESTAMP()
+SELECT 'state_forest_cover_pct', a.id, DATE '2019-01-01', 45.44, s.id, (now() AT TIME ZONE 'utc')
   FROM areas a
   JOIN sources s ON s.source_key = 'forest-survey-india'
  WHERE a.type = 'state' AND a.code = 'UK'
-ON DUPLICATE KEY UPDATE
-  value      = 45.44,
-  source_id  = s.id,
-  fetched_at = UTC_TIMESTAMP();
+ON CONFLICT (indicator_key, area_id, vintage) DO UPDATE SET
+  value      = EXCLUDED.value,
+  source_id  = EXCLUDED.source_id,
+  fetched_at = (now() AT TIME ZONE 'utc');
 
 -- ROLLBACK
 -- DELETE FROM indicator_values WHERE indicator_key IN (

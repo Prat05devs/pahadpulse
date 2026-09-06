@@ -1,14 +1,13 @@
-import type { ResultSetHeader } from 'mysql2';
 import { err, ok, type Result } from 'neverthrow';
 
 import { db } from '../database/db.js';
+import { bulkValues } from '../database/sql.js';
 import {
   ALERT_AREAS_TABLE,
   ALERTS_TABLE,
   toAlert,
   type Alert,
   type AlertCountRow,
-  type AlertRow,
   type AlertWithAreasRow,
 } from '../models/alert.model.js';
 import type { Paginated } from '../types/pagination.js';
@@ -32,14 +31,16 @@ const logger = createLogger('@alert.repository');
 const ALERT_SELECT = `
   SELECT a.id, a.source_id, a.source_alert_id, a.type, a.severity, a.urgency, a.certainty,
          a.status, a.headline, a.body, a.instruction, a.language, a.authority, a.web_url,
-         a.geometry, a.centroid_lat, a.centroid_lng,
+         ST_AsGeoJSON(a.geom) AS geometry,
+         ST_Y(a.centroid::geometry) AS centroid_lat,
+         ST_X(a.centroid::geometry) AS centroid_lng,
          a.issued_at, a.effective_from, a.expires_at, a.fetched_at,
          COALESCE(
-           (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', ar.id, 'slug', ar.slug, 'name_en', ar.name_en, 'name_hi', ar.name_hi))
+           (SELECT json_agg(json_build_object('id', ar.id, 'slug', ar.slug, 'name_en', ar.name_en, 'name_hi', ar.name_hi))
               FROM ${ALERT_AREAS_TABLE} aa
               JOIN areas ar ON ar.id = aa.area_id
              WHERE aa.alert_id = a.id),
-           JSON_ARRAY()
+           '[]'::json
          ) AS area_ids
     FROM ${ALERTS_TABLE} a
 `;
@@ -108,27 +109,45 @@ export interface IAlertRepository {
 
 class AlertRepositoryImpl implements IAlertRepository {
   async upsert(input: UpsertAlertInput): Promise<Result<number, RequestError>> {
-    const connection = await db.getConnection();
+    const client = await db.connect();
     try {
-      await connection.beginTransaction();
+      await client.query('BEGIN');
 
-      await connection.query<ResultSetHeader>(
+      /*
+       * `RETURNING id` replaces the follow-up SELECT the MySQL version needed. MySQL's
+       * `insertId` is 0 on the update branch of an upsert, so the old code had to re-read
+       * the row to learn its id; Postgres returns it from either branch.
+       *
+       * Geometry arrives as GeoJSON text and is converted in SQL. `ST_Multi` normalises a
+       * single Polygon into the MultiPolygon the column holds, and the whole expression is
+       * NULL-safe because most alerts have no polygon at all — SACHET's polygon endpoint
+       * returns 403.
+       */
+      const upserted = await client.query<{ id: number }>(
         `INSERT INTO ${ALERTS_TABLE}
            (source_id, source_alert_id, type, severity, urgency, certainty, status,
             headline, body, instruction, language, authority, web_url,
-            geometry, centroid_lat, centroid_lng,
+            geom, centroid,
             issued_at, effective_from, expires_at, fetched_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())
-         AS new
-         ON DUPLICATE KEY UPDATE
-           type = new.type, severity = new.severity, urgency = new.urgency,
-           certainty = new.certainty, status = 'active',
-           headline = new.headline, body = new.body, instruction = new.instruction,
-           language = new.language, authority = new.authority, web_url = new.web_url,
-           geometry = new.geometry,
-           centroid_lat = new.centroid_lat, centroid_lng = new.centroid_lng,
-           issued_at = new.issued_at, effective_from = new.effective_from,
-           expires_at = new.expires_at, fetched_at = new.fetched_at`,
+         VALUES (
+           $1, $2, $3, $4, $5, $6, 'active',
+           $7, $8, $9, $10, $11, $12,
+           CASE WHEN $13::text IS NULL THEN NULL
+                ELSE ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON($13::text), 4326)) END,
+           CASE WHEN $14::double precision IS NULL OR $15::double precision IS NULL THEN NULL
+                ELSE ST_SetSRID(ST_MakePoint($14::double precision, $15::double precision), 4326)::geography END,
+           $16, $17, $18, (now() AT TIME ZONE 'utc')
+         )
+         ON CONFLICT (source_id, source_alert_id) DO UPDATE SET
+           type = EXCLUDED.type, severity = EXCLUDED.severity, urgency = EXCLUDED.urgency,
+           certainty = EXCLUDED.certainty, status = 'active',
+           headline = EXCLUDED.headline, body = EXCLUDED.body,
+           instruction = EXCLUDED.instruction, language = EXCLUDED.language,
+           authority = EXCLUDED.authority, web_url = EXCLUDED.web_url,
+           geom = EXCLUDED.geom, centroid = EXCLUDED.centroid,
+           issued_at = EXCLUDED.issued_at, effective_from = EXCLUDED.effective_from,
+           expires_at = EXCLUDED.expires_at, fetched_at = EXCLUDED.fetched_at
+         RETURNING id`,
         [
           input.sourceId,
           input.sourceAlertId,
@@ -145,49 +164,49 @@ class AlertRepositoryImpl implements IAlertRepository {
           input.geometry === undefined || input.geometry === null
             ? null
             : JSON.stringify(input.geometry),
-          input.centroidLat ?? null,
+          // lng then lat: ST_MakePoint takes X before Y.
           input.centroidLng ?? null,
+          input.centroidLat ?? null,
           input.issuedAt,
           input.effectiveFrom,
           input.expiresAt,
         ],
       );
 
-      const [idRows] = await connection.query<AlertRow[]>(
-        `SELECT id FROM ${ALERTS_TABLE} WHERE source_id = ? AND source_alert_id = ? LIMIT 1`,
-        [input.sourceId, input.sourceAlertId],
-      );
-      const alertId = idRows[0]?.id;
+      const alertId = upserted.rows[0]?.id;
       if (alertId === undefined) throw new Error('upsert did not produce a row');
 
       // Areas are replaced wholesale rather than diffed: a revised CAP message can add or
       // drop area blocks, and there is no meaningful "partial" area update for an alert.
-      await connection.query('DELETE FROM ' + ALERT_AREAS_TABLE + ' WHERE alert_id = ?', [alertId]);
+      await client.query(`DELETE FROM ${ALERT_AREAS_TABLE} WHERE alert_id = $1`, [alertId]);
       if (input.areaIds.length > 0) {
-        const values = input.areaIds.map((areaId) => [alertId, areaId]);
-        await connection.query(`INSERT INTO ${ALERT_AREAS_TABLE} (alert_id, area_id) VALUES ?`, [
-          values,
-        ]);
+        const { text, params } = bulkValues(input.areaIds.map((areaId) => [alertId, areaId]));
+        await client.query(
+          `INSERT INTO ${ALERT_AREAS_TABLE} (alert_id, area_id) VALUES ${text}`,
+          params,
+        );
       }
 
-      await connection.commit();
+      await client.query('COMMIT');
       return ok(alertId);
     } catch (error) {
-      await connection.rollback();
+      await client.query('ROLLBACK');
       logger.error('upsert failed', { sourceAlertId: input.sourceAlertId, error });
       return err(ERRORS.DATABASE_ERROR);
     } finally {
-      connection.release();
+      client.release();
     }
   }
 
   async cancel(sourceId: number, sourceAlertId: string): Promise<Result<boolean, RequestError>> {
     try {
-      const [result] = await db.query<ResultSetHeader>(
-        `UPDATE ${ALERTS_TABLE} SET status = ? WHERE source_id = ? AND source_alert_id = ?`,
+      const result = await db.query(
+        `UPDATE ${ALERTS_TABLE} SET status = $1 WHERE source_id = $2 AND source_alert_id = $3`,
         [AlertStatus.Cancelled, sourceId, sourceAlertId],
       );
-      return ok(result.affectedRows > 0);
+      // `rowCount` is `number | null` in pg's types; null means the command reports no
+      // count, which for an UPDATE means nothing matched.
+      return ok((result.rowCount ?? 0) > 0);
     } catch (error) {
       logger.error('cancel failed', { sourceId, sourceAlertId, error });
       return err(ERRORS.DATABASE_ERROR);
@@ -196,7 +215,7 @@ class AlertRepositoryImpl implements IAlertRepository {
 
   async findById(id: number): Promise<Result<Alert, RequestError>> {
     try {
-      const [rows] = await db.query<AlertWithAreasRow[]>(`${ALERT_SELECT} WHERE a.id = ? LIMIT 1`, [
+      const { rows } = await db.query<AlertWithAreasRow>(`${ALERT_SELECT} WHERE a.id = $1 LIMIT 1`, [
         id,
       ]);
       const row = rows[0];
@@ -218,38 +237,56 @@ class AlertRepositoryImpl implements IAlertRepository {
     filters: ActiveAlertFilters,
   ): Promise<Result<Paginated<Alert>, RequestError>> {
     try {
+      /*
+       * Placeholders are numbered as the parameters are pushed, not written literally.
+       *
+       * Postgres uses positional `$n` where MySQL used a bare `?`, so a query assembled
+       * from optional fragments has to keep the two in step — a hardcoded number silently
+       * binds the wrong value the moment an earlier filter is absent. `next()` makes the
+       * position a consequence of pushing rather than something to remember.
+       */
+      const params: (string | number)[] = [];
+      const next = (value: string | number): string => {
+        params.push(value);
+        return `$${params.length}`;
+      };
+
+      // The area filter joins before the WHERE clause, so its parameter has to be bound
+      // first — hence the join is built before any condition below.
+      let sql = ALERT_SELECT;
+      if (filters.areaId !== undefined) {
+        sql =
+          `${ALERT_SELECT} JOIN ${ALERT_AREAS_TABLE} filter_area ` +
+          `ON filter_area.alert_id = a.id AND filter_area.area_id = ${next(filters.areaId)}`;
+      }
+
       const conditions = [
         "a.status = 'active'",
-        '(a.expires_at IS NULL OR a.expires_at > UTC_TIMESTAMP())',
-        'a.id < ?',
+        "(a.expires_at IS NULL OR a.expires_at > (now() AT TIME ZONE 'utc'))",
+        // ::bigint because the "start from the top" sentinel is Number.MAX_SAFE_INTEGER,
+        // which does not fit the int4 `id` column. Comparing int4 to bigint is exact.
+        `a.id < ${next(cursor)}::bigint`,
       ];
-      const params: (string | number)[] = [cursor];
 
       if (filters.type !== undefined) {
-        conditions.push('a.type = ?');
-        params.push(filters.type);
+        conditions.push(`a.type = ${next(filters.type)}`);
       }
       if (filters.minSeverity !== undefined) {
         const minRank = SEVERITY_RANK[filters.minSeverity];
         const allowed = (Object.keys(SEVERITY_RANK) as AlertSeverity[]).filter(
           (severity) => SEVERITY_RANK[severity] >= minRank,
         );
-        conditions.push(`a.severity IN (${allowed.map(() => '?').join(',')})`);
-        params.push(...allowed);
+        conditions.push(
+          `a.severity IN (${allowed.map((severity) => next(severity)).join(', ')})`,
+        );
       }
 
-      let sql = ALERT_SELECT;
-      if (filters.areaId !== undefined) {
-        sql = `${ALERT_SELECT} JOIN ${ALERT_AREAS_TABLE} filter_area ON filter_area.alert_id = a.id AND filter_area.area_id = ?`;
-        params.unshift(filters.areaId);
-      }
-
-      const [rows] = await db.query<AlertWithAreasRow[]>(
+      const { rows } = await db.query<AlertWithAreasRow>(
         `${sql}
           WHERE ${conditions.join(' AND ')}
           ORDER BY a.id DESC
-          LIMIT ?`,
-        [...params, limit + 1],
+          LIMIT ${next(limit + 1)}`,
+        params,
       );
 
       return ok(toPage(rows.map(toAlert), limit));
@@ -269,9 +306,9 @@ class AlertRepositoryImpl implements IAlertRepository {
 
   async countActive(): Promise<Result<number, RequestError>> {
     try {
-      const [rows] = await db.query<AlertCountRow[]>(
+      const { rows } = await db.query<AlertCountRow>(
         `SELECT COUNT(*) AS total FROM ${ALERTS_TABLE} a
-          WHERE a.status = 'active' AND (a.expires_at IS NULL OR a.expires_at > UTC_TIMESTAMP())`,
+          WHERE a.status = 'active' AND (a.expires_at IS NULL OR a.expires_at > (now() AT TIME ZONE 'utc'))`,
       );
       return ok(rows[0]?.total ?? 0);
     } catch (error) {

@@ -16,7 +16,7 @@ The shared philosophy and the coverage bar. Layer-specific mechanics live in
 | Level | Backend | Web / Mobile |
 |---|---|---|
 | Unit | controller, repository (mocked `db`), utils, middleware | components (RTL), hooks (`renderHook`), pure utils |
-| Integration | router + real Express + Testcontainers MySQL | component + real hook + MSW-mocked network |
+| Integration | router + real Express + Testcontainers Postgres | component + real hook + MSW-mocked network |
 | E2E | — (covered by web E2E) | Cypress (web) / Maestro or Detox (mobile) against a seeded stack |
 
 ---

@@ -29,7 +29,7 @@ cannot shift the window.
 
 ### 1.2 It scans linearly
 
-`OFFSET 100000` makes MySQL read and discard 100,000 rows before returning 10. Page 1 is fast,
+`OFFSET 100000` makes Postgres read and discard 100,000 rows before returning 10. Page 1 is fast,
 page 5,000 times out. Cursor pagination is an index seek: page 5,000 costs exactly what page 1
 costs.
 
@@ -228,7 +228,7 @@ INDEX idx_status_id (status, id)
 ```
 
 The index must contain **the equality-filtered columns first, then the cursor/order column**.
-With `(status, id)` MySQL seeks straight to the cursor position inside the `status` group and
+With `(status, id)` Postgres seeks straight to the cursor position inside the `status` group and
 walks backwards. With a single-column `idx_status`, it matches every approved row and then
 sorts them — `Using filesort` on every page load.
 
@@ -375,7 +375,7 @@ it('never interpolates the cursor into the SQL string', async () => {
 });
 ```
 
-Integration (real MySQL, seeded with 25 rows) — this is the level that proves the SQL is right:
+Integration (real Postgres, seeded with 25 rows) — this is the level that proves the SQL is right:
 
 - [ ] First page returns `limit` rows, `hasNext: true`
 - [ ] Walking with `nextCursor` reaches the last page with `hasNext: false`

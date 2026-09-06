@@ -42,20 +42,19 @@ VALUES
     'The GDACS RSS declares public domain in its own copyright element. Scope not yet confirmed with JRC. Events are filtered to the Uttarakhand bounding box before ingestion, because GDACS reports globally and the rest is out of this product scope.',
     TRUE
   )
-AS new
-ON DUPLICATE KEY UPDATE
-  owner_module     = new.owner_module,
-  department_en    = new.department_en,
-  department_hi    = new.department_hi,
-  url              = new.url,
-  attribution      = new.attribution,
-  licence          = new.licence,
-  access_method    = new.access_method,
-  cadence          = new.cadence,
-  may_redistribute = new.may_redistribute,
-  metadata_status  = new.metadata_status,
-  metadata_note    = new.metadata_note,
-  is_enabled       = new.is_enabled;
+ON CONFLICT (source_key) DO UPDATE SET
+  owner_module     = EXCLUDED.owner_module,
+  department_en    = EXCLUDED.department_en,
+  department_hi    = EXCLUDED.department_hi,
+  url              = EXCLUDED.url,
+  attribution      = EXCLUDED.attribution,
+  licence          = EXCLUDED.licence,
+  access_method    = EXCLUDED.access_method,
+  cadence          = EXCLUDED.cadence,
+  may_redistribute = EXCLUDED.may_redistribute,
+  metadata_status  = EXCLUDED.metadata_status,
+  metadata_note    = EXCLUDED.metadata_note,
+  is_enabled       = EXCLUDED.is_enabled;
 
 -- ROLLBACK
 -- DELETE FROM sources WHERE source_key = 'gdacs';

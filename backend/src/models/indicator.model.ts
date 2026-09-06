@@ -1,12 +1,10 @@
-import type { RowDataPacket } from 'mysql2';
-
 import type { Provenance } from './source.model.js';
 import type { IndicatorCategory, IndicatorScope } from '../types/indicator.js';
 
 export const INDICATORS_TABLE = 'indicators';
 export const INDICATOR_VALUES_TABLE = 'indicator_values';
 
-export interface IndicatorRow extends RowDataPacket {
+export interface IndicatorRow {
   id: number;
   indicator_key: string;
   category: IndicatorCategory;
@@ -27,7 +25,7 @@ export interface IndicatorWithValueRow extends IndicatorRow {
 }
 
 /** One district's value for a ranking table, joined to its area identity. */
-export interface RankingRow extends RowDataPacket {
+export interface RankingRow {
   area_id: number;
   area_slug: string;
   area_name_en: string;
@@ -39,7 +37,7 @@ export interface RankingRow extends RowDataPacket {
 }
 
 /** One point on a trend line for a single area + indicator. */
-export interface SeriesPointRow extends RowDataPacket {
+export interface SeriesPointRow {
   value: string;
   vintage: string;
   source_id: number;
@@ -47,7 +45,7 @@ export interface SeriesPointRow extends RowDataPacket {
 }
 
 /** Result of a bare `MAX(vintage)` aggregate. */
-export interface MaxVintageRow extends RowDataPacket {
+export interface MaxVintageRow {
   max_vintage: string | null;
 }
 

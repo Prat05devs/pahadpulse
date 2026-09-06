@@ -29,7 +29,9 @@ const logger = createLogger('@area.repository');
 const AREA_COLUMNS = `
   a.id, a.type, a.code, a.slug, a.name_en, a.name_hi, a.parent_id,
   a.division, a.headquarters_en, a.headquarters_hi,
-  a.centroid_lat, a.centroid_lng, a.lgd_code, a.census_2011_code
+  ST_Y(a.centroid::geometry) AS centroid_lat,
+  ST_X(a.centroid::geometry) AS centroid_lng,
+  a.lgd_code, a.census_2011_code
 `;
 
 function toArea(row: AreaRow): Area {
@@ -148,7 +150,7 @@ class AreaRepositoryImpl implements IAreaRepository {
    */
   async listDistricts(): Promise<Result<DistrictSummary[], RequestError>> {
     try {
-      const [rows] = await db.query<DistrictWithCountsRow[]>(
+      const { rows } = await db.query<DistrictWithCountsRow>(
         `SELECT ${AREA_COLUMNS},
                 COALESCE(t.tehsil_count, 0)  AS tehsil_count,
                 COALESCE(v.village_count, 0) AS village_count,
@@ -157,18 +159,18 @@ class AreaRepositoryImpl implements IAreaRepository {
            LEFT JOIN (
              SELECT parent_id, COUNT(*) AS tehsil_count
                FROM ${AREAS_TABLE}
-              WHERE type = ?
+              WHERE type = $1
               GROUP BY parent_id
            ) t ON t.parent_id = a.id
            LEFT JOIN (
              SELECT th.parent_id AS district_id, COUNT(*) AS village_count
                FROM ${AREAS_TABLE} vl
                JOIN ${AREAS_TABLE} th ON th.id = vl.parent_id
-              WHERE vl.type = ? AND th.type = ?
+              WHERE vl.type = $2 AND th.type = $3
               GROUP BY th.parent_id
            ) v ON v.district_id = a.id
            LEFT JOIN ${AREA_BOUNDARIES_TABLE} b ON b.area_id = a.id
-          WHERE a.type = ?
+          WHERE a.type = $4
           ORDER BY a.name_en ASC, a.id ASC`,
         [AreaType.Tehsil, AreaType.Village, AreaType.Tehsil, AreaType.District],
       );
@@ -181,8 +183,8 @@ class AreaRepositoryImpl implements IAreaRepository {
 
   async findBySlug(slug: string): Promise<Result<Area, RequestError>> {
     try {
-      const [rows] = await db.query<AreaRow[]>(
-        `SELECT ${AREA_COLUMNS} FROM ${AREAS_TABLE} a WHERE a.slug = ? LIMIT 1`,
+      const { rows } = await db.query<AreaRow>(
+        `SELECT ${AREA_COLUMNS} FROM ${AREAS_TABLE} a WHERE a.slug = $1 LIMIT 1`,
         [slug],
       );
       const row = rows[0];
@@ -196,8 +198,8 @@ class AreaRepositoryImpl implements IAreaRepository {
 
   async findByCode(type: AreaType, code: string): Promise<Result<Area, RequestError>> {
     try {
-      const [rows] = await db.query<AreaRow[]>(
-        `SELECT ${AREA_COLUMNS} FROM ${AREAS_TABLE} a WHERE a.type = ? AND a.code = ? LIMIT 1`,
+      const { rows } = await db.query<AreaRow>(
+        `SELECT ${AREA_COLUMNS} FROM ${AREAS_TABLE} a WHERE a.type = $1 AND a.code = $2 LIMIT 1`,
         [type, code],
       );
       const row = rows[0];
@@ -211,10 +213,10 @@ class AreaRepositoryImpl implements IAreaRepository {
 
   async listChildren(parentId: number, type: AreaType): Promise<Result<Area[], RequestError>> {
     try {
-      const [rows] = await db.query<AreaRow[]>(
+      const { rows } = await db.query<AreaRow>(
         `SELECT ${AREA_COLUMNS}
            FROM ${AREAS_TABLE} a
-          WHERE a.parent_id = ? AND a.type = ?
+          WHERE a.parent_id = $1 AND a.type = $2
           ORDER BY a.name_en ASC, a.id ASC
           LIMIT 5000`,
         [parentId, type],
@@ -228,10 +230,13 @@ class AreaRepositoryImpl implements IAreaRepository {
 
   async findBoundaryByAreaId(areaId: number): Promise<Result<AreaBoundary, RequestError>> {
     try {
-      const [rows] = await db.query<AreaBoundaryRow[]>(
-        `SELECT area_id, geojson, simplified_geojson, is_placeholder, source_note, updated_at
+      const { rows } = await db.query<AreaBoundaryRow>(
+        `SELECT area_id,
+                ST_AsGeoJSON(geom) AS geojson,
+                ST_AsGeoJSON(simplified_geom) AS simplified_geojson,
+                is_placeholder, source_note, updated_at
            FROM ${AREA_BOUNDARIES_TABLE}
-          WHERE area_id = ?
+          WHERE area_id = $1
           LIMIT 1`,
         [areaId],
       );
@@ -255,7 +260,7 @@ class AreaRepositoryImpl implements IAreaRepository {
 
   async listMapLayers(): Promise<Result<MapLayer[], RequestError>> {
     try {
-      const [rows] = await db.query<MapLayerRow[]>(
+      const { rows } = await db.query<MapLayerRow>(
         `SELECT id, layer_key, owner_module, name_en, name_hi,
                 display_order, is_default_visible, is_available
            FROM ${MAP_LAYERS_TABLE}
@@ -270,8 +275,8 @@ class AreaRepositoryImpl implements IAreaRepository {
 
   async countByType(type: AreaType): Promise<Result<number, RequestError>> {
     try {
-      const [rows] = await db.query<AreaCountRow[]>(
-        `SELECT COUNT(*) AS total FROM ${AREAS_TABLE} WHERE type = ?`,
+      const { rows } = await db.query<AreaCountRow>(
+        `SELECT COUNT(*) AS total FROM ${AREAS_TABLE} WHERE type = $1`,
         [type],
       );
       return ok(rows[0]?.total ?? 0);
@@ -284,10 +289,10 @@ class AreaRepositoryImpl implements IAreaRepository {
   async resolveToDistricts(names: readonly string[]): Promise<Result<Area[], RequestError>> {
     if (names.length === 0) return ok([]);
     try {
-      const [rows] = await db.query<AreaRow[]>(
+      const { rows } = await db.query<AreaRow>(
         `SELECT ${AREA_COLUMNS}
            FROM ${AREAS_TABLE} a
-          WHERE a.type = ? AND LOWER(a.name_en) IN (?)`,
+          WHERE a.type = $1 AND LOWER(a.name_en) = ANY($2::text[])`,
         [AreaType.District, names.map((name) => name.toLowerCase())],
       );
       return ok(rows.map(toArea));
@@ -299,14 +304,15 @@ class AreaRepositoryImpl implements IAreaRepository {
 
   async listDistrictBoundaries(): Promise<Result<DistrictBoundary[], RequestError>> {
     try {
-      const [rows] = await db.query<DistrictBoundaryRow[]>(
+      const { rows } = await db.query<DistrictBoundaryRow>(
         `SELECT a.id, a.slug, a.name_en, a.name_hi, a.division,
-                a.centroid_lat, a.centroid_lng,
-                COALESCE(b.simplified_geojson, b.geojson) AS geojson,
+                ST_Y(a.centroid::geometry) AS centroid_lat,
+                ST_X(a.centroid::geometry) AS centroid_lng,
+                ST_AsGeoJSON(COALESCE(b.simplified_geom, b.geom)) AS geojson,
                 b.is_placeholder, b.source_note
            FROM ${AREAS_TABLE} a
            JOIN ${AREA_BOUNDARIES_TABLE} b ON b.area_id = a.id
-          WHERE a.type = ?
+          WHERE a.type = $1
           ORDER BY a.name_en ASC, a.id ASC`,
         [AreaType.District],
       );
@@ -334,8 +340,8 @@ class AreaRepositoryImpl implements IAreaRepository {
 
   async listDistrictNames(): Promise<Result<DistrictName[], RequestError>> {
     try {
-      const [rows] = await db.query<DistrictNameRow[]>(
-        `SELECT id, name_en, name_hi FROM ${AREAS_TABLE} WHERE type = ? ORDER BY id ASC`,
+      const { rows } = await db.query<DistrictNameRow>(
+        `SELECT id, name_en, name_hi FROM ${AREAS_TABLE} WHERE type = $1 ORDER BY id ASC`,
         [AreaType.District],
       );
       return ok(rows.map((row) => ({ id: row.id, nameEn: row.name_en, nameHi: row.name_hi })));
@@ -347,8 +353,8 @@ class AreaRepositoryImpl implements IAreaRepository {
 
   async listTehsils(): Promise<Result<TehsilRef[], RequestError>> {
     try {
-      const [rows] = await db.query<AreaRow[]>(
-        `SELECT id, slug, name_en FROM ${AREAS_TABLE} WHERE type = ? ORDER BY id ASC`,
+      const { rows } = await db.query<AreaRow>(
+        `SELECT id, slug, name_en FROM ${AREAS_TABLE} WHERE type = $1 ORDER BY id ASC`,
         [AreaType.Tehsil],
       );
       return ok(rows.map((row) => ({ id: row.id, slug: row.slug, nameEn: row.name_en })));
@@ -360,13 +366,15 @@ class AreaRepositoryImpl implements IAreaRepository {
 
   async listVillagesByTehsil(districtId: number): Promise<Result<Map<number, string[]>, RequestError>> {
     try {
-      const [rows] = await db.query<AreaRow[]>(
+      const { rows } = await db.query<AreaRow>(
         `SELECT v.parent_id, v.name_en, v.name_hi, v.id, v.type, v.code, v.slug,
                 v.division, v.headquarters_en, v.headquarters_hi,
-                v.centroid_lat, v.centroid_lng, v.lgd_code, v.census_2011_code
+                ST_Y(v.centroid::geometry) AS centroid_lat,
+                ST_X(v.centroid::geometry) AS centroid_lng,
+                v.lgd_code, v.census_2011_code
            FROM ${AREAS_TABLE} v
-           JOIN ${AREAS_TABLE} t ON t.id = v.parent_id AND t.type = ?
-          WHERE v.type = ? AND t.parent_id = ?
+           JOIN ${AREAS_TABLE} t ON t.id = v.parent_id AND t.type = $1
+          WHERE v.type = $2 AND t.parent_id = $3
           ORDER BY v.name_en ASC`,
         [AreaType.Tehsil, AreaType.Village, districtId],
       );
@@ -391,62 +399,90 @@ class AreaRepositoryImpl implements IAreaRepository {
   ): Promise<Result<number, RequestError>> {
     if (villages.length === 0) return ok(0);
 
-    const connection = await db.getConnection();
+    const client = await db.connect();
     try {
-      await connection.beginTransaction();
+      await client.query('BEGIN');
 
       // Only ingested rows are cleared. A curated village added by hand would not carry the
       // OSM prefix and must survive a re-run untouched.
-      await connection.query(
-        `DELETE FROM ${AREAS_TABLE} WHERE type = ? AND code LIKE 'OSM-V-%'`,
+      await client.query(
+        `DELETE FROM ${AREAS_TABLE} WHERE type = $1 AND code LIKE 'OSM-V-%'`,
         [AreaType.Village],
       );
 
-      // Chunked: a single 13,000-row INSERT exceeds max_allowed_packet on a default MySQL.
+      /*
+       * Chunked because Postgres caps a statement at 65,535 bound parameters. Eight columns
+       * per village puts the ceiling near 8,000 rows, and there are ~13,000 villages — so
+       * this is a hard limit, not a tuning choice.
+       */
       const CHUNK = 1000;
       for (let i = 0; i < villages.length; i += CHUNK) {
         const chunk = villages.slice(i, i + CHUNK);
-        await connection.query(
-          `INSERT INTO ${AREAS_TABLE} (type, code, slug, name_en, name_hi, parent_id, centroid_lat, centroid_lng)
-           VALUES ?`,
-          [
-            chunk.map((village) => [
-              AreaType.Village,
-              village.code,
-              village.slug,
-              village.nameEn,
-              village.nameHi,
-              village.parentId,
-              village.lat,
-              village.lng,
-            ]),
-          ],
+
+        // Built by hand rather than with `bulkValues`: the centroid slot is a constructed
+        // point wrapping two placeholders, not a placeholder of its own.
+        const params: unknown[] = [];
+        const tuples: string[] = [];
+
+        for (const village of chunk) {
+          const base = params.length;
+          params.push(
+            AreaType.Village,
+            village.code,
+            village.slug,
+            village.nameEn,
+            village.nameHi,
+            village.parentId,
+            village.lng,
+            village.lat,
+          );
+          const p = (offset: number) => `$${base + offset}`;
+          tuples.push(
+            `(${p(1)}, ${p(2)}, ${p(3)}, ${p(4)}, ${p(5)}, ${p(6)}, ` +
+              `ST_SetSRID(ST_MakePoint(${p(7)}, ${p(8)}), 4326)::geography)`,
+          );
+        }
+
+        await client.query(
+          `INSERT INTO ${AREAS_TABLE}
+             (type, code, slug, name_en, name_hi, parent_id, centroid)
+           VALUES ${tuples.join(', ')}`,
+          params,
         );
       }
 
-      await connection.commit();
+      await client.query('COMMIT');
       return ok(villages.length);
     } catch (error) {
-      await connection.rollback();
+      await client.query('ROLLBACK');
       logger.error('replaceIngestedVillages failed', { count: villages.length, error });
       return err(ERRORS.DATABASE_ERROR);
     } finally {
-      connection.release();
+      client.release();
     }
   }
 
   async upsertBoundary(input: UpsertBoundaryInput): Promise<Result<void, RequestError>> {
     try {
       await db.query(
+        /*
+         * `ST_Multi` normalises a Polygon into a MultiPolygon so the column's type
+         * constraint holds: Overpass returns a single ring for a district with no exclaves
+         * and a multi for one with them, and rejecting the simple case would be absurd.
+         */
         `INSERT INTO ${AREA_BOUNDARIES_TABLE}
-           (area_id, geojson, simplified_geojson, is_placeholder, source_note)
-         VALUES (?, ?, ?, ?, ?)
-         AS new
-         ON DUPLICATE KEY UPDATE
-           geojson            = new.geojson,
-           simplified_geojson = new.simplified_geojson,
-           is_placeholder     = new.is_placeholder,
-           source_note        = new.source_note`,
+           (area_id, geom, simplified_geom, is_placeholder, source_note)
+         VALUES (
+           $1,
+           ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON($2), 4326)),
+           ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON($3), 4326)),
+           $4, $5
+         )
+         ON CONFLICT (area_id) DO UPDATE SET
+           geom            = EXCLUDED.geom,
+           simplified_geom = EXCLUDED.simplified_geom,
+           is_placeholder  = EXCLUDED.is_placeholder,
+           source_note     = EXCLUDED.source_note`,
         [
           input.areaId,
           JSON.stringify(input.geojson),

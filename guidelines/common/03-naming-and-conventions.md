@@ -70,7 +70,7 @@ Frontend services use `fetchArticleById`, `createArticle`, `updateArticleStatus`
 
 ---
 
-## 4. Database naming (MySQL)
+## 4. Database naming (Postgres)
 
 | Kind | Convention | Example |
 |---|---|---|
@@ -84,7 +84,7 @@ Frontend services use `fetchArticleById`, `createArticle`, `updateArticleStatus`
 | Unique | `uq_<column>` | `uq_email` |
 | Boolean column | `is_<adjective>` | `is_active` |
 | Timestamps | `created_at`, `updated_at`, both `DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP` | |
-| Enum column | MySQL `ENUM(...)` matching the TS enum values exactly | `ENUM('draft','pending','approved','rejected')` |
+| Enum column | A named Postgres type matching the TS enum values exactly | `CREATE TYPE status AS ENUM ('draft','pending','approved','rejected')` |
 
 **API payloads keep `snake_case` for fields that come straight from the DB** (`author_id`,
 `publish_date`, `created_at`). Do not camelCase-convert in the repository — it creates a

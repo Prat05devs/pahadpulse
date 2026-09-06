@@ -186,7 +186,7 @@ Default posture: logs only. Add metrics when a project has SLOs.
 
 - **Metrics:** `prom-client` exposing `/metrics` — request rate, error rate, p50/p95/p99
   latency by route, DB pool utilisation, cache hit ratio.
-- **Tracing:** OpenTelemetry SDK, auto-instrumentation for Express + MySQL. `requestId`
+- **Tracing:** OpenTelemetry SDK, auto-instrumentation for Express + Postgres. `requestId`
   becomes the trace's baggage.
 - **Crash reporting (client):** Sentry for web and mobile. Wire `requestId` as a Sentry tag
   so client and server records join.

@@ -33,7 +33,7 @@ already knows the tools.
 |---|---|---|
 | HTTP framework | `express` ^5 | |
 | Result type | `neverthrow` ^8 | the error model depends on it |
-| MySQL driver | `mysql2` ^3 (`/promise`) | raw SQL, parameterised, pooled |
+| Postgres driver | `pg` ^8 | raw SQL, parameterised, pooled. PostGIS used through SQL, never a wrapper. |
 | Logging | `winston` ^3 | JSON in prod |
 | Auth | `jsonwebtoken` ^9 | always pass `algorithms` |
 | Password hashing | `bcryptjs` ^3 | cost ≥ 12 |

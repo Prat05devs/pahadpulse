@@ -92,14 +92,14 @@ database/db_data
 # docker-compose.yml — dependencies only; the app runs on the host
 services:
   db:
-    image: mysql:8.4
+    image: postgres:8.4
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: ${DB_NAME:-app_dev}
       MYSQL_USER: ${DB_USER:-app}
       MYSQL_PASSWORD: ${DB_PASSWORD:-app}
     ports: ['3306:3306']
-    volumes: ['db_data:/var/lib/mysql']       # named volume — NOT ./database/db_data
+    volumes: ['db_data:/var/lib/postgres']       # named volume — NOT ./database/db_data
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       interval: 5s

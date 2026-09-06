@@ -110,13 +110,13 @@ a bind-mounted `./database/db_data` that ends up in git.
 ```yaml
 services:
   db:
-    image: mysql:8.4
+    image: postgres:8.4
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
     ports: ['3306:3306']
     volumes:
-      - db_data:/var/lib/mysql                 # named volume, not a bind mount
+      - db_data:/var/lib/postgres                 # named volume, not a bind mount
       - ./src/database:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']

@@ -1,6 +1,6 @@
 # Backend — 05 Database
 
-MySQL 8, `mysql2/promise`, raw parameterised SQL, forward-only numbered migrations. No ORM.
+PostgreSQL 16, `pg/promise`, raw parameterised SQL, forward-only numbered migrations. No ORM.
 
 ---
 
@@ -8,14 +8,14 @@ MySQL 8, `mysql2/promise`, raw parameterised SQL, forward-only numbered migratio
 
 ```ts
 // src/database/db.ts
-import mysql from 'mysql2/promise';
+import postgres from 'pg/promise';
 
 import { env } from '@config/env.ts';
 import createLogger from '@utils/logger.ts';
 
 const logger = createLogger('@database');
 
-export const db = mysql.createPool({
+export const db = postgres.createPool({
   host: env.DB_HOST,
   port: env.DB_PORT,
   user: env.DB_USER,
@@ -47,7 +47,7 @@ export async function closeDatabase(): Promise<void> {
 }
 ```
 
-**Sizing:** `connectionLimit × replicas` must stay well under MySQL's `max_connections`.
+**Sizing:** `connectionLimit × replicas` must stay well under Postgres's `max_connections`.
 20 per instance is a sane default; 50 (as in the reference) will exhaust a small managed
 instance at three replicas.
 
@@ -61,7 +61,7 @@ Shutdown: `closeDatabase()` on SIGTERM, after the HTTP server drains.
 
 ## 2. Schema conventions
 
-See [common/03-naming-and-conventions.md](../common/03-naming-and-conventions.md#4-database-naming-mysql)
+See [common/03-naming-and-conventions.md](../common/03-naming-and-conventions.md#4-database-naming-postgres)
 for names. Additional structural rules:
 
 | # | Rule |

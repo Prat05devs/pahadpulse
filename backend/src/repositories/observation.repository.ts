@@ -1,6 +1,7 @@
 import { err, ok, type Result } from 'neverthrow';
 
 import { db } from '../database/db.js';
+import { bulkValues, excludedSet } from '../database/sql.js';
 import {
   FORECASTS_TABLE,
   OBSERVATIONS_TABLE,
@@ -19,7 +20,12 @@ const logger = createLogger('@observation.repository');
 
 const STATION_SELECT = `
   SELECT s.id, s.source_id, s.source_station_code, s.type, s.name_en, s.name_hi,
-         s.area_id, s.lat, s.lng, s.river_name, s.is_active
+         s.area_id,
+         -- The column is a geography(Point); the model still wants a lat/lng pair, so it
+         -- is projected here rather than reshaping every consumer.
+         ST_Y(s.location::geometry) AS lat,
+         ST_X(s.location::geometry) AS lng,
+         s.river_name, s.is_active
     FROM ${STATIONS_TABLE} s
 `;
 
@@ -63,8 +69,8 @@ export interface IObservationRepository {
 class ObservationRepositoryImpl implements IObservationRepository {
   async listActiveStations(type: StationType): Promise<Result<Station[], RequestError>> {
     try {
-      const [rows] = await db.query<StationRow[]>(
-        `${STATION_SELECT} WHERE s.type = ? AND s.is_active = TRUE ORDER BY s.id`,
+      const { rows } = await db.query<StationRow>(
+        `${STATION_SELECT} WHERE s.type = $1 AND s.is_active = TRUE ORDER BY s.id`,
         [type],
       );
       return ok(rows.map(toStation));
@@ -79,8 +85,8 @@ class ObservationRepositoryImpl implements IObservationRepository {
     type: StationType,
   ): Promise<Result<Station, RequestError>> {
     try {
-      const [rows] = await db.query<StationRow[]>(
-        `${STATION_SELECT} WHERE s.area_id = ? AND s.type = ? AND s.is_active = TRUE
+      const { rows } = await db.query<StationRow>(
+        `${STATION_SELECT} WHERE s.area_id = $1 AND s.type = $2 AND s.is_active = TRUE
           ORDER BY s.id LIMIT 1`,
         [areaId, type],
       );
@@ -104,24 +110,25 @@ class ObservationRepositoryImpl implements IObservationRepository {
     if (inputs.length === 0) return ok(0);
 
     try {
-      const values = inputs.map((input) => [
-        input.stationId,
-        input.metric,
-        input.observedAt,
-        input.value,
-        input.unit,
-        input.sourceId,
-      ]);
+      const { text, params } = bulkValues(
+        inputs.map((input) => [
+          input.stationId,
+          input.metric,
+          input.observedAt,
+          input.value,
+          input.unit,
+          input.sourceId,
+        ]),
+      );
 
       await db.query(
         `INSERT INTO ${OBSERVATIONS_TABLE}
            (station_id, metric, observed_at, value, unit, source_id)
-         VALUES ?
-         AS new
-         ON DUPLICATE KEY UPDATE
-           value = new.value, unit = new.unit, source_id = new.source_id,
-           fetched_at = UTC_TIMESTAMP()`,
-        [values],
+         VALUES ${text}
+         ON CONFLICT (station_id, metric, observed_at) DO UPDATE SET
+           ${excludedSet(['value', 'unit', 'source_id'])},
+           fetched_at = (now() AT TIME ZONE 'utc')`,
+        params,
       );
 
       return ok(inputs.length);
@@ -146,11 +153,11 @@ class ObservationRepositoryImpl implements IObservationRepository {
     if (metrics.length === 0) return ok([]);
 
     try {
-      const [rows] = await db.query<ObservationRow[]>(
+      const { rows } = await db.query<ObservationRow>(
         `SELECT o.station_id, o.metric, o.observed_at, o.value, o.unit, o.source_id, o.fetched_at
            FROM ${OBSERVATIONS_TABLE} o
-          WHERE o.station_id = ?
-            AND o.metric IN (?)
+          WHERE o.station_id = $1
+            AND o.metric = ANY($2::metric[])
             AND o.observed_at = (
               SELECT MAX(i.observed_at)
                 FROM ${OBSERVATIONS_TABLE} i
@@ -178,56 +185,58 @@ class ObservationRepositoryImpl implements IObservationRepository {
     sourceId: number,
     inputs: readonly ForecastInput[],
   ): Promise<Result<number, RequestError>> {
-    const connection = await db.getConnection();
+    const client = await db.connect();
     try {
-      await connection.beginTransaction();
+      await client.query('BEGIN');
 
       // Scoped to this source: another source's forecasts for the same area are not this
       // run's to discard (HYD-5 allows several, ordered).
-      await connection.query(`DELETE FROM ${FORECASTS_TABLE} WHERE area_id = ? AND source_id = ?`, [
-        areaId,
-        sourceId,
-      ]);
+      await client.query(
+        `DELETE FROM ${FORECASTS_TABLE} WHERE area_id = $1 AND source_id = $2`,
+        [areaId, sourceId],
+      );
 
       if (inputs.length > 0) {
-        const values = inputs.map((input) => [
-          input.areaId,
-          input.metric,
-          input.validFrom,
-          input.validTo,
-          input.value,
-          input.unit,
-          input.sourceId,
-        ]);
-        await connection.query(
+        const { text, params } = bulkValues(
+          inputs.map((input) => [
+            input.areaId,
+            input.metric,
+            input.validFrom,
+            input.validTo,
+            input.value,
+            input.unit,
+            input.sourceId,
+          ]),
+        );
+        await client.query(
           `INSERT INTO ${FORECASTS_TABLE}
              (area_id, metric, valid_from, valid_to, value, unit, source_id)
-           VALUES ?`,
-          [values],
+           VALUES ${text}`,
+          params,
         );
       }
 
-      await connection.commit();
+      await client.query('COMMIT');
       return ok(inputs.length);
     } catch (error) {
-      await connection.rollback();
+      await client.query('ROLLBACK');
       logger.error('replaceForecasts failed', { areaId, sourceId, error });
       return err(ERRORS.DATABASE_ERROR);
     } finally {
-      connection.release();
+      client.release();
     }
   }
 
   async forecastForArea(areaId: number): Promise<Result<ForecastRow[], RequestError>> {
     try {
-      const [rows] = await db.query<ForecastRow[]>(
+      const { rows } = await db.query<ForecastRow>(
         `SELECT f.area_id, f.metric, f.valid_from, f.valid_to, f.value, f.unit,
                 f.source_id, f.fetched_at
            FROM ${FORECASTS_TABLE} f
-          WHERE f.area_id = ?
+          WHERE f.area_id = $1
             -- Past days are dropped at read time rather than deleted: the run that
             -- replaces them is the only thing that should write here.
-            AND f.valid_to >= UTC_TIMESTAMP()
+            AND f.valid_to >= (now() AT TIME ZONE 'utc')
           ORDER BY f.valid_from ASC, f.metric ASC`,
         [areaId],
       );

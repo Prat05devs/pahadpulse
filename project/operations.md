@@ -32,8 +32,8 @@ fix this section.
 ### Render API and ingestion, Vercel web
 
 The deployment configuration is in [`render.yaml`](../render.yaml). The selected database
-is MySQL 8.0 on a Render private service, with 2 GB RAM and a 10 GB disk mounted at
-`/var/lib/mysql`. MySQL, the API, and both cron jobs must share a workspace and the Singapore
+is PostgreSQL 16 on a Render private service, with 2 GB RAM and a 10 GB disk mounted at
+`/var/lib/postgres`. Postgres, the API, and both cron jobs must share a workspace and the Singapore
 region. Live provisioning has not been verified.
 
 1. Push the reviewed Blueprint and create or sync it in Render. Review compute and disk
@@ -44,19 +44,19 @@ region. Live provisioning has not been verified.
    localhost values can be used during creation and replaced after the URLs are assigned.
 3. On Vercel choose root directory `web`, use npm with `package-lock.json`, and set
    `NEXT_PUBLIC_API_URL=https://<render-host>/api` before building.
-4. Wait for MySQL initialization and successful API migrations before triggering ingestion.
-   If initial migrations fail because MySQL is starting, redeploy the API once MySQL is ready.
+4. Wait for Postgres initialization and successful API migrations before triggering ingestion.
+   If initial migrations fail because Postgres is starting, redeploy the API once Postgres is ready.
 5. Trigger both ingestion jobs and inspect their source results. Check `/health`, `/ready`,
    `/api/roads`, and `/api/map/districts`, then verify the live web app.
 
-`DB_SSL=false` applies to the Render private MySQL connection only; it does not traverse the
-public internet. The MySQL service has no public endpoint. External database connections
-should use `DB_SSL=true`, with `DB_SSL_CA` if needed. Do not expose this MySQL instance as a
+`DB_SSL=false` applies to the Render private Postgres connection only; it does not traverse the
+public internet. The Postgres service has no public endpoint. External database connections
+should use `DB_SSL=true`, with `DB_SSL_CA` if needed. Do not expose this Postgres instance as a
 web service. Ensure environment isolation rules permit the API and cron jobs to reach it.
 
 Switching an existing deployment to this Blueprint does not transfer external database data.
 The `MYSQL_*` initialization variables create users only on an empty disk. To rotate a
-password later, change it in MySQL and update the corresponding Render environment variable,
+password later, change it in Postgres and update the corresponding Render environment variable,
 then sync the Blueprint to propagate the value. Never delete the disk to reset credentials.
 
 Alerts run every 15 minutes. Reference ingestion (`--all`, which also includes alerts)
@@ -131,19 +131,19 @@ One entry per alert: what it means, how to confirm, how to mitigate.
 | Escalation | `<path>` |
 | Paging | `<tool>` |
 
-## MySQL backups and recovery
+## Postgres backups and recovery
 
 **Not yet configured:** automated logical backups, separate backup storage, retention,
 monitoring of backup failures, and a verified restore. Assign these before production use.
-Render disk snapshots are not a substitute for a consistent MySQL backup; see
-[Render's MySQL backup guidance](https://render.com/docs/deploy-mysql#backups).
+Render disk snapshots are not a substitute for a consistent Postgres backup; see
+[Render's Postgres backup guidance](https://render.com/docs/deploy-postgres#backups).
 
 - Run `mysqldump` using `--single-transaction --quick --no-tablespaces` for the application
   schema from a trusted host on the private network. Avoid schema changes during the dump.
   Supply credentials through a protected client option file, not command-line arguments.
 - Store encrypted backups outside the database service and its disk. Restrict access and
   configure retention with the selected storage provider.
-- Restore into a separate MySQL 8.0 instance and verify the migration ledger, row counts,
+- Restore into a separate PostgreSQL 16 instance and verify the migration ledger, row counts,
   API readiness, district geometry, and road data before any production cutover.
-- Before MySQL image upgrades, create and verify a logical backup. Test the upgrade on a
+- Before Postgres image upgrades, create and verify a logical backup. Test the upgrade on a
   restored copy; do not assume downgrading the image can reverse an on-disk format change.

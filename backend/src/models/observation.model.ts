@@ -1,5 +1,3 @@
-import type { RowDataPacket } from 'mysql2';
-
 import { AqiBand, Metric, StationType, WeatherCondition } from '../types/hydromet.js';
 import { toIsoUtc } from '../utils/datetime.js';
 import type { LocalisedText } from './alert.model.js';
@@ -8,7 +6,7 @@ export const STATIONS_TABLE = 'stations';
 export const OBSERVATIONS_TABLE = 'observations';
 export const FORECASTS_TABLE = 'forecasts';
 
-export interface StationRow extends RowDataPacket {
+export interface StationRow {
   id: number;
   source_id: number;
   source_station_code: string;
@@ -23,7 +21,7 @@ export interface StationRow extends RowDataPacket {
   is_active: number;
 }
 
-export interface ObservationRow extends RowDataPacket {
+export interface ObservationRow {
   station_id: number;
   metric: Metric;
   observed_at: string;
@@ -33,7 +31,7 @@ export interface ObservationRow extends RowDataPacket {
   fetched_at: string;
 }
 
-export interface ForecastRow extends RowDataPacket {
+export interface ForecastRow {
   area_id: number;
   metric: Metric;
   valid_from: string;

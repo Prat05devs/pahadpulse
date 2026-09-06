@@ -1,5 +1,3 @@
-import type { RowDataPacket } from 'mysql2';
-
 import type { AreaType, Division } from '../types/area.js';
 
 export const AREAS_TABLE = 'areas';
@@ -7,7 +5,7 @@ export const AREA_BOUNDARIES_TABLE = 'area_boundaries';
 export const MAP_LAYERS_TABLE = 'map_layers';
 
 /** Raw `areas` row. Column names, not domain names. */
-export interface AreaRow extends RowDataPacket {
+export interface AreaRow {
   id: number;
   type: AreaType;
   code: string;
@@ -26,7 +24,7 @@ export interface AreaRow extends RowDataPacket {
   updated_at: string;
 }
 
-export interface AreaBoundaryRow extends RowDataPacket {
+export interface AreaBoundaryRow {
   area_id: number;
   geojson: unknown;
   simplified_geojson: unknown;
@@ -35,7 +33,7 @@ export interface AreaBoundaryRow extends RowDataPacket {
   updated_at: string;
 }
 
-export interface MapLayerRow extends RowDataPacket {
+export interface MapLayerRow {
   id: number;
   layer_key: string;
   owner_module: string;
@@ -47,7 +45,7 @@ export interface MapLayerRow extends RowDataPacket {
 }
 
 /** Result of a bare `COUNT(*)` aggregate. */
-export interface AreaCountRow extends RowDataPacket {
+export interface AreaCountRow {
   total: number;
 }
 
@@ -55,7 +53,7 @@ export interface AreaCountRow extends RowDataPacket {
  * A district joined to its boundary, for the map's one-request district layer.
  * Only the simplified geometry is selected — the full-precision column is never sent (GEO-5).
  */
-export interface DistrictBoundaryRow extends RowDataPacket {
+export interface DistrictBoundaryRow {
   id: number;
   slug: string;
   name_en: string;
@@ -69,7 +67,7 @@ export interface DistrictBoundaryRow extends RowDataPacket {
 }
 
 /** The reference names an alert connector matches free text against. */
-export interface DistrictNameRow extends RowDataPacket {
+export interface DistrictNameRow {
   id: number;
   name_en: string;
   name_hi: string;

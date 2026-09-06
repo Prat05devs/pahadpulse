@@ -190,7 +190,7 @@ Then, in the controller:
 
 1. Verify **magic bytes** (`file-type`), not just the declared MIME.
 2. Generate a random filename; never use `file.originalname`.
-3. Upload to object storage; store only the resulting URL in MySQL.
+3. Upload to object storage; store only the resulting URL in Postgres.
 4. Strip EXIF from user-supplied images.
 5. Return `{ url }`.
 

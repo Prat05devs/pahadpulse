@@ -9,7 +9,7 @@ Backend-specific application of [common/04-error-model.md](../common/04-error-mo
 
 ```mermaid
 flowchart TD
-  A[mysql2 throws] --> B[repository catch]
+  A[pg throws] --> B[repository catch]
   B --> C["err(ERRORS.DATABASE_ERROR) + logger.error"]
   D[row not found] --> E["err(ERRORS.ARTICLE_NOT_FOUND)"]
   F[business rule violated] --> G["controller: err(ERRORS.X)"]

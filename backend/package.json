@@ -25,9 +25,11 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm test",
-    "ingest": "tsx scripts/ingest.ts"
+    "ingest": "tsx scripts/ingest.ts",
+    "db:rollup": "tsx scripts/rollup-observations.ts"
   },
   "dependencies": {
+    "@types/pg": "^8.23.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
@@ -35,9 +37,9 @@
     "express-rate-limit": "^7.5.0",
     "fast-xml-parser": "^5.11.1",
     "helmet": "^8.1.0",
-    "mysql2": "^3.12.0",
     "neverthrow": "^8.2.0",
     "node-cache": "^5.1.2",
+    "pg": "^8.23.0",
     "winston": "^3.17.0",
     "zod": "^4.0.0"
   },

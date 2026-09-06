@@ -12,9 +12,12 @@ function readSslConfig(overrides: Record<string, string> = {}) {
       'tsx',
       '--input-type=module',
       '-e',
-      `import mysql from 'mysql2/promise';
+      // `pg.Pool` is a constructor rather than mysql2's factory function, so the stub is a
+       // class. It must also carry `on`, because db.ts attaches an idle-error listener —
+       // a bare object would throw before the options could be read.
+       `import pg from 'pg';
        let options;
-       mysql.createPool = (value) => { options = value; return {}; };
+       pg.Pool = class { constructor(value) { options = value; } on() {} };
        await import('./src/database/db.ts');
        process.stdout.write(JSON.stringify(options.ssl ?? null));`,
     ],
@@ -34,16 +37,25 @@ function readSslConfig(overrides: Record<string, string> = {}) {
 }
 
 describe('database TLS configuration', () => {
-  it.each([{}, { DB_SSL: 'false' }])('supports local MySQL without TLS: %j', (config) => {
+  it.each([{}, { DB_SSL: 'false' }])('supports a local database without TLS: %j', (config) => {
     const result = readSslConfig(config);
     expect(result.status).toBe(0);
     expect(JSON.parse(result.stdout)).toBeNull();
   });
 
+  /*
+   * `rejectUnauthorized: true` alone is the full protection here, and the absence of
+   * mysql2's `verifyIdentity` is not a weakening.
+   *
+   * mysql2 needed a separate flag because its default `checkServerIdentity` did not verify
+   * the hostname. `pg` hands the socket to Node's TLS, whose default `checkServerIdentity`
+   * DOES verify it — so chain validation and hostname validation both apply, and adding a
+   * `verifyIdentity` key would simply be ignored.
+   */
   it('requires certificate and hostname verification when TLS is enabled', () => {
     const result = readSslConfig({ DB_SSL: 'true' });
     expect(result.status).toBe(0);
-    expect(JSON.parse(result.stdout)).toEqual({ rejectUnauthorized: true, verifyIdentity: true });
+    expect(JSON.parse(result.stdout)).toEqual({ rejectUnauthorized: true });
   });
 
   it.each(['first\\nsecond', 'first\nsecond'])('normalizes provider CA newlines: %j', (ca) => {
@@ -51,7 +63,6 @@ describe('database TLS configuration', () => {
     expect(result.status).toBe(0);
     expect(JSON.parse(result.stdout)).toEqual({
       rejectUnauthorized: true,
-      verifyIdentity: true,
       ca: 'first\nsecond',
     });
   });

@@ -27,7 +27,7 @@
 
 -- Census values. Vintage 2011-03-01 is the Census reference date.
 INSERT INTO indicator_values (indicator_key, area_id, vintage, value, source_id, fetched_at)
-SELECT v.indicator_key, a.id, v.vintage, v.value, s.id, UTC_TIMESTAMP()
+SELECT v.indicator_key, a.id, v.vintage, v.value, s.id, (now() AT TIME ZONE 'utc')
   FROM (
     SELECT 'population'    AS indicator_key, 'almora' AS slug, DATE '2011-03-01' AS vintage, 622506 AS value
     UNION ALL
@@ -109,12 +109,14 @@ SELECT v.indicator_key, a.id, v.vintage, v.value, s.id, UTC_TIMESTAMP()
   ) v
   JOIN areas a   ON a.slug = v.slug AND a.type = 'district'
   JOIN sources s ON s.source_key = 'census-2011'
-ON DUPLICATE KEY UPDATE
-  value = v.value, source_id = s.id, fetched_at = UTC_TIMESTAMP();
+ON CONFLICT (indicator_key, area_id, vintage) DO UPDATE SET
+  value = EXCLUDED.value,
+  source_id = EXCLUDED.source_id,
+  fetched_at = (now() AT TIME ZONE 'utc');
 
 -- Per capita income. Vintage is the last day of the financial year the figure describes.
 INSERT INTO indicator_values (indicator_key, area_id, vintage, value, source_id, fetched_at)
-SELECT 'per_capita_income', a.id, v.vintage, v.value, s.id, UTC_TIMESTAMP()
+SELECT 'per_capita_income', a.id, v.vintage, v.value, s.id, (now() AT TIME ZONE 'utc')
   FROM (
     SELECT 'almora' AS slug, DATE '2012-03-31' AS vintage, 55640 AS value
     UNION ALL
@@ -404,15 +406,18 @@ SELECT 'per_capita_income', a.id, v.vintage, v.value, s.id, UTC_TIMESTAMP()
   ) v
   JOIN areas a   ON a.slug = v.slug AND a.type = 'district'
   JOIN sources s ON s.source_key = 'uk-des-ddp'
-ON DUPLICATE KEY UPDATE
-  value = v.value, source_id = s.id, fetched_at = UTC_TIMESTAMP();
+ON CONFLICT (indicator_key, area_id, vintage) DO UPDATE SET
+  value = EXCLUDED.value,
+  source_id = EXCLUDED.source_id,
+  fetched_at = (now() AT TIME ZONE 'utc');
 
 -- The demo figures for these four indicators are now superseded by published data. They are
 -- removed rather than left in place: their 2015-2023 vintages are LATER than the Census
 -- vintage, so "latest value" would keep returning the synthetic number.
-DELETE iv FROM indicator_values iv
-  JOIN sources s ON s.id = iv.source_id
- WHERE s.source_key = 'pahad-pulse-demo-data'
+DELETE FROM indicator_values iv
+  USING sources s
+ WHERE s.id = iv.source_id
+   AND s.source_key = 'pahad-pulse-demo-data'
    AND iv.indicator_key IN ('population', 'literacy_rate', 'sex_ratio', 'per_capita_income');
 
 -- ROLLBACK

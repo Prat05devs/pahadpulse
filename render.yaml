@@ -1,32 +1,15 @@
-# PahadPulse on Render: private MySQL, API, and ingestion jobs in Singapore.
+# PahadPulse on Render: the API and the ingestion jobs. Singapore region.
 # The Next.js web app deploys separately to Vercel from web/.
-# MySQL is self-managed: arrange off-service logical backups and tested restores.
-# Generated passwords stay in Render; do not rotate MYSQL_* by editing env vars alone
-# after disk initialization. Existing MySQL users must be changed with SQL as well.
+#
+# The database is Supabase Postgres, not a service defined here. It is reached over the
+# public internet, so DB_SSL is mandatory and every DB_* value is a dashboard secret rather
+# than a `fromService` reference — Render cannot resolve a host it does not manage.
+#
+# Free-tier note: Supabase allows 60 direct connections in total. The pools below add up to
+# 10 (API) + 4 x 6 (crons) = 34 at absolute peak, which fits with room to spare. Raising any
+# of them without checking that sum is how a cron starts failing to connect.
 
 services:
-  - type: pserv
-    name: pahadpulse-mysql
-    runtime: image
-    image:
-      url: docker.io/library/mysql:8.0
-    plan: 1c-2g # 2 GB RAM for MySQL; review compute and disk charges before applying.
-    region: singapore
-    dockerCommand: mysqld --default-time-zone=+00:00
-    disk:
-      name: mysql-data
-      mountPath: /var/lib/mysql
-      sizeGB: 10
-    envVars:
-      - key: MYSQL_DATABASE
-        value: pahad_pulse
-      - key: MYSQL_USER
-        value: pahad
-      - key: MYSQL_PASSWORD
-        generateValue: true
-      - key: MYSQL_ROOT_PASSWORD
-        generateValue: true
-
   # ---------------------------------------------------------------------------------------
   # The API server.
   # ---------------------------------------------------------------------------------------
@@ -63,33 +46,21 @@ services:
       - key: SERVER_URL
         sync: false
 
-      # Resolve the private host and application credentials from the MySQL service.
+      # Supabase connection. All set in the dashboard; none can be derived here.
       - key: DB_HOST
-        fromService:
-          type: pserv
-          name: pahadpulse-mysql
-          property: host
+        sync: false
       - key: DB_PORT
-        value: '3306'
+        value: '5432'
       - key: DB_USER
-        fromService:
-          type: pserv
-          name: pahadpulse-mysql
-          envVarKey: MYSQL_USER
+        sync: false
       - key: DB_PASSWORD
-        fromService:
-          type: pserv
-          name: pahadpulse-mysql
-          envVarKey: MYSQL_PASSWORD
+        sync: false
       - key: DB_NAME
-        fromService:
-          type: pserv
-          name: pahadpulse-mysql
-          envVarKey: MYSQL_DATABASE
-      # Private-network MySQL only; no public endpoint. Public external DBs need verified TLS.
+        sync: false
+      # Mandatory: Supabase refuses unencrypted connections, and the pool verifies both the
+      # certificate chain and the hostname.
       - key: DB_SSL
-        value: 'false'
-      # Serverless would need this near 1; a long-lived container can hold a real pool.
+        value: 'true'
       - key: DB_POOL_LIMIT
         value: '10'
 
@@ -121,30 +92,17 @@ services:
       - key: LOG_LEVEL
         value: info
       - key: DB_HOST
-        fromService:
-          type: pserv
-          name: pahadpulse-mysql
-          property: host
+        sync: false
       - key: DB_PORT
-        value: '3306'
+        value: '5432'
       - key: DB_USER
-        fromService:
-          type: pserv
-          name: pahadpulse-mysql
-          envVarKey: MYSQL_USER
+        sync: false
       - key: DB_PASSWORD
-        fromService:
-          type: pserv
-          name: pahadpulse-mysql
-          envVarKey: MYSQL_PASSWORD
+        sync: false
       - key: DB_NAME
-        fromService:
-          type: pserv
-          name: pahadpulse-mysql
-          envVarKey: MYSQL_DATABASE
-      # Private-network MySQL only; no public endpoint. Public external DBs need verified TLS.
+        sync: false
       - key: DB_SSL
-        value: 'false'
+        value: 'true'
       # A cron container is short-lived and single-purpose; it needs very few connections.
       - key: DB_POOL_LIMIT
         value: '4'
@@ -212,6 +170,28 @@ services:
     region: singapore
     schedule: '20,50 * * * *'
     dockerCommand: npm run ingest -- gdacs
+    envVars: *ingest_env
+
+  # Observation rollup and retention, nightly.
+  #
+  # THIS IS WHAT KEEPS THE DATABASE INSIDE THE FREE TIER. `observations` grows at 169 rows
+  # an hour — 1.48 million a year, about 249 MB — and Supabase free allows 500 MB total.
+  # Without this job the database is comfortable for roughly eighteen months and then is
+  # not, with no graceful way down from a hard ceiling.
+  #
+  # It summarises days older than 90 into `observations_daily` and prunes the raw rows, in
+  # one transaction, aggregate-before-prune. Steady state is roughly 74 MB and flat.
+  #
+  # 02:40 UTC is 08:10 IST — after the night's hourly runs, before anyone is reading.
+  - type: cron
+    name: pahadpulse-rollup-observations
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: 0.5c-512mb
+    region: singapore
+    schedule: '40 2 * * *'
+    dockerCommand: npm run db:rollup
     envVars: *ingest_env
 
   # Reference geography and the highway network. Weekly: OSM boundaries and highway numbers

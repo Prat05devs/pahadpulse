@@ -180,7 +180,7 @@ There is no hook for traffic. It is a map layer, not application data.
 
 ### `<TBD>` — Two data paths: stored network, live-only traffic
 
-**Context:** the sourcing strategy is scheduled ingestion into MySQL, but Google Maps Platform
+**Context:** the sourcing strategy is scheduled ingestion into Postgres, but Google Maps Platform
 terms permit only limited caching of their content, and the product needs Google's live traffic.
 **Decision:** road identity, geometry and closures come from OSM, NHAI and PWD, and are stored
 and served by our API. Google's traffic is rendered client-side via the Maps JavaScript API

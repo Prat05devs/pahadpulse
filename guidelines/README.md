@@ -26,7 +26,7 @@ Read `common/` first. Then read the folder for the layer you are touching.
 
 ---
 
-## backend/ — Express + TypeScript + MySQL
+## backend/ — Express + TypeScript + Postgres
 
 | File | Covers |
 |---|---|

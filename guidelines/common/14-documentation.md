@@ -97,7 +97,7 @@ Follow `03-naming-and-conventions.md` §8. In short:
 Good:
 
 ```ts
-// MySQL FULLTEXT requires a minimum token length of 4 by default (ft_min_word_len),
+// Postgres FULLTEXT requires a minimum token length of 4 by default (ft_min_word_len),
 // so short search terms fall back to LIKE. See project/modules/articles.md §8.
 ```
 
@@ -133,7 +133,7 @@ Figma/Miro board as the only copy.
 
 ```mermaid
 flowchart LR
-  Client --> Router --> Controller --> Repository --> MySQL
+  Client --> Router --> Controller --> Repository --> Postgres
   Router -.-> Middleware
   Controller -.-> Service
 ```

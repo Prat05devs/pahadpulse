@@ -20,7 +20,7 @@ flowchart LR
     Svc[Services]
   end
 
-  API --> DB[(MySQL 8)]
+  API --> DB[(PostgreSQL 16)]
   API --> Blob[(Object storage)]
   API --> SMTP[(SMTP)]
   API --> Cache[(In-process cache / Redis)]
@@ -43,7 +43,7 @@ flowchart TD
   C --> D[Controller: use case, authorization, orchestration]
   D --> E[Repository: SQL]
   D --> F[Service: SMTP, blob, 3rd party]
-  E --> G[(MySQL)]
+  E --> G[(Postgres)]
   D -->|Result&lt;T, RequestError&gt;| C
   C -->|match| H[successResponse] & I[next error]
   I --> J[errorHandler: single response builder]
@@ -114,7 +114,7 @@ sequenceDiagram
   participant R as Route
   participant C as Controller
   participant Repo as Repository
-  participant DB as MySQL
+  participant DB as Postgres
 
   R->>C: getApprovedArticleById(42)
   C->>Repo: findById(42)
@@ -154,7 +154,7 @@ throws — i.e. inside a repository or service method.
 
 ## 6. Persistence design
 
-- **MySQL 8**, accessed with `mysql2/promise`, raw parameterised SQL. No ORM.
+- **PostgreSQL 16**, accessed with `pg/promise`, raw parameterised SQL. No ORM.
 - One connection **pool**, created once in `database/db.ts`, closed on shutdown.
 - Row types are `interface X extends RowDataPacket` in `models/`.
 - Reads use cursor pagination (`WHERE id < ? ORDER BY id DESC LIMIT ?`) — see
@@ -212,7 +212,7 @@ Rules:
 | Slow work that shouldn't block a response (image processing, bulk email) | Job queue (BullMQ + Redis) | yes |
 | Scheduled work (publish scheduled articles) | Cron container running a `scripts/` entry point | no |
 | Multi-instance cache/session | Redis | yes |
-| Full-text at scale beyond MySQL `FULLTEXT` | Search service | yes |
+| Full-text at scale beyond Postgres `FULLTEXT` | Search service | yes |
 | Real-time updates | SSE first; WebSockets only if bidirectional | yes |
 
 Default answer is "not yet". Add infrastructure when a real requirement demands it, not
