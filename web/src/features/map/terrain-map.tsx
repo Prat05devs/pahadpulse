@@ -139,7 +139,16 @@ export function TerrainMap({
 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [terrainOn, setTerrainOn] = useState(true);
+  /**
+   * 2D by default; 3D is opt-in.
+   *
+   * The tilted terrain view is the more impressive first impression, but it is the wrong
+   * default for the job: a pitched map makes northern districts recede and read as smaller
+   * than southern ones, and anyone comparing districts or reading an alert extent is doing
+   * geometry that a flat map answers correctly and a tilted one distorts. Relief is the
+   * right tool for a specific question, so it is a button rather than the starting state.
+   */
+  const [terrainOn, setTerrainOn] = useState(false);
   const [alertsOn, setAlertsOn] = useState(true);
   const [selected, setSelected] = useState<SelectedAlert | null>(null);
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
@@ -180,8 +189,9 @@ export function TerrainMap({
         style: BASEMAP_STYLE as unknown as StyleSpecification,
         center: UTTARAKHAND_CENTER,
         zoom: DEFAULT_VIEW.zoom,
-        pitch: DEFAULT_VIEW.pitch,
-        bearing: DEFAULT_VIEW.bearing,
+        // Flat and north-up on load, to match the 2D default above.
+        pitch: 0,
+        bearing: 0,
         // Keeps the map on Uttarakhand. This is a state portal; panning to Kerala is not a
         // feature, and the terrain tiles are only paid attention to over this extent.
         maxBounds: [
@@ -224,7 +234,11 @@ export function TerrainMap({
         attribution: 'Terrain: Mapzen / AWS Terrain Tiles',
       });
 
-      map.setTerrain({ source: TERRAIN_SOURCE, exaggeration: TERRAIN_EXAGGERATION });
+      // Not attached on load: the terrain effect below owns this, and attaching here would
+      // briefly render relief before the 2D default is applied.
+      if (terrainOn) {
+        map.setTerrain({ source: TERRAIN_SOURCE, exaggeration: TERRAIN_EXAGGERATION });
+      }
 
       map.addLayer({
         id: 'pp-hillshade',
@@ -640,10 +654,10 @@ export function TerrainMap({
         // vector tiles over SH12 showed NH refs from z8 but no SH ref until much closer. A
         // short route therefore has to be framed hard before it renders at all; a long one
         // is still limited by its own extent, so this cap only bites on the short ones.
-        { padding: 40, maxZoom: 15, pitch: 45, duration: 1100 }
+        { padding: 40, maxZoom: 15, pitch: terrainOn ? 45 : 0, duration: 1100 }
       );
     }
-  }, [ready, highlightRoads, selectedRoadRef, selectedRoadBounds]);
+  }, [ready, highlightRoads, selectedRoadRef, selectedRoadBounds, terrainOn]);
 
   /** Frame the map on the active warnings, for the view whose subject is the warnings. */
   useEffect(() => {
@@ -665,9 +679,9 @@ export function TerrainMap({
     }
 
     if (!bounds.isEmpty()) {
-      map.fitBounds(bounds, { padding: 80, maxZoom: 9.5, pitch: 45, duration: 1200 });
+      map.fitBounds(bounds, { padding: 80, maxZoom: 9.5, pitch: terrainOn ? 45 : 0, duration: 1200 });
     }
-  }, [ready, fitToAlerts, alerts]);
+  }, [ready, fitToAlerts, alerts, terrainOn]);
 
   /** Push fresh alert data without rebuilding the map or moving the camera. */
   useEffect(() => {
@@ -690,8 +704,8 @@ export function TerrainMap({
     if (map.getLayer('pp-hillshade') !== undefined) {
       map.setLayoutProperty('pp-hillshade', 'visibility', terrainOn ? 'visible' : 'none');
     }
-    if (!terrainOn) map.easeTo({ pitch: 0, duration: 400 });
-    else map.easeTo({ pitch: DEFAULT_VIEW.pitch, duration: 400 });
+    if (!terrainOn) map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+    else map.easeTo({ pitch: DEFAULT_VIEW.pitch, bearing: DEFAULT_VIEW.bearing, duration: 400 });
   }, [terrainOn, ready]);
 
   useEffect(() => {
@@ -730,7 +744,7 @@ export function TerrainMap({
 
       {!ready && (
         <div className="absolute inset-0 flex items-center justify-center bg-surface/80">
-          <p className="text-sm text-muted-foreground">Loading terrain…</p>
+          <p className="text-sm text-muted-foreground">Loading map…</p>
         </div>
       )}
 
@@ -745,7 +759,7 @@ export function TerrainMap({
           aria-pressed={terrainOn}
           className="rounded-md border border-border bg-surface/95 px-3 py-1.5 text-xs font-medium shadow-card backdrop-blur transition hover:bg-surface-hover"
         >
-          {terrainOn ? '3D terrain on' : '3D terrain off'}
+          {terrainOn ? 'Switch to 2D' : 'Switch to 3D'}
         </button>
         <button
           type="button"

@@ -83,7 +83,18 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  /**
+   * The rail starts collapsed and expands on hover.
+   *
+   * `isCollapsed` is the user's stated preference; `isPeeking` is the transient hover. The
+   * two are kept apart so hovering never overwrites a deliberate choice — someone who
+   * expands the rail keeps it expanded when the pointer leaves.
+   */
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isPeeking, setIsPeeking] = useState(false);
+
+  // What the rail actually shows. Hover only ever expands, never collapses.
+  const showLabels = !isCollapsed || isPeeking;
 
   /**
    * The collapsed state is a per-viewer convenience, so it lives in localStorage rather than
@@ -167,19 +178,48 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         />
       ) : null}
 
-      <aside
+      {/* Reserves the rail's footprint so the page never reflows when the rail expands on
+          hover. Without it, moving the pointer over the navigation would resize the map and
+          shuffle every card beside it — the exact jitter that makes hover-to-expand feel
+          broken. The spacer tracks the PREFERENCE, the rail tracks the hover. */}
+      <div
+        aria-hidden="true"
         className={clsx(
-          'fixed inset-y-0 left-0 z-50 flex w-rail flex-col overflow-y-auto border-r border-border bg-bg-dark text-text-light transition-[transform,width] duration-200 ease-out lg:static lg:z-auto lg:translate-x-0',
+          'hidden lg:block lg:shrink-0 lg:transition-[width] lg:duration-200',
+          isCollapsed ? 'lg:w-[4.75rem]' : 'lg:w-rail'
+        )}
+      />
+
+      <aside
+        onMouseEnter={() => {
+          setIsPeeking(true);
+        }}
+        onMouseLeave={() => {
+          setIsPeeking(false);
+        }}
+        // Keyboard users get the same reveal: tabbing into the nav expands it.
+        onFocusCapture={() => {
+          setIsPeeking(true);
+        }}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setIsPeeking(false);
+          }
+        }}
+        className={clsx(
+          'fixed inset-y-0 left-0 z-50 flex w-rail flex-col overflow-y-auto border-r border-border bg-bg-dark text-text-light transition-[transform,width] duration-200 ease-out lg:z-40 lg:translate-x-0',
           isMenuOpen ? 'translate-x-0' : '-translate-x-full',
           // Collapsing is desktop-only: on mobile the rail is an overlay that is either
           // open or shut, so an icon-only width there would be a third state with no use.
-          isCollapsed ? 'lg:w-[4.75rem]' : 'lg:w-rail'
+          showLabels ? 'lg:w-rail' : 'lg:w-[4.75rem]',
+          // Expanded-on-hover overlays the content rather than displacing it.
+          isPeeking && isCollapsed ? 'lg:shadow-2xl' : ''
         )}
       >
         <div
           className={clsx(
             'flex min-h-24 items-center border-b border-border',
-            isCollapsed ? 'lg:justify-center lg:px-0' : 'px-5'
+            showLabels ? 'px-5' : 'lg:justify-center lg:px-0'
           )}
         >
           <Link
@@ -190,7 +230,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-info-soft text-info">
               <Mountain className="size-5" aria-hidden="true" />
             </span>
-            <span className={clsx(isCollapsed && 'lg:hidden')}>
+            <span className={clsx(!showLabels && 'lg:hidden')}>
               <span className="block font-display text-xl font-bold leading-none">Pahad Pulse</span>
               <span className="mt-1.5 block text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
                 Uttarakhand public data
@@ -219,7 +259,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           title={isCollapsed ? 'Expand navigation' : 'Collapse navigation'}
           className={clsx(
             'hidden min-h-11 items-center gap-3 border-b border-border text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-surface/65 hover:text-text-light focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent lg:flex',
-            isCollapsed ? 'lg:justify-center lg:px-0' : 'px-5'
+            showLabels ? 'px-5' : 'lg:justify-center lg:px-0'
           )}
         >
           <MorphIcon
@@ -229,7 +269,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             spring={NAV_MORPH}
             reducedMotion="user"
           />
-          <span className={clsx('py-3', isCollapsed && 'lg:hidden')}>Collapse</span>
+          <span className={clsx('py-3', !showLabels && 'lg:hidden')}>Collapse</span>
         </button>
 
         <nav id="primary-navigation" aria-label="Primary" className="flex-1 space-y-5 px-3 py-5">
@@ -240,7 +280,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <p
                 className={clsx(
                   'mb-1.5 px-3 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground/75',
-                  isCollapsed && 'lg:sr-only'
+                  !showLabels && 'lg:sr-only'
                 )}
               >
                 {group.label}
@@ -263,7 +303,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       aria-label={isCollapsed ? item.label : undefined}
                       className={clsx(
                         'group flex min-h-11 items-center gap-3 rounded-lg text-sm font-medium transition-colors duration-150 active:scale-[0.98]',
-                        isCollapsed ? 'px-3 lg:justify-center lg:px-0' : 'px-3',
+                        showLabels ? 'px-3' : 'px-3 lg:justify-center lg:px-0',
                         isActive
                           ? 'bg-surface text-text-light shadow-card'
                           : 'text-muted-foreground hover:bg-surface/65 hover:text-text-light'
@@ -279,12 +319,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         strokeWidth={1.8}
                         aria-hidden="true"
                       />
-                      <span className={clsx(isCollapsed && 'lg:hidden')}>{item.label}</span>
+                      <span className={clsx(!showLabels && 'lg:hidden')}>{item.label}</span>
                       {isActive ? (
                         <span
                           className={clsx(
                             'ml-auto size-1.5 rounded-full bg-accent',
-                            isCollapsed && 'lg:hidden'
+                            !showLabels && 'lg:hidden'
                           )}
                           aria-hidden="true"
                         />
@@ -297,17 +337,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        <div className={clsx('border-t border-border py-4', isCollapsed ? 'lg:px-0' : 'px-5')}>
+        <div className={clsx('border-t border-border py-4', showLabels ? 'px-5' : 'lg:px-0')}>
           <div
             className={clsx(
               'flex items-center gap-2 text-xs text-muted-foreground',
-              isCollapsed && 'lg:justify-center'
+              !showLabels && 'lg:justify-center'
             )}
             title={isCollapsed ? 'Public data portal · v0.1' : undefined}
           >
             <Gauge className="size-3.5 shrink-0 text-success" aria-hidden="true" />
-            <span className={clsx(isCollapsed && 'lg:hidden')}>Public data portal</span>
-            <span className={clsx('ml-auto font-mono text-[0.65rem]', isCollapsed && 'lg:hidden')}>
+            <span className={clsx(!showLabels && 'lg:hidden')}>Public data portal</span>
+            <span className={clsx('ml-auto font-mono text-[0.65rem]', !showLabels && 'lg:hidden')}>
               v0.1
             </span>
           </div>

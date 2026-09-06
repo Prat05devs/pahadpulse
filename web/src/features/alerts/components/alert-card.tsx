@@ -5,6 +5,8 @@ import type { Alert } from '../schemas';
 
 interface AlertCardProps {
   alert: Alert;
+  /** Position in the list, for the entrance stagger. */
+  index?: number;
 }
 
 // `unknown` is a real CAP severity, not a gap: a source may issue a warning without
@@ -32,7 +34,7 @@ const STATUS_BADGES = {
   superseded: 'bg-gray-100 text-gray-800',
 };
 
-export function AlertCard({ alert }: AlertCardProps) {
+export function AlertCard({ alert, index = 0 }: AlertCardProps) {
   const colorClass = SEVERITY_COLORS[alert.severity];
   const statusClass = STATUS_BADGES[alert.status];
   const icon = TYPE_ICONS[alert.type];
@@ -43,7 +45,11 @@ export function AlertCard({ alert }: AlertCardProps) {
   const isExpired = expiresDate && expiresDate <= now;
 
   return (
-    <div className={`border rounded-lg p-4 ${colorClass}`}>
+    <div
+      className={`pp-rise border rounded-lg p-4 ${colorClass}`}
+      // Capped so a long warning list does not take three seconds to finish arriving.
+      style={{ '--pp-delay': `${Math.min(index * 50, 400)}ms` } as React.CSSProperties}
+    >
       <div className="flex items-start gap-3 mb-2">
         <span className="text-2xl">{icon}</span>
         <div className="flex-1">

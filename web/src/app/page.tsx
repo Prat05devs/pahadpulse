@@ -2,10 +2,11 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { AlertCircle, Database } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
-import { TerrainMap, fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
+import { fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
 import {
   DistrictOverviewGrid,
   LiveCounters,
+  MapStage,
   QuickAccessGrid,
   SourceStatusPanel,
   StateOverviewCard,
@@ -72,7 +73,7 @@ export default async function HomePage() {
   return (
     <DashboardLayout>
       <div className="min-h-full">
-        <header className="border-b border-border bg-surface">
+        <header className="border-b border-border bg-surface lg:hidden">
           <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-6 lg:px-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
@@ -89,7 +90,7 @@ export default async function HomePage() {
               </div>
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-success" aria-hidden="true" /> Public
+                  <span className="pp-live-dot size-2 rounded-full bg-success" aria-hidden="true" /> Public
                   access
                 </span>
                 <span className="flex items-center gap-2">
@@ -100,10 +101,10 @@ export default async function HomePage() {
           </div>
         </header>
 
-        <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 sm:px-6 md:space-y-12 md:py-8 lg:px-8">
+        <div className="lg:relative">
           {!counters || !overview || !districts ? (
             <section
-              className="surface-card flex flex-col items-start gap-4 p-6 sm:flex-row"
+              className="surface-card mx-4 my-6 flex flex-col items-start gap-4 p-6 sm:mx-6 sm:flex-row lg:mx-8"
               role="alert"
             >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-danger-soft text-danger">
@@ -119,44 +120,38 @@ export default async function HomePage() {
             </section>
           ) : (
             <>
-              {/* The map leads, with the live tally beside it and the state profile beneath.
-                  The arrangement is the argument: these figures describe the place the map is
-                  showing, so they sit around it rather than in a separate section above. */}
-              <section aria-label="Uttarakhand overview map and live figures">
-                {/* The map speaks for itself, so it carries no heading. The failure notice
-                    stays: silence is fine when the map is there, never when it is missing. */}
-                {mapError !== null && (
-                  <p className="mb-3 text-xs text-muted-foreground">
-                    Map data unavailable — {mapError}
-                  </p>
-                )}
+              {/* The map is the page on desktop: full-bleed, with the figures floating in
+                  its corners. Below `lg` it returns to normal flow with the cards stacked
+                  beneath it — see MapStage for why that inversion is not optional. */}
+              <MapStage
+                districts={districtFeatures}
+                alerts={alertFeatures}
+                counters={counters}
+                overview={overview}
+                mapError={mapError}
+              />
 
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                  <div className="lg:col-span-9">
-                    <TerrainMap
-                      districts={districtFeatures}
-                      alerts={alertFeatures}
-                      className="h-[460px] sm:h-[540px] lg:h-[640px]"
-                    />
-                  </div>
-                  {/* The rail matches the map's height on desktop so the two read as one
-                      object, and falls back to a 2-up grid under it on narrow screens. */}
-                  <div className="lg:col-span-3 lg:h-[640px]">
-                    <LiveCounters data={counters} orientation="rail" />
-                  </div>
-                </div>
+              {/* Everything below scrolls under the map. The floating cards are a summary,
+                  not a replacement: the full figures with their sources stay here, because
+                  a card with room for three numbers cannot carry provenance for six. */}
+              <div className="mx-auto max-w-7xl space-y-10 px-4 pb-6 pt-8 sm:px-6 md:space-y-12 lg:px-8">
+                <LiveCounters data={counters} />
 
-                <div className="mt-4">
+                <div className="pp-rise" style={{ '--pp-delay': '120ms' } as React.CSSProperties}>
                   <StateOverviewCard data={overview} />
                 </div>
-              </section>
 
-              <QuickAccessGrid />
-              <DistrictOverviewGrid districts={districts} />
+                <div className="pp-rise" style={{ '--pp-delay': '200ms' } as React.CSSProperties}>
+                  <QuickAccessGrid />
+                </div>
+                <DistrictOverviewGrid districts={districts} />
 
-              {/* Connection health sits after the data it describes: it explains where the
-                  figures above came from, so leading with it buried the dashboard. */}
-              <SourceStatusPanel status={imdStatus} error={imdStatusError} />
+                {/* Connection health sits after the data it describes: it explains where the
+                    figures above came from, so leading with it buried the dashboard. */}
+                <div className="pp-rise" style={{ '--pp-delay': '280ms' } as React.CSSProperties}>
+                  <SourceStatusPanel status={imdStatus} error={imdStatusError} />
+                </div>
+              </div>
             </>
           )}
         </div>

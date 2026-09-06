@@ -45,11 +45,12 @@ export default async function DistrictsListPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {districts.map((district) => (
+              {districts.map((district, index) => (
                 <a
                   key={district.id}
                   href={`/districts/${district.slug}`}
-                  className="bg-surface border border-border rounded-lg p-6 hover:border-accent hover:shadow-md transition-all hover:bg-surface-hover"
+                  className="pp-rise interactive-card bg-surface border border-border rounded-lg p-5 sm:p-6 hover:border-accent hover:shadow-md hover:bg-surface-hover"
+                  style={{ '--pp-delay': `${Math.min(index * 40, 480)}ms` } as React.CSSProperties}
                 >
                   <h2 className="font-bold text-lg mb-1 hover:text-accent">{district.name.en}</h2>
                   <p className="text-sm text-text-light/60 mb-4">{district.name.hi}</p>

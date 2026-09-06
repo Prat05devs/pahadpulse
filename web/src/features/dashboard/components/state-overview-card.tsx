@@ -129,10 +129,14 @@ export function StateOverviewCard({ data, loading }: StateOverviewCardProps) {
         </div>
       ) : (
         <dl className="grid grid-cols-2 gap-px bg-border sm:grid-cols-3">
-          {items.map((item) => {
+          {items.map((item, index) => {
             const Icon = item.icon;
             return (
-              <div key={item.label} className="bg-surface p-5 sm:p-6">
+              <div
+                key={item.label}
+                className="pp-rise bg-surface p-5 sm:p-6"
+                style={{ '--pp-delay': `${index * 55}ms` } as React.CSSProperties}
+              >
                 <Icon className="size-5 text-accent" strokeWidth={1.8} aria-hidden="true" />
                 <dd className="mt-4 font-mono text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">
                   {item.value}

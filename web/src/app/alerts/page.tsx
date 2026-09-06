@@ -139,8 +139,8 @@ export default async function AlertsPage() {
               </p>
 
               <div className="space-y-3">
-                {alerts.map((alert) => (
-                  <AlertCard key={alert.id} alert={alert} />
+                {alerts.map((alert, index) => (
+                  <AlertCard key={alert.id} alert={alert} index={index} />
                 ))}
               </div>
 

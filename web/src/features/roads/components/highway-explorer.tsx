@@ -28,7 +28,7 @@ function HighwayList({
   onSelect: (route: RoadRoute) => void;
 }) {
   return (
-    <section className="surface-card p-5">
+    <section className="surface-card pp-rise p-4 sm:p-5">
       <div className="mb-4 flex items-baseline justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
@@ -50,10 +50,16 @@ function HighwayList({
         <p className="text-sm text-muted-foreground">No routes recorded.</p>
       ) : (
         <ul className="flex flex-wrap gap-2">
-          {routes.map((route) => {
+          {routes.map((route, index) => {
             const isSelected = selectedRef === route.ref;
             return (
-              <li key={route.ref}>
+              // Staggered fade rather than rise: these are small chips in a wrap-flow, and
+              // vertical movement across several rows reads as jitter rather than order.
+              <li
+                key={route.ref}
+                className="pp-fade"
+                style={{ '--pp-delay': `${Math.min(index * 18, 420)}ms` } as React.CSSProperties}
+              >
                 <button
                   type="button"
                   onClick={() => {

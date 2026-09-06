@@ -88,15 +88,18 @@ export function LiveCounters({ data, loading, orientation = 'grid' }: LiveCounte
             : 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'
         }
       >
-        {counters.map((counter) => {
+        {counters.map((counter, index) => {
           const Icon = counter.icon;
 
           return (
             <article
               key={counter.label}
-              className={`surface-card overflow-hidden ${
+              // Staggered so the four figures land in order rather than all at once. These
+              // are the numbers an officer reads first, so they enter first and fastest.
+              className={`surface-card pp-rise overflow-hidden ${
                 isRail ? 'flex flex-col justify-center p-3.5' : 'p-5'
               }`}
+              style={{ '--pp-delay': `${index * 60}ms` } as React.CSSProperties}
             >
               {loading ? (
                 <div className="animate-pulse space-y-3" aria-label={`Loading ${counter.label}`}>

@@ -1,0 +1,210 @@
+import React from 'react';
+import Link from 'next/link';
+import { AlertTriangle, ArrowRight, CloudSun, Landmark } from 'lucide-react';
+import { TerrainMap } from '@/features/map';
+import type { AlertCollection, DistrictCollection } from '@/features/map/schemas';
+import type { LiveCounters as LiveCountersData, StateOverview } from '../types';
+
+interface MapStageProps {
+  districts: DistrictCollection | null;
+  alerts: AlertCollection | null;
+  counters: LiveCountersData;
+  overview: StateOverview;
+  mapError: string | null;
+}
+
+/**
+ * The floating cards' background.
+ *
+ * `/95` rather than a heavy glass effect on purpose. These sit over hill terrain that runs
+ * from near-white snow to dark forest, and a translucent card is legible over one and not
+ * the other. The audience reads this projected in bright rooms, so contrast wins over the
+ * frosted look — the blur is there only to soften the seam, not to show the map through.
+ */
+const FLOATING_CARD =
+  'surface-card bg-surface/95 backdrop-blur-sm shadow-card lg:pointer-events-auto';
+
+function Figure({ value, label, year }: { value: string; label: string; year?: string | null }) {
+  return (
+    <div>
+      <p className="font-mono text-lg font-semibold tabular-nums sm:text-xl">{value}</p>
+      <p className="text-[0.7rem] leading-tight text-muted-foreground">{label}</p>
+      {year != null && <p className="text-[0.62rem] text-muted-foreground/60">{year}</p>}
+    </div>
+  );
+}
+
+function year(figure: { vintage: string | null }): string | null {
+  if (figure.vintage === null) return null;
+  const value = figure.vintage.slice(0, 4);
+  return /^\d{4}$/.test(value) ? value : null;
+}
+
+function format(figure: { value: number | null }, fn: (n: number) => string): string {
+  return figure.value === null ? '—' : fn(figure.value);
+}
+
+/**
+ * The home dashboard's map stage.
+ *
+ * On large screens the map fills the viewport and the cards float over its corners. Below
+ * `lg` that inverts completely and everything returns to normal document flow: the map
+ * becomes a fixed-height block and the cards stack underneath it.
+ *
+ * That split is not a nicety. Floating translucent panels over a pannable map on a phone
+ * means the cards cover most of the map AND steal the drag gestures needed to move it —
+ * both halves become unusable at once. Most people reaching a state data portal are on a
+ * phone, so the mobile layout is the one that has to be right.
+ *
+ * `pointer-events-none` on the overlay wrappers with `pointer-events-auto` on the cards
+ * themselves keeps the map draggable in the gaps between them.
+ */
+export function MapStage({ districts, alerts, counters, overview, mapError }: MapStageProps) {
+  const alertCount = counters.activeAlerts;
+
+  return (
+    <section
+      aria-label="Uttarakhand overview map and live figures"
+      // Fills the viewport on desktop, where `main` is the h-screen scroll container, so
+      // the map is the page and everything else scrolls in beneath it.
+      className="relative lg:h-screen"
+    >
+      {mapError !== null && (
+        <p className="mb-3 text-xs text-muted-foreground">Map data unavailable — {mapError}</p>
+      )}
+
+      {/* The map. Absolute only from lg up, so mobile keeps it in flow. */}
+      <div className="lg:absolute lg:inset-0">
+        <TerrainMap
+          districts={districts}
+          alerts={alerts}
+          className="h-[380px] rounded-lg sm:h-[460px] lg:h-full lg:rounded-none"
+        />
+      </div>
+
+      {/* Top-left: the headline figures, over the map on desktop. */}
+      <div className="mt-4 lg:pointer-events-none lg:absolute lg:inset-x-0 lg:top-0 lg:mt-0 lg:p-5">
+        <div className={`${FLOATING_CARD} pp-rise p-4 lg:max-w-md`}>
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+            Uttarakhand overview
+          </p>
+          {/* Not an h1: the page header already carries one. Both are in the DOM at all
+              times (each is merely hidden at the other's breakpoint), so a second h1 here
+              would have a screen reader announce two page titles. */}
+          <p className="mt-1 font-display text-xl font-semibold tracking-tight text-text-light lg:text-2xl">
+            Uttarakhand, at a glance
+          </p>
+          <div className="mt-3 grid grid-cols-4 gap-3">
+            <Figure
+              value={format(overview.population, (v) => `${(v / 1_000_000).toFixed(1)}M`)}
+              label="Population"
+              year={year(overview.population)}
+            />
+            <Figure
+              value={format(overview.districts, (v) => v.toString())}
+              label="Districts"
+            />
+            <Figure value={alertCount.toString()} label="Active alerts" />
+            <Figure
+              value={format(overview.forestCoverage, (v) => `${v.toFixed(0)}%`)}
+              label="Forest cover"
+              year={year(overview.forestCoverage)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom: the three things worth acting on. */}
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:pointer-events-none lg:absolute lg:inset-x-0 lg:bottom-0 lg:mt-0 lg:grid-cols-3 lg:gap-5 lg:p-5">
+        {/* Alerts first, and styled to stand out when there are any. This is an emergency
+            -facing product; the warning card is the one that must not blend in. */}
+        <article
+          className={`${FLOATING_CARD} pp-rise p-4`}
+          style={{ '--pp-delay': '80ms' } as React.CSSProperties}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <AlertTriangle
+                className={`size-4 ${alertCount > 0 ? 'text-danger' : 'text-muted-foreground'}`}
+                strokeWidth={2}
+                aria-hidden="true"
+              />
+              Live alerts
+            </h2>
+            <Link
+              href="/alerts"
+              className="flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+            >
+              See all <ArrowRight className="size-3" aria-hidden="true" />
+            </Link>
+          </div>
+          <p className="mt-3 font-mono text-3xl font-semibold tabular-nums">{alertCount}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {alertCount === 0
+              ? 'No warnings currently in force across the state.'
+              : `Warning${alertCount === 1 ? '' : 's'} in force. Shaded areas on the map show the districts affected.`}
+          </p>
+        </article>
+
+        <article
+          className={`${FLOATING_CARD} pp-rise p-4`}
+          style={{ '--pp-delay': '150ms' } as React.CSSProperties}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <CloudSun className="size-4 text-accent" strokeWidth={2} aria-hidden="true" />
+              Weather &amp; air
+            </h2>
+            <Link
+              href="/hydromet"
+              className="flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+            >
+              See all <ArrowRight className="size-3" aria-hidden="true" />
+            </Link>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-text-light">
+            Current conditions and air quality at every district headquarters, updated hourly.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Source named on every figure.
+          </p>
+        </article>
+
+        <article
+          className={`${FLOATING_CARD} pp-rise p-4`}
+          style={{ '--pp-delay': '220ms' } as React.CSSProperties}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <Landmark className="size-4 text-accent" strokeWidth={2} aria-hidden="true" />
+              State profile
+            </h2>
+            <Link
+              href="/districts"
+              className="flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+            >
+              Districts <ArrowRight className="size-3" aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <Figure
+              value={format(overview.areaKmSq, (v) => v.toLocaleString('en-IN'))}
+              label="km² area"
+              year={year(overview.areaKmSq)}
+            />
+            <Figure
+              value={format(overview.literacy, (v) => `${v.toFixed(1)}%`)}
+              label="Literacy"
+              year={year(overview.literacy)}
+            />
+            <Figure
+              value={format(overview.villages, (v) => v.toLocaleString('en-IN'))}
+              label="Villages"
+              year={year(overview.villages)}
+            />
+          </div>
+        </article>
+      </div>
+    </section>
+  );
+}
