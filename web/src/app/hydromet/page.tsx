@@ -1,107 +1,136 @@
 import React from 'react';
 import type { Metadata } from 'next';
+import { CloudSun, Wind } from 'lucide-react';
+import { z } from 'zod';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
-import { fetchRiverLevels } from '@/features/weather/services';
+import { apiClient } from '@/lib/api';
+import { DistrictSummarySchema } from '@/features/dashboard/schemas';
+import { WeatherDataSchema } from '@/features/weather/schemas';
+import { WeatherPanel } from '@/features/weather/components';
+import { fetchAirQualityForDistricts } from '@/features/air-quality/services';
+import {
+  AirQualityCard,
+  AirQualitySummary,
+} from '@/features/air-quality/components/air-quality-panel';
 
 export const metadata: Metadata = {
-  title: 'Weather & Rivers — Pahad Pulse',
-  description: 'Real-time weather observations and river level monitoring across Uttarakhand.',
+  title: 'Weather & Air — Pahad Pulse',
+  description:
+    'Current weather and air quality for every district of Uttarakhand, with the source behind every figure.',
 };
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Weather and air quality for the whole state.
+ *
+ * River levels are deliberately absent. The page previously called `/rivers/levels`, which
+ * has never existed — CWC access is unresolved, and the one keyless discharge model
+ * available returns 0.17 m³/s for the Ganga at Haridwar because it snaps to a tributary
+ * grid cell. A wrong river level on a public safety page is worse than no river level, so
+ * the section says what is missing and why rather than showing a number.
+ */
 export default async function WeatherPage() {
-  let rivers = null;
-  let error = null;
+  const districtsResult = await Promise.allSettled([
+    apiClient.get('/areas/districts', z.array(DistrictSummarySchema)),
+  ]);
 
-  try {
-    rivers = await fetchRiverLevels();
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load data';
-  }
+  const districts =
+    districtsResult[0].status === 'fulfilled' ? districtsResult[0].value : [];
+  const slugs = districts.map((district) => district.slug);
+
+  // Every fetch degrades on its own: one district with no reading must not blank the state.
+  const [airReadings, dehradunWeather] = await Promise.all([
+    slugs.length > 0 ? fetchAirQualityForDistricts(slugs) : Promise.resolve([]),
+    apiClient.get('/areas/dehradun/weather', WeatherDataSchema).catch(() => null),
+  ]);
+
+  const air = airReadings.filter((reading): reading is NonNullable<typeof reading> =>
+    reading !== null
+  );
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-bg-light">
-        {/* Header */}
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">Weather & Rivers</h1>
-          <p className="text-text-dark/70 mt-2">
-            Real-time weather and river monitoring across Uttarakhand
-          </p>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              <p className="font-semibold">Unable to load data</p>
-              <p className="text-sm mt-1">{error}</p>
-            </div>
-          )}
-
-          {/* River Levels */}
-          {rivers && rivers.length > 0 && (
-            <div className="bg-surface border border-border rounded-lg p-6">
-              <h2 className="font-display text-2xl font-bold mb-4">River Levels 🌊</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {rivers.map((river) => (
-                  <div
-                    key={river.station.id}
-                    className="border border-border rounded-lg p-4 hover:bg-surface-hover transition"
-                  >
-                    <p className="font-bold mb-2">{river.station.name.en}</p>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Level</span>
-                        <span className="font-semibold">
-                          {river.latestLevel.value} {river.latestLevel.unit}
-                        </span>
-                      </div>
-                      {river.latestLevel.delta !== null && (
-                        <div className="flex justify-between">
-                          <span>Change</span>
-                          <span
-                            className={
-                              river.latestLevel.delta > 0 ? 'text-red-600' : 'text-green-600'
-                            }
-                          >
-                            {river.latestLevel.delta > 0 ? '+' : ''}
-                            {river.latestLevel.delta.toFixed(2)}
-                          </span>
-                        </div>
-                      )}
-                      {river.threshold && (
-                        <div className="flex justify-between">
-                          <span>Danger Level</span>
-                          <span className="font-semibold">{river.threshold.value}</span>
-                        </div>
-                      )}
-                      <p className="text-xs text-text-light/50 pt-2 border-t">
-                        Updated: {new Date(river.latestLevel.observedAt).toLocaleString('en-IN')}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!rivers || rivers.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="font-semibold text-text-dark">Loading river data...</p>
-            </div>
-          ) : null}
-
-          {/* Weather Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h2 className="font-display text-2xl font-bold text-blue-900 mb-4">
-              Weather Stations 🌤️
-            </h2>
-            <p className="text-blue-800">
-              Weather data for individual districts is available on their detail pages.
+      <div className="min-h-full">
+        <header className="border-b border-border bg-surface">
+          <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-6 lg:px-8">
+            <p className="mb-1.5 text-sm font-medium text-muted-foreground">Live systems</p>
+            <h1 className="flex items-center gap-2 font-display text-3xl font-semibold leading-tight tracking-[-0.025em] text-text-light">
+              <CloudSun className="size-6 text-accent" strokeWidth={1.8} aria-hidden="true" />
+              Weather &amp; air
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              Current conditions and air quality at every district headquarters, updated
+              hourly.
             </p>
           </div>
+        </header>
+
+        <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+          {dehradunWeather !== null && (
+            <section aria-labelledby="capital-weather">
+              <h2 id="capital-weather" className="sr-only">
+                Weather at the state capital
+              </h2>
+              <div className="pp-rise">
+                <WeatherPanel weather={dehradunWeather} />
+              </div>
+            </section>
+          )}
+
+          <section aria-labelledby="air-heading">
+            <div className="mb-4">
+              <h2
+                id="air-heading"
+                className="flex items-center gap-2 text-xl font-semibold tracking-tight"
+              >
+                <Wind className="size-5 text-accent" strokeWidth={1.8} aria-hidden="true" />
+                Air quality by district
+              </h2>
+              <div className="mt-2">
+                <AirQualitySummary readings={air} />
+              </div>
+            </div>
+
+            {air.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No air quality readings are available yet. They arrive with the hourly
+                ingestion run.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {air.map((reading, index) => (
+                  <AirQualityCard key={reading.station.id} data={reading} index={index} />
+                ))}
+              </div>
+            )}
+
+            {air[0] !== undefined && (
+              <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                {air[0].source.attribution}. These are modelled estimates covering every
+                district, not readings from a ground monitor. The Central Pollution Control
+                Board operates reference-grade stations in some Uttarakhand towns and its
+                figures are authoritative where they exist.
+              </p>
+            )}
+          </section>
+
+          {/* Stated, not hidden. A "Rivers" heading with nothing under it invites the
+              assumption that the rivers are fine. */}
+          <section aria-labelledby="rivers-heading">
+            <h2 id="rivers-heading" className="text-xl font-semibold tracking-tight">
+              River levels
+            </h2>
+            <div className="mt-3 rounded-lg border border-warning/40 bg-warning-soft/60 px-4 py-3">
+              <p className="text-sm leading-relaxed text-text-light">
+                <span className="font-semibold">No river level data is published here yet.</span>{' '}
+                River gauge readings come from the Central Water Commission, and access has
+                not been arranged. Until it is, this page shows nothing rather than an
+                estimate — a wrong river level is more dangerous than an absent one. Check
+                CWC or the district administration for current levels.
+              </p>
+            </div>
+          </section>
         </div>
       </div>
     </DashboardLayout>

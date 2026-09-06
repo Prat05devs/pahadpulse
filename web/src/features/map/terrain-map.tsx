@@ -14,6 +14,7 @@ import {
   BASEMAP_STYLE,
   DEFAULT_VIEW,
   DISTRICT_VIEW,
+  DISTRICT_BORDER_CASING,
   DIVISION_COLORS,
   SEVERITY_COLORS,
   ROAD_CASING,
@@ -320,10 +321,31 @@ export function TerrainMap({
               DIVISION_COLORS.kumaon,
               '#6b7a83',
             ],
+            // Raised from 0.18 on review feedback: at that weight the state read as barely
+            // tinted and did not stand out from the plains or Nepal. 0.34 makes Uttarakhand
+            // the clear subject while still letting the hillshade through — going much past
+            // this flattens the terrain into a colour block.
             'fill-opacity':
               focusSlug === undefined
-                ? ['case', ['boolean', ['feature-state', 'hover'], false], 0.4, 0.18]
-                : ['case', focused, 0.42, 0.03],
+                ? ['case', ['boolean', ['feature-state', 'hover'], false], 0.52, 0.34]
+                : ['case', focused, 0.52, 0.08],
+          },
+        });
+
+        // Casing first, so the white border draws on top of it. Two layers rather than one
+        // darker line: a single dark border would separate the districts but lose the crisp
+        // internal division that the white line gives against the fill.
+        map.addLayer({
+          id: 'pp-district-casing',
+          type: 'line',
+          source: DISTRICTS_SOURCE,
+          paint: {
+            'line-color': DISTRICT_BORDER_CASING,
+            'line-width':
+              focusSlug === undefined
+                ? ['case', ['boolean', ['feature-state', 'hover'], false], 4.6, 2.8]
+                : ['case', focused, 5.2, 1.4],
+            'line-opacity': focusSlug === undefined ? 0.75 : ['case', focused, 0.85, 0.25],
           },
         });
 
@@ -335,9 +357,9 @@ export function TerrainMap({
             'line-color': '#ffffff',
             'line-width':
               focusSlug === undefined
-                ? ['case', ['boolean', ['feature-state', 'hover'], false], 2.4, 1.1]
+                ? ['case', ['boolean', ['feature-state', 'hover'], false], 2.4, 1.3]
                 : ['case', focused, 3, 0.6],
-            'line-opacity': focusSlug === undefined ? 0.85 : ['case', focused, 1, 0.3],
+            'line-opacity': focusSlug === undefined ? 0.95 : ['case', focused, 1, 0.3],
           },
         });
       }

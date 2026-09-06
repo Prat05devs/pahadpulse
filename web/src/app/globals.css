@@ -120,9 +120,118 @@ button {
   }
 }
 
+/* ---------------------------------------------------------------------------------------
+ * Motion.
+ *
+ * Restrained on purpose. The audience for these pages is a district officer reading a
+ * projected dashboard in a bright room, often to brief someone else — motion there has one
+ * job, which is to show that a figure is live and freshly loaded, not to entertain. So:
+ * everything settles within 600ms, nothing loops except the live indicator, nothing moves
+ * more than 8px, and nothing spins or bounces.
+ *
+ * Every animation below is switched off entirely by the reduced-motion block that follows.
+ * ------------------------------------------------------------------------------------- */
+
+@keyframes pp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Panels enter once, on load. Staggered by --pp-delay so a page reads top-to-bottom
+   rather than flashing in all at once. */
+.pp-rise {
+  animation: pp-rise 460ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation-delay: var(--pp-delay, 0ms);
+}
+
+@keyframes pp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pp-fade {
+  animation: pp-fade 520ms ease both;
+  animation-delay: var(--pp-delay, 0ms);
+}
+
+/* The one looping animation in the system: a slow breath on the "live" dot. Two seconds,
+   never fully disappearing, so peripheral vision registers "updating" without the blink
+   of a status LED pulling the eye off the number beside it. */
+@keyframes pp-breathe {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.86);
+  }
+}
+
+.pp-live-dot {
+  animation: pp-breathe 2.4s ease-in-out infinite;
+}
+
+/* A single expanding ring, used on the largest recent earthquake. It runs three times and
+   stops — a permanent ripple on a seismic page would read as an ongoing event, which is
+   precisely the wrong thing to imply. */
+@keyframes pp-ripple {
+  from {
+    opacity: 0.55;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+
+.pp-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid currentColor;
+  animation: pp-ripple 2.6s cubic-bezier(0.16, 1, 0.3, 1) 3;
+}
+
+/* Bars and gauges grow from zero to their value once, so the eye follows the length rather
+   than having to read the number to know it is large. */
+@keyframes pp-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.pp-grow-x {
+  transform-origin: left center;
+  animation: pp-grow-x 720ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation-delay: var(--pp-delay, 0ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  /* Belt and braces: the wildcard rule below collapses durations, but the ripple is a
+     decorative pseudo-element that should simply not exist for these users. */
+  .pp-ripple::after {
+    display: none;
   }
 
   *,

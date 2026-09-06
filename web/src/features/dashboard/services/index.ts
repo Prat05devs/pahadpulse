@@ -1,6 +1,13 @@
 import { z } from 'zod';
 import { apiClient } from '@/lib/api';
-import type { DistrictSummary, ImdCapLiveStatus, LiveCounters, StateOverview } from '../types';
+import { AreaIndicatorsSchema } from '@/features/indicators/schemas';
+import type {
+  DistrictSummary,
+  ImdCapLiveStatus,
+  LiveCounters,
+  StateFigure,
+  StateOverview,
+} from '../types';
 import {
   AlertSummarySchema,
   DistrictSummarySchema,
@@ -29,18 +36,52 @@ export async function fetchLiveCounters(): Promise<LiveCounters> {
   };
 }
 
+/**
+ * The state profile figures.
+ *
+ * These were six hardcoded literals in this function until the `indicators` module gained
+ * state-scoped rows (migrations 024-026). Two of them were wrong: the village count matched
+ * no published Census total, and "63% forest coverage" matched neither of the Forest Survey
+ * of India's two measures. Both rendered beside genuine Census figures and looked equally
+ * authoritative, which is the failure this module's provenance rules exist to prevent.
+ *
+ * They now come from the API with a source and a vintage attached. Nothing is defaulted: a
+ * figure the API does not return arrives as null and the panel shows a dash, because an
+ * invented number is worse than an absent one.
+ */
 export async function fetchStateOverview(): Promise<StateOverview> {
-  const districts = await apiClient.get('/areas/districts', z.array(DistrictSummarySchema));
+  const [districts, indicators] = await Promise.all([
+    apiClient.get('/areas/districts', z.array(DistrictSummarySchema)),
+    // Degrades to "no figures" rather than failing the whole dashboard — the map, alerts
+    // and district grid do not depend on this panel.
+    apiClient.get('/areas/uttarakhand/indicators', AreaIndicatorsSchema).catch(() => null),
+  ]);
+
+  const byKey = new Map((indicators ?? []).map((entry) => [entry.indicator.key, entry]));
+
+  const figure = (key: string): StateFigure => {
+    const entry = byKey.get(key);
+    if (entry === undefined) return { value: null, vintage: null, sourceLabel: null };
+    return {
+      value: entry.value,
+      vintage: entry.vintage,
+      sourceLabel: entry.provenance?.department?.en ?? entry.provenance?.sourceKey ?? null,
+    };
+  };
 
   return {
-    // Census of India 2011 state totals. These are the published state figures, not a sum of
-    // our district rows — summing would silently drift if one district failed to ingest.
-    population: 10086292,
-    areaKmSq: 53483,
-    literacy: 78.82,
-    districts: districts.length,
-    forestCoverage: 63,
-    villages: 16817,
+    population: figure('state_population'),
+    areaKmSq: figure('state_area_sq_km'),
+    literacy: figure('state_literacy_rate'),
+    // Counted, not stored: the district list is the authority on how many districts there
+    // are, so a second copy of "13" could only ever disagree with it.
+    districts: {
+      value: districts.length,
+      vintage: null,
+      sourceLabel: 'Pahad Pulse geography module',
+    },
+    forestCoverage: figure('state_forest_cover_pct'),
+    villages: figure('state_villages'),
   };
 }
 

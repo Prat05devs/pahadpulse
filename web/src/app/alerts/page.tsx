@@ -4,6 +4,8 @@ import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { AlertCard } from '@/features/alerts/components';
 import { fetchActiveAlerts } from '@/features/alerts/services';
 import { TerrainMap, fetchAlertFeatures } from '@/features/map';
+import { fetchRecentSeismic } from '@/features/seismic/services';
+import { SeismicPanel } from '@/features/seismic/components/seismic-panel';
 
 export const metadata: Metadata = {
   title: 'Live Alerts — Pahad Pulse',
@@ -17,9 +19,10 @@ export default async function AlertsPage() {
   let alertFeatures = null;
   let error = null;
 
-  const [listResult, mapResult] = await Promise.allSettled([
+  const [listResult, mapResult, seismicResult] = await Promise.allSettled([
     fetchActiveAlerts(undefined, 50),
     fetchAlertFeatures(),
+    fetchRecentSeismic(10),
   ]);
 
   if (listResult.status === 'fulfilled') {
@@ -32,6 +35,10 @@ export default async function AlertsPage() {
   // The map is settled separately: geometry failing must never cost the reader the warnings
   // themselves, which are the safety-critical half of this page.
   if (mapResult.status === 'fulfilled') alertFeatures = mapResult.value;
+
+  // Observed events, kept structurally separate from the warnings above — see the section
+  // heading. Its failure never affects the alerts, which are the safety-critical half.
+  const seismic = seismicResult.status === 'fulfilled' ? seismicResult.value : null;
 
   const mappedCount = alertFeatures?.features.length ?? 0;
   const listedCount = alerts?.length ?? 0;
@@ -102,6 +109,14 @@ export default async function AlertsPage() {
                 ))}
               </div>
 
+            </div>
+          )}
+
+          {/* Below the warnings, and visually separated from them. An earthquake that has
+              already happened is not a warning, and the two must not read as one list. */}
+          {seismic !== null && (
+            <div className="mt-8">
+              <SeismicPanel data={seismic} />
             </div>
           )}
         </div>

@@ -83,11 +83,29 @@ export const SEVERITY_LABELS: Record<string, string> = {
   unknown: 'Unspecified',
 };
 
-/** Garhwal and Kumaon, the two administrative divisions, tinted apart on the district layer. */
+/**
+ * Garhwal and Kumaon, the two administrative divisions, tinted apart on the district layer.
+ *
+ * Deepened from the original mid-tones (#2F6F62 / #3B6091) on review feedback: the state was
+ * legible but sat at nearly the same weight as the surrounding plains and Nepal, so nothing
+ * marked Uttarakhand as the subject of the map. Darker tones let the fill carry the state's
+ * silhouette at low opacity, without the flat wash that a high opacity would put over the
+ * terrain relief this map exists to show.
+ */
 export const DIVISION_COLORS: Record<string, string> = {
-  garhwal: '#2F6F62',
-  kumaon: '#3B6091',
+  garhwal: '#1E5348',
+  kumaon: '#26456C',
 };
+
+/**
+ * Drawn under the white district borders.
+ *
+ * The white lines alone separate districts against pale valley floors but wash out over
+ * snow and cloud-bright terrain, which is most of the north. A dark casing under them gives
+ * every border an edge on any ground, and — because the outer districts' casings form one
+ * continuous ring — defines the state boundary itself without a separate layer.
+ */
+export const DISTRICT_BORDER_CASING = '#0B2A26';
 
 /**
  * Highway colours. Distinct from the alert palette on purpose: a road is infrastructure, not

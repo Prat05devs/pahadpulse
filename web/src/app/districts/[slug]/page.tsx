@@ -7,6 +7,7 @@ import { AreaSchema } from '@/features/dashboard/schemas';
 import { ActiveAlertsSchema } from '@/features/alerts/schemas';
 import { AreaIndicatorsSchema } from '@/features/indicators/schemas';
 import { WeatherDataSchema } from '@/features/weather/schemas';
+import { WeatherPanel } from '@/features/weather/components';
 import { TerrainMap, fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
 import { formatIndicatorValue } from '@/features/indicators/format';
 
@@ -127,23 +128,10 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
             </div>
           )}
 
-          {/* Weather Data */}
-          {weather && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-surface border border-border rounded-lg p-4">
-                <p className="text-sm text-text-light/60 mb-1">🌡️ Temperature</p>
-                <p className="text-2xl font-bold">{weather.temperature?.value || '—'}°C</p>
-              </div>
-              <div className="bg-surface border border-border rounded-lg p-4">
-                <p className="text-sm text-text-light/60 mb-1">💧 Rainfall</p>
-                <p className="text-2xl font-bold">{weather.rainfall?.value || '—'} mm</p>
-              </div>
-              <div className="bg-surface border border-border rounded-lg p-4">
-                <p className="text-sm text-text-light/60 mb-1">💨 Humidity</p>
-                <p className="text-2xl font-bold">{weather.humidity?.value || '—'}%</p>
-              </div>
-            </div>
-          )}
+          {/* Weather. Still `weather && …`: the fetch below catches its own failure, so a
+              district with no reading yet renders exactly as it did before this panel
+              existed rather than showing a zero. */}
+          {weather && <WeatherPanel weather={weather} />}
 
           {/* Indicators / Statistics.
               Every figure carries its source and the year it describes — that pairing is the
