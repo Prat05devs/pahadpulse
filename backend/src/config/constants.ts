@@ -134,3 +134,128 @@ export const ALERT_SIMPLIFY_TOLERANCE_DEGREES = 0.005;
 
 /** The map's district layer is geography — it changes by migration. Cached like the rest. */
 export const CACHE_TTL_MAP_DISTRICTS = 24 * 60 * 60;
+
+/**
+ * Observations are re-read hourly by the connector, so a 10-minute cache never serves a
+ * reading the ingestion has already replaced, and absorbs a district page being refreshed.
+ * Matches the TTL hydromet.md §5 specifies for `/areas/:slug/weather`.
+ */
+export const CACHE_TTL_OBSERVATIONS = 10 * 60;
+
+/**
+ * Open-Meteo — current conditions and daily forecast, by coordinate.
+ *
+ * No API key and no registration. Chosen over IMD's own endpoints for one reason that
+ * outranks provenance here: Open-Meteo publishes under CC-BY 4.0, so its values may
+ * actually be DISPLAYED. IMD's redistribution terms are unconfirmed, which is why
+ * `imd-cap-alerts` sits at `may_redistribute = FALSE` and shows nothing (migration 009).
+ *
+ * This is a source-chain decision, not a claim that Open-Meteo outranks IMD (HYD-5): when
+ * IMD's terms are confirmed it is added ahead of this one, and the source actually used is
+ * always named in the response.
+ */
+export const OPEN_METEO = {
+  FORECAST_URL: 'https://api.open-meteo.com/v1/forecast',
+  /** WMO codes plus what the district panel shows. Order matters — see the connector. */
+  CURRENT_FIELDS: [
+    'temperature_2m',
+    'relative_humidity_2m',
+    'precipitation',
+    'weather_code',
+    'wind_speed_10m',
+    'wind_direction_10m',
+  ] as const,
+  DAILY_FIELDS: [
+    'weather_code',
+    'temperature_2m_max',
+    'temperature_2m_min',
+    'precipitation_sum',
+  ] as const,
+  /** IST. Open-Meteo aligns daily buckets to this, so forecast days are local days. */
+  TIMEZONE: 'Asia/Kolkata',
+  FORECAST_DAYS: 7,
+  FETCH_TIMEOUT_MS: 15_000,
+  FETCH_RETRIES: 2,
+} as const;
+
+/**
+ * Open-Meteo Air Quality — Copernicus CAMS, by coordinate. Keyless, CC-BY 4.0.
+ *
+ * Modelled, not measured. CPCB runs real reference-grade monitors in Uttarakhand and those
+ * are authoritative where they exist — but they exist in a handful of towns, and this
+ * covers every district including the ones with no instrument at all. The UI says which it
+ * is showing; the source registry note (migration 028) records why both can coexist.
+ */
+export const OPEN_METEO_AIR = {
+  URL: 'https://air-quality-api.open-meteo.com/v1/air-quality',
+  CURRENT_FIELDS: [
+    'pm10',
+    'pm2_5',
+    'carbon_monoxide',
+    'nitrogen_dioxide',
+    'sulphur_dioxide',
+    'ozone',
+    'us_aqi',
+  ] as const,
+  TIMEZONE: 'Asia/Kolkata',
+  FETCH_TIMEOUT_MS: 15_000,
+  FETCH_RETRIES: 2,
+} as const;
+
+/**
+ * USGS earthquakes, filtered to the Uttarakhand bounding box.
+ *
+ * Keyless and public domain (US Government work). The National Center for Seismology is
+ * the Indian authority and should lead this source chain once its terms are known — the
+ * same relationship IMD has to Open-Meteo for weather.
+ */
+export const USGS = {
+  QUERY_URL: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
+  /**
+   * How far back each run looks. Generous relative to the hourly schedule on purpose:
+   * USGS revises magnitude and depth for hours after an event as more stations report, and
+   * a window that only covered "since the last run" would freeze the first, roughest
+   * estimate. Re-reading a settled event is free — the upsert replaces it (DS-5).
+   */
+  LOOKBACK_DAYS: 90,
+  /**
+   * No magnitude floor. A M2.5 in a fragile Himalayan valley is information; filtering the
+   * feed to the dramatic ones would be this platform editorialising about what counts.
+   * The UI decides what to foreground, the ingestion keeps everything.
+   */
+  MIN_MAGNITUDE: null,
+  BBOX: { MIN_LAT: 28.4, MAX_LAT: 31.5, MIN_LNG: 77.5, MAX_LNG: 81.1 },
+  MAX_ITEMS_PER_RUN: 500,
+  FETCH_TIMEOUT_MS: 20_000,
+  FETCH_RETRIES: 2,
+} as const;
+
+/** Seismic history is append-mostly and changes on ingestion, not on read. */
+export const CACHE_TTL_SEISMIC = 5 * 60;
+
+/**
+ * GDACS — the Global Disaster Alert and Coordination System (European Commission JRC + UN).
+ *
+ * Its RSS declares `<copyright>public domain</copyright>`, which is why this is seeded
+ * `may_redistribute = TRUE` while IMD is not.
+ *
+ * Complements SACHET rather than duplicating it: SACHET carries Indian meteorological
+ * warnings, GDACS carries scored disaster EVENTS (flood, earthquake, cyclone) with an
+ * international GLIDE number. An event can appear in both, which is what the alerts upsert
+ * key is for — they are separate sources, so they are separate rows, never merged (ALR-1).
+ */
+export const GDACS = {
+  EVENT_LIST_URL: 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH',
+  /** Flood, earthquake, tropical cyclone. The three that reach Uttarakhand. */
+  EVENT_TYPES: 'EQ;TC;FL',
+  COUNTRY: 'India',
+  /**
+   * Uttarakhand's bounding box, generously drawn. GDACS reports nationally, so events are
+   * filtered to the state by point-in-box before anything is written — an Assam flood is
+   * not this product's concern.
+   */
+  BBOX: { MIN_LAT: 28.4, MAX_LAT: 31.5, MIN_LNG: 77.5, MAX_LNG: 81.1 },
+  MAX_ITEMS_PER_RUN: 50,
+  FETCH_TIMEOUT_MS: 20_000,
+  FETCH_RETRIES: 2,
+} as const;

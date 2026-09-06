@@ -102,4 +102,20 @@ export const ERRORS = {
   ALERT_EXPIRED: new RequestError('This alert has expired', 60002, 410),
   ALERT_AREA_UNRESOLVED: new RequestError('Alert area could not be resolved', 60004, 422),
   ALERT_SEVERITY_INVALID: new RequestError('Invalid alert severity', 60005, 400),
+
+  // 70xxx — hydromet
+  STATION_NOT_FOUND: new RequestError('Station not found', 70001, 404),
+  OBSERVATION_NOT_AVAILABLE: new RequestError(
+    'No observation is available for this area',
+    70002,
+    404,
+  ),
+  AIR_QUALITY_NOT_AVAILABLE: new RequestError(
+    'No air quality reading is available for this area',
+    70006,
+    404,
+  ),
+
+  // 75xxx — seismic
+  SEISMIC_EVENT_NOT_FOUND: new RequestError('Seismic event not found', 75001, 404),
 } as const;
