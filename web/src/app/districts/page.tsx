@@ -4,9 +4,16 @@ import { z } from 'zod';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { apiClient } from '@/lib/api';
 import { DistrictSummarySchema } from '@/features/dashboard/schemas';
+import { WeatherDataSchema } from '@/features/weather/schemas';
+import {
+  DistrictCarousel,
+  type CarouselDistrict,
+} from '@/features/districts/components/district-carousel';
 
 export const metadata: Metadata = {
-  title: 'Select District — Pahad Pulse',
+  title: 'Districts — Pahad Pulse',
+  description:
+    'The thirteen districts of Uttarakhand, with current conditions and administrative figures.',
 };
 
 export const dynamic = 'force-dynamic';
@@ -21,57 +28,75 @@ export default async function DistrictsListPage() {
     error = err instanceof Error ? err.message : 'Failed to load districts';
   }
 
+  /**
+   * Weather for each district, settled individually.
+   *
+   * Thirteen requests rather than one because there is no batch endpoint — and settling
+   * them separately matters more than the round trips: a district whose ingestion has not
+   * run returns 404, and one missing reading must leave that card without a temperature
+   * rather than stripping the weather from all thirteen.
+   */
+  const weather = await Promise.all(
+    (districts ?? []).map((district) =>
+      apiClient
+        .get(`/areas/${district.slug}/weather`, WeatherDataSchema)
+        .catch(() => null)
+    )
+  );
+
+  const cards: CarouselDistrict[] = (districts ?? []).map((district, index) => {
+    const reading = weather[index];
+    return {
+      id: district.id,
+      slug: district.slug,
+      name: district.name,
+      tehsils: district.counts.tehsils,
+      villages: district.counts.villages,
+      weather:
+        reading == null
+          ? null
+          : {
+              temperatureC: reading.temperature?.value ?? null,
+              humidityPct: reading.humidity?.value ?? null,
+              windKmh: reading.wind?.value ?? null,
+              condition: reading.condition?.label.en ?? null,
+              station: reading.station.name.en,
+            },
+    };
+  });
+
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-bg-light">
-        {/* Header */}
-        <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
-          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Districts</h1>
-          <p className="text-text-dark/70 mt-2">Select a district to view detailed information</p>
+      <div className="relative min-h-screen bg-bg-light">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(55rem_35rem_at_20%_-10%,rgba(56,102,181,0.10),transparent),radial-gradient(45rem_30rem_at_90%_5%,rgba(47,111,98,0.09),transparent)]"
+        />
+
+        <div className="px-4 pb-2 pt-6 sm:px-6 md:pt-8">
+          <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
+            Districts
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            Thirteen districts, each shown by the place it is known for. Swipe or use the
+            arrows.
+          </p>
         </div>
 
-        {/* Content */}
-        <div className="px-4 py-5 sm:px-6 md:py-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-              <p className="font-semibold">Unable to load districts</p>
-              <p className="text-sm mt-1">{error}</p>
+        <div className="px-0 pb-8">
+          {error !== null && (
+            <div className="mx-4 mb-6 rounded-lg border border-warning/50 bg-warning-soft/60 px-4 py-3 sm:mx-6">
+              <p className="font-semibold text-text-light">Unable to load districts</p>
+              <p className="mt-1 text-sm text-text-light/80">{error}</p>
             </div>
           )}
 
-          {!districts || districts.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="font-semibold text-text-dark">No districts found</p>
-            </div>
+          {cards.length === 0 ? (
+            <p className="px-4 py-12 text-center text-sm text-muted-foreground sm:px-6">
+              No districts found.
+            </p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {districts.map((district, index) => (
-                <a
-                  key={district.id}
-                  href={`/districts/${district.slug}`}
-                  className="pp-rise interactive-card bg-surface border border-border rounded-lg p-5 sm:p-6 hover:border-accent hover:shadow-md hover:bg-surface-hover"
-                  style={{ '--pp-delay': `${Math.min(index * 40, 480)}ms` } as React.CSSProperties}
-                >
-                  <h2 className="font-bold text-lg mb-1 hover:text-accent">{district.name.en}</h2>
-                  <p className="text-sm text-text-light/60 mb-4">{district.name.hi}</p>
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Tehsils</span>
-                      <span className="font-semibold">{district.counts?.tehsils || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Villages</span>
-                      <span className="font-semibold">{district.counts?.villages || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Map</span>
-                      <span>{district.hasBoundary ? '✓' : '—'}</span>
-                    </div>
-                  </div>
-                </a>
-              ))}
-            </div>
+            <DistrictCarousel districts={cards} />
           )}
         </div>
       </div>

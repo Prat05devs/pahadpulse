@@ -42,7 +42,7 @@ export default async function TourismPage() {
 
           {/* Char Dham */}
           {destinations && destinations.length > 0 && (
-            <div className="bg-surface border border-border rounded-lg p-6">
+            <div className="bg-surface border border-border rounded-lg p-4 sm:p-6">
               <h2 className="font-display text-2xl font-bold mb-4">🏛️ Char Dham Sites</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {destinations.map((dest) => {
@@ -101,7 +101,7 @@ export default async function TourismPage() {
             </div>
           ) : null}
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
             <h3 className="font-bold text-blue-900 mb-2">Peak Season</h3>
             <p className="text-blue-800 text-sm">
               The Char Dham yatra (pilgrimage) typically sees peak loads during: May-June (summer),

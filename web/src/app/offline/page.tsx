@@ -20,7 +20,7 @@ export default function OfflinePage() {
         </div>
 
         <div className="space-y-5 px-4 py-5 sm:px-6 md:py-6">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 sm:p-6">
             <h2 className="mb-2 flex items-center gap-2 font-bold text-yellow-900">
               <RefreshCw className="size-5" strokeWidth={1.8} aria-hidden="true" />
               Sync Strategy
@@ -63,7 +63,7 @@ export default function OfflinePage() {
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
             <h2 className="mb-2 flex items-center gap-2 font-bold text-blue-900">
               <Lightbulb className="size-5" strokeWidth={1.8} aria-hidden="true" />
               Use Cases

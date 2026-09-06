@@ -65,7 +65,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
         <header className="border-b border-border bg-surface">
           <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-6 lg:px-8">
             <p className="mb-1.5 text-sm font-medium text-muted-foreground">Analysis</p>
-            <h1 className="flex items-center gap-2 font-display text-3xl font-semibold leading-tight tracking-[-0.025em] text-text-light">
+            <h1 className="flex items-center gap-2 font-display text-2xl font-semibold leading-tight tracking-[-0.025em] sm:text-3xl text-text-light">
               <GitCompare className="size-6 text-accent" strokeWidth={1.8} aria-hidden="true" />
               Compare districts
             </h1>
@@ -77,7 +77,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
 
         <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
           {error !== null && (
-            <section className="surface-card flex items-start gap-4 p-6" role="alert">
+            <section className="surface-card flex flex-col items-start gap-3 p-4 sm:flex-row sm:gap-4 sm:p-6" role="alert">
               <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-danger-soft text-danger">
                 <AlertCircle className="size-5" aria-hidden="true" />
               </span>

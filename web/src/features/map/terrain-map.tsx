@@ -73,6 +73,15 @@ interface TerrainMapProps {
   selectedRoadRef?: string | null;
   /** Extent of `selectedRoadRef`, as [west, south, east, north]. */
   selectedRoadBounds?: [number, number, number, number] | null;
+  /**
+   * Move the map's own chrome out of the corners a surrounding overlay occupies.
+   *
+   * The home dashboard floats cards over the map's top-left and bottom edge, which sat
+   * directly on top of the 2D/3D toggle, the severity legend, the scale bar and the
+   * attribution. Rather than have the stage guess at offsets, the map is told an overlay is
+   * present and relocates its controls to the right-hand side, which the stage keeps clear.
+   */
+  stage?: boolean;
   className?: string;
 }
 
@@ -130,6 +139,7 @@ export function TerrainMap({
   highlightRoads = false,
   selectedRoadRef = null,
   selectedRoadBounds = null,
+  stage = false,
   className,
 }: TerrainMapProps) {
   const router = useRouter();
@@ -210,8 +220,16 @@ export function TerrainMap({
 
     mapRef.current = map;
 
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
-    map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
+    // In stage mode both move to the right edge: the stage owns the top-left corner and
+    // the full bottom strip, so bottom-left would put the scale bar under a card.
+    map.addControl(
+      new maplibregl.NavigationControl({ visualizePitch: true }),
+      stage ? 'bottom-right' : 'top-right',
+    );
+    map.addControl(
+      new maplibregl.ScaleControl({ unit: 'metric' }),
+      stage ? 'bottom-right' : 'bottom-left',
+    );
     map.on('error', (event) => {
       // A single failed tile must not blank the map, so this never throws. It is not silent
       // either: swallowing map errors outright hides real breakage (a missing glyph, a bad
@@ -750,7 +768,11 @@ export function TerrainMap({
 
       {/* Controls. Kept to the two toggles that change what the map means, rather than a
           full layer panel for layers that have no data behind them yet. */}
-      <div className="absolute left-3 top-3 flex flex-col gap-1.5">
+      <div
+        className={`absolute z-10 flex flex-col gap-1.5 ${
+          stage ? 'right-3 top-9' : 'left-3 top-3'
+        }`}
+      >
         <button
           type="button"
           onClick={() => {
@@ -774,14 +796,22 @@ export function TerrainMap({
       </div>
 
       {hoveredDistrict !== null && (
-        <div className="pointer-events-none absolute right-3 top-3 rounded-md border border-border bg-surface/95 px-3 py-1.5 text-xs font-semibold shadow-card backdrop-blur">
+        <div
+          className={`pointer-events-none absolute z-10 rounded-md border border-border bg-surface/95 px-3 py-1.5 text-xs font-semibold shadow-card backdrop-blur ${
+            stage ? 'left-1/2 top-8 -translate-x-1/2' : 'right-3 top-3'
+          }`}
+        >
           {hoveredDistrict}
         </div>
       )}
 
       {/* Severity legend, using the source's own scale. */}
-      {alertsOn && activeAlertCount > 0 && (
-        <div className="absolute bottom-10 left-3 rounded-md border border-border bg-surface/95 px-3 py-2 shadow-card backdrop-blur">
+      {alertsOn && activeAlertCount > 0 && selected === null && (
+        <div
+          className={`absolute z-10 rounded-md border border-border bg-surface/95 px-3 py-2 shadow-card backdrop-blur ${
+            stage ? 'right-3 top-32' : 'bottom-10 left-3'
+          }`}
+        >
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Alert severity
           </p>
@@ -800,7 +830,11 @@ export function TerrainMap({
       )}
 
       {selected !== null && (
-        <div className="absolute bottom-3 right-3 max-w-sm rounded-lg border border-border bg-surface/97 p-4 shadow-card-hover backdrop-blur">
+        <div
+          className={`absolute right-3 z-20 max-w-sm rounded-lg border border-border bg-surface/97 p-4 shadow-card-hover backdrop-blur ${
+            stage ? 'top-32' : 'bottom-3'
+          }`}
+        >
           <div className="mb-2 flex items-start justify-between gap-3">
             <span
               className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
@@ -839,12 +873,20 @@ export function TerrainMap({
         </div>
       )}
 
-      <div className="absolute bottom-0 right-0 rounded-tl bg-surface/90 px-2 py-0.5 text-[10px] text-muted-foreground">
+      <div
+        className={`absolute right-0 z-10 bg-surface/90 px-2 py-0.5 text-[10px] text-muted-foreground ${
+          stage ? 'top-0 rounded-bl' : 'bottom-0 rounded-tl'
+        }`}
+      >
         {ATTRIBUTION}
       </div>
 
       {usesPlaceholder && (
-        <div className="absolute bottom-10 right-3 rounded border border-warning bg-warning-soft px-2 py-1 text-[10px] text-text-light">
+        <div
+          className={`absolute z-10 rounded border border-warning bg-warning-soft px-2 py-1 text-[10px] text-text-light ${
+            stage ? 'left-3 top-3' : 'bottom-10 right-3'
+          }`}
+        >
           Some boundaries are placeholder geometry
         </div>
       )}

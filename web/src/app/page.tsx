@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import { AlertCircle, Database } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
 import {
@@ -73,33 +73,6 @@ export default async function HomePage() {
   return (
     <DashboardLayout>
       <div className="min-h-full">
-        <header className="border-b border-border bg-surface lg:hidden">
-          <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-6 lg:px-8">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <p className="mb-1.5 text-sm font-medium text-muted-foreground">
-                  Uttarakhand overview
-                </p>
-                <h1 className="font-display text-3xl font-semibold leading-tight tracking-[-0.025em] text-text-light md:text-4xl">
-                  Uttarakhand, at a glance
-                </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  Current weather, alerts, mobility and district indicators, with a clear source
-                  behind every figure.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-2">
-                  <span className="pp-live-dot size-2 rounded-full bg-success" aria-hidden="true" /> Public
-                  access
-                </span>
-                <span className="flex items-center gap-2">
-                  <Database className="size-3.5" aria-hidden="true" /> Government sources
-                </span>
-              </div>
-            </div>
-          </div>
-        </header>
 
         <div className="lg:relative">
           {!counters || !overview || !districts ? (

@@ -5,6 +5,7 @@ import { apiClient } from '@/lib/api';
 import { z } from 'zod';
 import { AreaSchema } from '@/features/dashboard/schemas';
 import { ActiveAlertsSchema } from '@/features/alerts/schemas';
+import { AlertCard } from '@/features/alerts/components';
 import { AreaIndicatorsSchema } from '@/features/indicators/schemas';
 import { WeatherDataSchema } from '@/features/weather/schemas';
 import { WeatherPanel } from '@/features/weather/components';
@@ -74,7 +75,7 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
   if (error || !district) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-bg-light p-6">
+        <div className="min-h-screen bg-bg-light px-4 py-5 sm:px-6">
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
             <p className="font-semibold">Unable to load district</p>
             <p className="text-sm mt-1">{error || 'District not found'}</p>
@@ -92,12 +93,14 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
     <DashboardLayout>
       <div className="min-h-screen bg-bg-light">
         {/* Header */}
-        <div className="bg-bg-dark text-text-dark py-8 px-6">
-          <h1 className="font-display text-4xl font-bold">{districtData.name.en}</h1>
-          <p className="text-text-dark/70 mt-2">{districtData.name.hi}</p>
+        <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">
+            {districtData.name.en}
+          </h1>
+          <p className="mt-1.5 text-sm text-text-dark/70 sm:mt-2 sm:text-base">{districtData.name.hi}</p>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="space-y-5 px-4 py-5 sm:px-6 md:space-y-6 md:py-6">
           {/* Terrain map, focused on this district. Navigation is off here — the user is
               already on the district they would be navigating to. */}
           {districts !== null && (
@@ -109,23 +112,24 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
             />
           )}
 
-          {/* Active Alerts */}
-          {alerts && alerts.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <h2 className="font-bold text-red-800 mb-2">
-                🚨 {alerts.length} Active Alert{alerts.length !== 1 ? 's' : ''}
+          {/* The same AlertCard the alerts page uses, rather than a second, plainer
+              rendering of the same warnings. One component means a district page can never
+              drift into showing a different severity, or dropping the expiry, for an alert
+              the alerts page shows in full. */}
+          {alerts !== null && alerts.length > 0 && (
+            <section aria-labelledby="district-alerts">
+              <h2
+                id="district-alerts"
+                className="mb-3 text-lg font-semibold tracking-tight sm:text-xl"
+              >
+                {alerts.length} active alert{alerts.length === 1 ? '' : 's'}
               </h2>
-              <ul className="space-y-2">
-                {alerts.slice(0, 3).map((alert) => (
-                  <li key={alert.id} className="text-sm text-red-700">
-                    • {alert.headline}
-                  </li>
+              <div className="space-y-3">
+                {alerts.map((alert, index) => (
+                  <AlertCard key={alert.id} alert={alert} index={index} />
                 ))}
-              </ul>
-              {alerts.length > 3 && (
-                <p className="text-sm text-red-700 mt-2">+{alerts.length - 3} more</p>
-              )}
-            </div>
+              </div>
+            </section>
           )}
 
           {/* Weather. Still `weather && …`: the fetch below catches its own failure, so a

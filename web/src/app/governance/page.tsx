@@ -20,7 +20,7 @@ export default function GovernancePage() {
         </div>
 
         <div className="space-y-5 px-4 py-5 sm:px-6 md:py-6">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6">
             <h2 className="mb-2 flex items-center gap-2 font-bold text-red-900">
               <LockKeyhole className="size-5" strokeWidth={1.8} aria-hidden="true" />
               Authorization Required

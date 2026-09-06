@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Menu as MenuIconData,
-  PanelLeftClose as CollapseIconData,
   X as CloseIconData,
 } from 'lucide';
 import {
@@ -86,41 +85,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   /**
    * The rail starts collapsed and expands on hover.
    *
-   * `isCollapsed` is the user's stated preference; `isPeeking` is the transient hover. The
+   * `isPeeking` is the transient hover state. The
    * two are kept apart so hovering never overwrites a deliberate choice — someone who
    * expands the rail keeps it expanded when the pointer leaves.
    */
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isPeeking, setIsPeeking] = useState(false);
-
-  // What the rail actually shows. Hover only ever expands, never collapses.
-  const showLabels = !isCollapsed || isPeeking;
-
   /**
-   * The collapsed state is a per-viewer convenience, so it lives in localStorage rather than
-   * on the server. Read after mount, not during render: the server has no way to know it, and
-   * reading it during render would produce a hydration mismatch on every visit.
+   * The rail is always collapsed on desktop and expands only while hovered or keyboard
+   * focused. There is no stored preference and no toggle: the hover reveal replaced the
+   * collapse button, so a persisted "expanded" state had no way to be set and every way to
+   * get stuck.
    */
-  useEffect(() => {
-    try {
-      setIsCollapsed(window.localStorage.getItem('pp:nav-collapsed') === '1');
-    } catch {
-      // Private windows and blocked site data throw on access. A rail that defaults to
-      // expanded is a fine outcome; a layout that crashes is not.
-    }
-  }, []);
+  const [isPeeking, setIsPeeking] = useState(false);
+  const showLabels = isPeeking;
 
-  const toggleCollapsed = () => {
-    setIsCollapsed((collapsed) => {
-      const next = !collapsed;
-      try {
-        window.localStorage.setItem('pp:nav-collapsed', next ? '1' : '0');
-      } catch {
-        // Ignored for the same reason as above — the toggle still works for this session.
-      }
-      return next;
-    });
-  };
+
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -185,8 +163,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div
         aria-hidden="true"
         className={clsx(
-          'hidden lg:block lg:shrink-0 lg:transition-[width] lg:duration-200',
-          isCollapsed ? 'lg:w-[4.75rem]' : 'lg:w-rail'
+          'hidden lg:block lg:w-[4.75rem] lg:shrink-0'
         )}
       />
 
@@ -198,8 +175,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           setIsPeeking(false);
         }}
         // Keyboard users get the same reveal: tabbing into the nav expands it.
-        onFocusCapture={() => {
-          setIsPeeking(true);
+        onFocusCapture={(event) => {
+          // Keyboard focus only. `onFocusCapture` also fires when a link is CLICKED, and
+          // that left focus sitting on the link after navigation — so `isPeeking` stayed
+          // true and the rail stayed expanded even once the pointer had left. Matching
+          // `:focus-visible` is what separates tabbing into the nav from clicking in it.
+          const target = event.target as HTMLElement;
+          if (typeof target.matches === 'function' && target.matches(':focus-visible')) {
+            setIsPeeking(true);
+          }
         }}
         onBlurCapture={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
@@ -213,7 +197,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           // open or shut, so an icon-only width there would be a third state with no use.
           showLabels ? 'lg:w-rail' : 'lg:w-[4.75rem]',
           // Expanded-on-hover overlays the content rather than displacing it.
-          isPeeking && isCollapsed ? 'lg:shadow-2xl' : ''
+          isPeeking ? 'lg:shadow-2xl' : ''
         )}
       >
         <div
@@ -225,7 +209,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <Link
             href="/"
             className="flex min-h-11 items-center gap-3 rounded-md"
-            title={isCollapsed ? 'Pahad Pulse' : undefined}
+            title={showLabels ? undefined : 'Pahad Pulse'}
           >
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-info-soft text-info">
               <Mountain className="size-5" aria-hidden="true" />
@@ -250,27 +234,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         {/* Collapse toggle. The icon morphs between a burger (the rail is closed, tap to
             open it) and a panel-close mark (the rail is open, tap to shrink it), so the
             control states what it will DO rather than what it currently is. */}
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          aria-label={isCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-          aria-expanded={!isCollapsed}
-          aria-controls="primary-navigation"
-          title={isCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-          className={clsx(
-            'hidden min-h-11 items-center gap-3 border-b border-border text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-surface/65 hover:text-text-light focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent lg:flex',
-            showLabels ? 'px-5' : 'lg:justify-center lg:px-0'
-          )}
-        >
-          <MorphIcon
-            icon={isCollapsed ? MenuIconData : CollapseIconData}
-            size={18}
-            strokeWidth={1.8}
-            spring={NAV_MORPH}
-            reducedMotion="user"
-          />
-          <span className={clsx('py-3', !showLabels && 'lg:hidden')}>Collapse</span>
-        </button>
 
         <nav id="primary-navigation" aria-label="Primary" className="flex-1 space-y-5 px-3 py-5">
           {NAV_GROUPS.map((group) => (
@@ -299,8 +262,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       // The label is the accessible name when it is visible; collapsed, the
                       // title attribute carries it for pointer users and aria-label for the
                       // rest, so the link is never an unlabelled icon.
-                      title={isCollapsed ? item.label : undefined}
-                      aria-label={isCollapsed ? item.label : undefined}
+                      title={showLabels ? undefined : item.label}
+                      aria-label={showLabels ? undefined : item.label}
                       className={clsx(
                         'group flex min-h-11 items-center gap-3 rounded-lg text-sm font-medium transition-colors duration-150 active:scale-[0.98]',
                         showLabels ? 'px-3' : 'px-3 lg:justify-center lg:px-0',
@@ -343,7 +306,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               'flex items-center gap-2 text-xs text-muted-foreground',
               !showLabels && 'lg:justify-center'
             )}
-            title={isCollapsed ? 'Public data portal · v0.1' : undefined}
+            title={showLabels ? undefined : 'Public data portal · v0.1'}
           >
             <Gauge className="size-3.5 shrink-0 text-success" aria-hidden="true" />
             <span className={clsx(!showLabels && 'lg:hidden')}>Public data portal</span>

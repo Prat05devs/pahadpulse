@@ -22,7 +22,7 @@ interface MapStageProps {
  * frosted look — the blur is there only to soften the seam, not to show the map through.
  */
 const FLOATING_CARD =
-  'surface-card bg-surface/95 backdrop-blur-sm shadow-card lg:pointer-events-auto';
+  'surface-card pointer-events-auto bg-surface/95 backdrop-blur-sm shadow-card';
 
 function Figure({ value, label, year }: { value: string; label: string; year?: string | null }) {
   return (
@@ -65,36 +65,39 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
   return (
     <section
       aria-label="Uttarakhand overview map and live figures"
-      // Fills the viewport on desktop, where `main` is the h-screen scroll container, so
-      // the map is the page and everything else scrolls in beneath it.
-      className="relative lg:h-screen"
+      /**
+       * Full-bleed at every size. `dvh` rather than `vh` on small screens because mobile
+       * browsers shrink the viewport when their toolbars appear, and `vh` keeps the old
+       * taller value — which would push the bottom card row under the address bar.
+       * The 4rem subtracted is the mobile nav header, which is hidden from `lg` up.
+       */
+      className="relative h-[calc(100dvh-4rem)] lg:h-screen"
     >
       {mapError !== null && (
         <p className="mb-3 text-xs text-muted-foreground">Map data unavailable — {mapError}</p>
       )}
 
-      {/* The map. Absolute only from lg up, so mobile keeps it in flow. */}
-      <div className="lg:absolute lg:inset-0">
+      <div className="absolute inset-0">
         <TerrainMap
           districts={districts}
           alerts={alerts}
-          className="h-[380px] rounded-lg sm:h-[460px] lg:h-full lg:rounded-none"
+          stage
+          className="h-full rounded-none border-0"
         />
       </div>
 
-      {/* Top-left: the headline figures, over the map on desktop. */}
-      <div className="mt-4 lg:pointer-events-none lg:absolute lg:inset-x-0 lg:top-0 lg:mt-0 lg:p-5">
-        <div className={`${FLOATING_CARD} pp-rise p-4 lg:max-w-md`}>
+      {/* Top-left: the headline figures. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 p-3 sm:p-4 lg:p-5">
+        <div className={`${FLOATING_CARD} pp-rise p-3 sm:p-4 lg:max-w-md`}>
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
             Uttarakhand overview
           </p>
-          {/* Not an h1: the page header already carries one. Both are in the DOM at all
-              times (each is merely hidden at the other's breakpoint), so a second h1 here
-              would have a screen reader announce two page titles. */}
-          <p className="mt-1 font-display text-xl font-semibold tracking-tight text-text-light lg:text-2xl">
+          {/* The page's only h1: the old page header was removed so the map could have the
+              full viewport at every size. */}
+          <h1 className="mt-0.5 font-display text-lg font-semibold tracking-tight text-text-light sm:mt-1 sm:text-xl lg:text-2xl">
             Uttarakhand, at a glance
-          </p>
-          <div className="mt-3 grid grid-cols-4 gap-3">
+          </h1>
+          <div className="mt-2 grid grid-cols-4 gap-2 sm:mt-3 sm:gap-3">
             <Figure
               value={format(overview.population, (v) => `${(v / 1_000_000).toFixed(1)}M`)}
               label="Population"
@@ -115,11 +118,11 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
       </div>
 
       {/* Bottom: the three things worth acting on. */}
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:pointer-events-none lg:absolute lg:inset-x-0 lg:bottom-0 lg:mt-0 lg:grid-cols-3 lg:gap-5 lg:p-5">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex snap-x snap-mandatory gap-3 overflow-x-auto p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:p-4 lg:grid lg:max-w-[64rem] lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:p-5">
         {/* Alerts first, and styled to stand out when there are any. This is an emergency
             -facing product; the warning card is the one that must not blend in. */}
         <article
-          className={`${FLOATING_CARD} pp-rise p-4`}
+          className={`${FLOATING_CARD} pp-rise w-[78vw] shrink-0 snap-start p-4 sm:w-[52vw] lg:w-auto lg:shrink`}
           style={{ '--pp-delay': '80ms' } as React.CSSProperties}
         >
           <div className="flex items-center justify-between gap-3">
@@ -147,7 +150,7 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
         </article>
 
         <article
-          className={`${FLOATING_CARD} pp-rise p-4`}
+          className={`${FLOATING_CARD} pp-rise w-[78vw] shrink-0 snap-start p-4 sm:w-[52vw] lg:w-auto lg:shrink`}
           style={{ '--pp-delay': '150ms' } as React.CSSProperties}
         >
           <div className="flex items-center justify-between gap-3">
@@ -171,7 +174,7 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
         </article>
 
         <article
-          className={`${FLOATING_CARD} pp-rise p-4`}
+          className={`${FLOATING_CARD} pp-rise w-[78vw] shrink-0 snap-start p-4 sm:w-[52vw] lg:w-auto lg:shrink`}
           style={{ '--pp-delay': '220ms' } as React.CSSProperties}
         >
           <div className="flex items-center justify-between gap-3">

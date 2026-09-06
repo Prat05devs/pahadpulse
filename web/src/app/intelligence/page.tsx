@@ -73,7 +73,7 @@ export default function IntelligencePage() {
               return (
                 <div
                   key={sector.title}
-                  className="bg-surface border border-border rounded-lg p-6 hover:shadow-md transition"
+                  className="bg-surface border border-border rounded-lg p-4 transition hover:shadow-md sm:p-6"
                 >
                   <span className="mb-4 flex size-10 items-center justify-center rounded-lg bg-info-soft text-info">
                     <Icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
@@ -89,7 +89,7 @@ export default function IntelligencePage() {
             })}
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
             <h2 className="mb-2 flex items-center gap-2 font-bold text-blue-900">
               <Database className="size-5" strokeWidth={1.8} aria-hidden="true" />
               Data Sources
@@ -101,7 +101,7 @@ export default function IntelligencePage() {
             </p>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 sm:p-6">
             <h2 className="mb-2 flex items-center gap-2 font-bold text-amber-900">
               <Search className="size-5" strokeWidth={1.8} aria-hidden="true" />
               How to Use

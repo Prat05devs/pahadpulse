@@ -48,7 +48,13 @@ export default async function AlertsPage() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-bg-light">
+      <div className="relative min-h-screen bg-bg-light">
+        {/* Backdrop for the glass cards. Fixed so it does not scroll with them, and low
+            enough in opacity that it never competes with warning text. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(60rem_40rem_at_15%_-10%,rgba(56,102,181,0.10),transparent),radial-gradient(50rem_35rem_at_95%_10%,rgba(194,16,27,0.07),transparent)]"
+        />
         {/* Header */}
         <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
           <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">

@@ -17,7 +17,7 @@ export default function ConnectivityPage() {
         </div>
 
         <div className="space-y-5 px-4 py-5 sm:px-6 md:py-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
             <h2 className="font-bold text-blue-900 mb-2">📡 Connectivity Status</h2>
             <p className="text-blue-800 text-sm">
               Real-time broadband coverage, 4G/5G availability, and internet speed metrics by district.
