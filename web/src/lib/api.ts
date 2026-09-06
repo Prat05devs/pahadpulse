@@ -27,6 +27,54 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * How long to wait for the API before giving up.
+ *
+ * This exists because of a real outage. When the database went away, the API could not
+ * start, and these fetches did not fail — they HUNG. Every page here is
+ * `dynamic = 'force-dynamic'`, so each request waited on a backend that would never answer,
+ * and the whole public site stopped responding rather than degrading to empty panels.
+ *
+ * The `.catch(() => null)` guards throughout the app were no help: a hang is not an error,
+ * so there was nothing to catch. A deadline is what turns an unreachable backend into a
+ * normal, catchable failure.
+ *
+ * Eight seconds is chosen against the slowest legitimate response — a cold Render instance
+ * answering a district query — not against a healthy one.
+ */
+const REQUEST_TIMEOUT_MS = 8_000;
+
+/** Raised when the API did not answer in time. Carries a code so callers can tell it apart. */
+export const API_TIMEOUT_CODE = 10_408;
+
+/**
+ * `AbortSignal.timeout` with a manual fallback.
+ *
+ * The static method is not available on every runtime this builds for, and silently having
+ * no timeout is the exact failure this function exists to prevent — so the fallback is a
+ * real controller rather than `undefined`.
+ */
+function timeoutSignal(ms: number): AbortSignal {
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(ms);
+  }
+  const controller = new AbortController();
+  setTimeout(() => {
+    controller.abort();
+  }, ms);
+  return controller.signal;
+}
+
+/** True for the various shapes an abort takes across runtimes. */
+function isAbort(error: unknown): boolean {
+  if (typeof DOMException !== 'undefined' && error instanceof DOMException) {
+    return error.name === 'AbortError' || error.name === 'TimeoutError';
+  }
+  return (
+    error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')
+  );
+}
+
 async function readJsonBody(response: Response, url: string): Promise<unknown> {
   const raw = await response.text();
 
@@ -54,6 +102,8 @@ export const apiClient = {
       const response = await fetch(url, {
         ...options,
         method: 'GET',
+        // The caller's own signal wins if it passed one; otherwise the deadline applies.
+        signal: options?.signal ?? timeoutSignal(REQUEST_TIMEOUT_MS),
         headers: {
           'Content-Type': 'application/json',
           ...options?.headers,
@@ -92,6 +142,15 @@ export const apiClient = {
           500
         );
       }
+      // Converted to an ApiError rather than rethrown raw: every caller already handles
+      // ApiError, so an unreachable backend now degrades the same way a 500 does.
+      if (isAbort(error)) {
+        throw new ApiError(
+          API_TIMEOUT_CODE,
+          `The API did not respond within ${REQUEST_TIMEOUT_MS / 1000}s (${url}).`,
+          504
+        );
+      }
       throw error;
     }
   },
@@ -108,6 +167,7 @@ export const apiClient = {
       const response = await fetch(url, {
         ...options,
         method: 'POST',
+        signal: options?.signal ?? timeoutSignal(REQUEST_TIMEOUT_MS),
         headers: {
           'Content-Type': 'application/json',
           ...options?.headers,
@@ -145,6 +205,15 @@ export const apiClient = {
           10000,
           `Invalid response format: ${error.message}`,
           500
+        );
+      }
+      // Converted to an ApiError rather than rethrown raw: every caller already handles
+      // ApiError, so an unreachable backend now degrades the same way a 500 does.
+      if (isAbort(error)) {
+        throw new ApiError(
+          API_TIMEOUT_CODE,
+          `The API did not respond within ${REQUEST_TIMEOUT_MS / 1000}s (${url}).`,
+          504
         );
       }
       throw error;
