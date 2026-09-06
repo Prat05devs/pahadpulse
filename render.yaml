@@ -149,6 +149,71 @@ services:
       - key: DB_POOL_LIMIT
         value: '4'
 
+  # Weather observations and the 7-day forecast, hourly.
+  #
+  # Hourly because that is the cadence the source is registered at and the rate Open-Meteo
+  # actually refreshes its model — polling faster would re-read numbers that have not moved
+  # while spending someone else's free allowance. One request per district per run, so
+  # 13 x 24 = 312 calls/day against a 10,000/day non-commercial limit.
+  #
+  # Separate from the alerts cron rather than folded into it: a slow weather run must never
+  # delay a flood warning, and the two have genuinely different urgencies.
+  - type: cron
+    name: pahadpulse-ingest-weather
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: 0.5c-512mb
+    region: singapore
+    schedule: '10 * * * *' # Ten past, to stay clear of the alerts run on the hour.
+    dockerCommand: npm run ingest -- open-meteo
+    envVars: *ingest_env
+
+  # Air quality, hourly. Separate from the weather cron rather than folded into it, for the
+  # same reason the connectors are separate: CAMS and the weather model are different
+  # upstreams, and one going quiet must not drag the other's freshness down with it.
+  - type: cron
+    name: pahadpulse-ingest-air
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: 0.5c-512mb
+    region: singapore
+    schedule: '25 * * * *' # Offset from the weather run at :10.
+    dockerCommand: npm run ingest -- open-meteo-air-quality
+    envVars: *ingest_env
+
+  # Earthquakes, hourly.
+  #
+  # Hourly rather than every few minutes despite `realtime` cadence: USGS revises magnitude
+  # for hours after an event, so the 90-day lookback window matters far more than polling
+  # frequency. A quake missed by 40 minutes is still correctly recorded on the next run.
+  - type: cron
+    name: pahadpulse-ingest-seismic
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: 0.5c-512mb
+    region: singapore
+    schedule: '40 * * * *'
+    dockerCommand: npm run ingest -- usgs-earthquakes
+    envVars: *ingest_env
+
+  # GDACS disaster events, every 30 minutes.
+  #
+  # Slower than the SACHET alerts cron: GDACS scores events over hours and days rather than
+  # issuing 3-hour nowcasts, so a 15-minute poll would re-read an unchanged assessment.
+  - type: cron
+    name: pahadpulse-ingest-gdacs
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: 0.5c-512mb
+    region: singapore
+    schedule: '20,50 * * * *'
+    dockerCommand: npm run ingest -- gdacs
+    envVars: *ingest_env
+
   # Reference geography and the highway network. Weekly: OSM boundaries and highway numbers
   # change on the timescale of government notifications, not minutes, and Overpass is a
   # volunteer-run service that should not be polled hard.

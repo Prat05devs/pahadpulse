@@ -125,8 +125,35 @@ No human transitions an alert. There is no editorial control over safety informa
 
 | # | File | What |
 |---|---|---|
-| 007 | `007-create-alerts.sql` | alerts + areas |
+| 008 | `008-create-alerts.sql` | alerts + areas |
+| 010 | `010-add-alert-geometry.sql` | affected-area polygons and centroids |
+| 011 | `011-seed-sachet-source.sql` | the SACHET registry row |
+| 022 | `022-seed-gdacs-source.sql` | the GDACS registry row |
 | `<TBD>` | `NNN-create-alert-subscriptions.sql` | ships with `accounts` |
+
+### Sources
+
+| Source | Displayable | Notes |
+|---|---|---|
+| `sachet-ndma` | yes | IMD/NDMA warnings via the Uttarakhand CAP feed. The primary source. |
+| `imd-cap-alerts` | **no** | ingested but withheld — redistribution unconfirmed (migration 009) |
+| `gdacs` | yes | scored disaster events, JRC/UN, public domain. Added 2026-09-06. |
+
+**GDACS does not replace SACHET and is not merged with it.** SACHET carries warnings issued
+by the authority for Uttarakhand; GDACS carries independently assessed disaster events with
+an international GLIDE number. The same flood can legitimately appear in both, and when it
+does it stays two rows — the upsert key is (source_id, source_alert_id), so each source
+keeps its own provenance. Merging them would mean this platform deciding which body is right
+about an event, which is the judgement ALR-6 forbids.
+
+GDACS reports nationally and has no state-level query, so the connector filters events to
+the Uttarakhand bounding box before writing. That is a coarse filter on purpose: admitting
+a neighbouring state's event is a much cheaper error than dropping one of ours.
+
+GDACS grades on Green/Orange/Red and CAP grades on four severities. The mapping is
+Green→minor, Orange→severe, Red→extreme, recorded in `gdacs.parser.ts`. Nothing maps to
+`moderate`: inventing a fourth GDACS level to fill CAP's fourth slot would fabricate
+precision the source does not have.
 
 ## 5. API
 

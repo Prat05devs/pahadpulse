@@ -104,8 +104,41 @@ The second index covers the filter and the vintage ordering together, per
 
 | # | File | What |
 |---|---|---|
-| 005 | `005-create-indicators.sql` | catalogue + values |
-| 006 | `006-seed-indicator-catalogue.sql` | keys, bilingual labels, units |
+| 006 | `006-create-indicators.sql` | catalogue + values |
+| 007 | `007-seed-indicator-catalogue.sql` | ten district-scoped keys, bilingual labels, units |
+| 013 | `013-seed-statistical-sources.sql` | `census-2011`, `uk-des-ddp` |
+| 014 | `014-seed-real-district-indicators.sql` | published district values, replacing demo figures |
+| 023 | `023-seed-forest-survey-source.sql` | `forest-survey-india` |
+| 024 | `024-add-indicator-categories.sql` | adds `geography` and `environment` categories |
+| 025 | `025-seed-state-indicator-catalogue.sql` | five state-scoped keys |
+| 026 | `026-seed-state-indicator-values.sql` | the state profile figures |
+
+### State-scoped indicators
+
+Migration 007 catalogued ten indicators, all district-scoped, noting that state scope was
+"schema-supported but not yet catalogued". That gap had a visible consequence: the home
+dashboard's "Uttarakhand at a glance" panel had nowhere to read state figures from, so all
+six were **hardcoded literals in the web app** — no source, no vintage, rendered beside
+genuine Census figures and looking equally authoritative.
+
+Two of them were wrong:
+
+| Figure | Was | Is | Why |
+|---|---|---|---|
+| Villages | 16,817 | 16,793 | matched no published Census total. 16,793 reconciles as 15,745 inhabited + 1,048 uninhabited. A second published breakdown gives 16,826 — also self-consistent; 16,817 is neither. |
+| Forest cover | 63% | 45.44% | matched neither FSI measure. Forest *cover* is 45.44%, recorded forest *area* is ~71%. Verified: 24,303.04 / 53,483 km² = 45.44%. |
+
+Population (10,086,292), area (53,483 km²) and literacy (78.82%) were already correct and
+are seeded unchanged. Literacy is the Census 7-plus rate — some secondary sites print
+68.22%, which is literates as a share of total population and is a different measure.
+
+The district **count** is deliberately not catalogued: it is derived by counting the rows
+geography returns, so it cannot drift from the district list the way a stored "13" could.
+
+State indicators use their own keys (`state_population`, not `population`) because
+`indicator_key` is unique and scope is a property of the indicator — one key cannot be both
+district- and state-scoped, and re-scoping the existing rows would break every district
+value referencing them.
 
 ## 5. API
 

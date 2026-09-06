@@ -3,10 +3,19 @@
 | | |
 |---|---|
 | **Owner** | `<TBD>` |
-| **Status** | planned |
-| **Backend** | `src/controllers/observation.controller.ts`, `src/repositories/observation.repository.ts`, `src/services/ingestion/imd.connector.ts` |
+| **Status** | **partial** — weather is built and live; rivers and reservoirs are not started |
+| **Backend** | `src/controllers/observation.controller.ts`, `src/repositories/observation.repository.ts`, `src/models/observation.model.ts`, `src/services/ingestion/connectors/open-meteo.connector.ts` |
 | **Web** | `src/features/weather/` |
 | **Mobile** | not in this repo |
+
+**What exists today.** One weather station per district, placed at the district
+headquarters, reading current conditions and a 7-day forecast from Open-Meteo every hour.
+`GET /api/areas/:slug/weather` serves it and the district page renders it.
+
+**What does not.** Rivers, reservoirs, thresholds and station series. `station_thresholds`
+is deliberately not created yet — it exists to satisfy HYD-3, and there is no river source
+until CWC access is resolved, so an empty table would only invite the half-built river panel
+HYD-3 is written to prevent.
 
 ---
 
@@ -61,9 +70,25 @@ enum StationType { Weather = 'weather', River = 'river', Reservoir = 'reservoir'
 enum Metric {
   TemperatureC = 'temperature_c', RainfallMm = 'rainfall_mm', HumidityPct = 'humidity_pct',
   RiverLevelM = 'river_level_m', ReservoirLevelM = 'reservoir_level_m', ReservoirStorageMcm = 'reservoir_storage_mcm',
+  WindSpeedKmh = 'wind_speed_kmh', WindDirectionDeg = 'wind_direction_deg',
+  WeatherCode = 'weather_code',
+  TemperatureMinC = 'temperature_min_c', TemperatureMaxC = 'temperature_max_c',
 }
 enum ThresholdLevel { Warning = 'warning', Danger = 'danger', HighestFloodLevel = 'hfl' }
+/** Coarse buckets derived from a WMO code for display; the raw code is always stored too. */
+enum WeatherCondition {
+  Clear = 'clear', PartlyCloudy = 'partly_cloudy', Cloudy = 'cloudy', Fog = 'fog',
+  Drizzle = 'drizzle', Rain = 'rain', HeavyRain = 'heavy_rain', Snow = 'snow',
+  Thunderstorm = 'thunderstorm', Unknown = 'unknown',
+}
 ```
+
+`weather_code` is a category stored numerically with unit `wmo`. HYD-2 makes that safe: the
+unit travels with the row, so nothing can mistake a 51 for millimetres.
+
+`temperature_min_c` / `temperature_max_c` are separate metrics rather than two
+`temperature_c` forecast rows, because `forecasts` is keyed on (area, metric, valid_from)
+and one metric cannot hold both bounds for a day.
 
 ### Rules
 
@@ -105,18 +130,47 @@ and recorded as an ingestion run.
 
 | # | File | What |
 |---|---|---|
-| 008 | `008-create-stations.sql` | stations + thresholds |
-| 009 | `009-create-observations.sql` | time series + forecasts |
+| 019 | `019-create-hydromet.sql` | stations, observations, forecasts |
+| 020 | `020-seed-open-meteo-source.sql` | the Open-Meteo registry row |
+| 021 | `021-seed-weather-stations.sql` | one weather station per district, at its headquarters |
+
+These were numbered 008/009 in the original plan. Those numbers were taken by the alerts
+tables before hydromet was built, so the tables landed at 019–021 and this table was
+corrected rather than the migration history rewritten.
+
+`station_thresholds` is not created yet — see the status note at the top.
 
 ## 5. API
 
-| Method | Path | Auth | Cache | Paginated |
-|---|---|---|---|---|
-| GET | `/api/areas/:slug/weather` | none | 10m | no |
-| GET | `/api/stations` | none | 1h | cursor |
-| GET | `/api/stations/:id/series` | none | 10m | no |
-| GET | `/api/rivers/levels` | none | 10m | no |
-| GET | `/api/reservoirs` | none | 1h | no |
+| Method | Path | Auth | Cache | Paginated | Status |
+|---|---|---|---|---|---|
+| GET | `/api/areas/:slug/weather` | none | 10m | no | **built** |
+| GET | `/api/stations` | none | 1h | cursor | not built |
+| GET | `/api/stations/:id/series` | none | 10m | no | not built |
+| GET | `/api/rivers/levels` | none | 10m | no | not built |
+| GET | `/api/reservoirs` | none | 1h | no | not built |
+
+`src/features/weather/services.ts` in the web app already has client functions for the
+unbuilt four. They resolve to 404 and every caller catches that, so they are dormant rather
+than broken — but nothing should start rendering them until the endpoints exist.
+
+### `GET /api/areas/:slug/weather`
+
+Returns the station, the latest reading per metric, the derived condition, the 7-day
+forecast, and the source used. `temperature`, `rainfall` and `humidity` keep the exact
+shape the web app's `WeatherDataSchema` required before the endpoint existed; everything
+else is additive and optional.
+
+An absent metric is omitted from the response rather than sent as zero or null (HYD-6).
+
+**Errors**
+
+| Constant | Code | HTTP | When |
+|---|---|---|---|
+| `AREA_NOT_FOUND` | `40001` | 404 | no such area slug |
+| `STATION_NOT_FOUND` | `70001` | 404 | the area has no weather station — e.g. the state row |
+| `OBSERVATION_NOT_AVAILABLE` | `70002` | 404 | a station exists but has no readings yet |
+| `SOURCE_NOT_REDISTRIBUTABLE` | `90006` | 403 | DS-6 — enforced here, not in the UI |
 
 ### `GET /api/rivers/levels`
 
@@ -177,7 +231,55 @@ to see the gap between now and danger at a glance, which is a gauge, not a stati
 
 ## 8. Decisions
 
-### `<TBD>` — Ordered source chain per metric, with the source shown
+### 2026-09-06 — Open-Meteo is the first weather source, on licence grounds
+
+**Supersedes** the OpenWeatherMap plan below, which was written before the redistribution
+problem was understood.
+
+**Context:** every alert source on the platform speaks CAP, and CAP carries warnings — it has
+no field for temperature, wind or humidity. A district weather panel needed an observation
+source, not more work on the existing connectors. Two candidates: IMD's own endpoints, and
+Open-Meteo.
+
+**Decision:** Open-Meteo, at CC-BY 4.0, one station per district at its headquarters.
+
+**Because:** `may_redistribute`. IMD's terms are unconfirmed, which is why `imd-cap-alerts`
+sits at FALSE and its content is ingested but never displayed (migration 009). Adopting IMD
+for weather would have produced the same outcome — a panel that legally cannot render.
+Open-Meteo grants redistribution in writing, with attribution, so its values can actually
+reach a reader. It is also keyless, which removed the credential wait that has kept
+`data-gov-in` stubbed since the start.
+
+**This is not a claim that Open-Meteo outranks IMD as an authority.** HYD-5 stands: when
+IMD's terms are confirmed it is inserted ahead of Open-Meteo in the chain and the panel
+starts naming IMD. Warnings continue to come only from SACHET/IMD — a forecast is never an
+alert (HYD-4).
+
+**Costs:** a modelled value rather than a station observation, and an offshore source for
+Indian weather, which is a poor look for a government-facing product and is exactly why the
+IMD conversation still matters.
+
+**Revisit if:** IMD confirms redistribution terms, or Open-Meteo changes its licence.
+
+### 2026-09-06 — One station per district, at the headquarters
+
+**Context:** a district is not a place with a temperature. Uttarkashi spans Gangotri at
+3,000 m and valley floors below 1,000 m.
+
+**Decision:** place the station at the district headquarters and carry the town's name —
+'Gopeshwar', not 'Chamoli'. The panel says "Measured at Gopeshwar".
+
+**Because:** the alternative, a polygon centroid, lands on an arbitrary uninhabited ridge.
+The headquarters is a real town where people are, so the reading is true about somewhere.
+Naming the place is the mechanism that keeps it honest: it never implies the figure covers
+8,000 km² of mountain.
+
+**Costs:** a single point per district, which is wrong for anyone in a high valley.
+
+**Revisit if:** demand appears for named places within a district — the schema already
+supports many stations per area, so this is seeding work, not a migration.
+
+### `<TBD>` — Ordered source chain per metric, with the source shown *(superseded above)*
 
 **Context:** IMD requires IP whitelisting with a multi-week lead time; OpenWeatherMap is
 available immediately.
@@ -189,6 +291,9 @@ configuration change. Showing the source is required by the product's core promi
 **Costs:** two connectors for the same metric, and values that differ slightly between sources
 across a fallback boundary.
 **Revisit if:** IMD access is denied outright, which would make OWM primary permanently.
+
+*The chain principle survives; only the choice of first source changed. OpenWeatherMap was
+never adopted — its free tier restricts redistribution, the same blocker as IMD.*
 
 ### `<TBD>` — Record measurements, never derive warnings
 
