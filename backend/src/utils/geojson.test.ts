@@ -5,9 +5,6 @@ import {
   countPositions,
   geometryCentroid,
   parseCapPolygon,
-  pointInAnyRing,
-  pointInRing,
-  ringBounds,
   ringCentroid,
   simplifyGeometry,
   simplifyRing,
@@ -280,70 +277,4 @@ describe('parseCapPolygon', () => {
   });
 });
 
-describe('pointInRing', () => {
-  const square: Position[] = [
-    [0, 0],
-    [4, 0],
-    [4, 4],
-    [0, 4],
-    [0, 0],
-  ];
 
-  it('accepts a point inside', () => {
-    expect(pointInRing([2, 2], square)).toBe(true);
-  });
-
-  it('rejects a point outside', () => {
-    expect(pointInRing([5, 2], square)).toBe(false);
-  });
-
-  it('rejects a point outside but within the bounding box of a concave ring', () => {
-    // An L-shape: the notch is inside the bbox but outside the polygon. This is the case a
-    // bounding-box test alone would get wrong, which is why the ray cast exists.
-    const lShape: Position[] = [
-      [0, 0],
-      [4, 0],
-      [4, 1],
-      [1, 1],
-      [1, 4],
-      [0, 4],
-      [0, 0],
-    ];
-    expect(pointInRing([3, 3], lShape)).toBe(false);
-    expect(pointInRing([0.5, 3], lShape)).toBe(true);
-  });
-
-  it('checks every ring of a multi-ring area', () => {
-    const other: Position[] = [
-      [10, 10],
-      [12, 10],
-      [12, 12],
-      [10, 10],
-    ];
-    expect(pointInAnyRing([11, 10.5], [square, other])).toBe(true);
-    expect(pointInAnyRing([7, 7], [square, other])).toBe(false);
-  });
-});
-
-describe('ringBounds', () => {
-  it('spans every ring', () => {
-    expect(
-      ringBounds([
-        [
-          [0, 0],
-          [2, 3],
-          [0, 0],
-        ],
-        [
-          [-1, 1],
-          [5, 9],
-          [-1, 1],
-        ],
-      ])
-    ).toEqual([-1, 0, 5, 9]);
-  });
-
-  it('returns null for no rings', () => {
-    expect(ringBounds([])).toBeNull();
-  });
-});

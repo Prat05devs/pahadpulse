@@ -73,6 +73,21 @@ function toMapLayer(row: MapLayerRow): MapLayer {
   };
 }
 
+/** A place node as OSM gives it, before any decision about which tehsil contains it. */
+export interface CandidatePlace {
+  osmId: number;
+  name: string;
+  nameHi: string | null;
+  lat: number;
+  lng: number;
+}
+
+export interface PlacementResult {
+  placed: number;
+  /** Fell inside no stored tehsil boundary. Reported, never guessed into the nearest one. */
+  unplaced: number;
+}
+
 export interface IAreaRepository {
   listDistricts(): Promise<Result<DistrictSummary[], RequestError>>;
   findBySlug(slug: string): Promise<Result<Area, RequestError>>;
@@ -103,16 +118,18 @@ export interface IAreaRepository {
   /** Every tehsil with the district it belongs to, for placing ingested villages. */
   listTehsils(): Promise<Result<TehsilRef[], RequestError>>;
   /**
+   * Replaces the ingested villages, placing each inside the tehsil whose boundary contains
+   * it — in the database, using the spatial index, rather than in application code.
+   */
+  replaceVillagesByGeometry(
+    places: readonly CandidatePlace[],
+  ): Promise<Result<PlacementResult, RequestError>>;
+  /**
    * Village names grouped by their tehsil, for one district. One query rather than N —
    * a district has up to ~1,500 villages across a dozen tehsils and per-tehsil queries
    * would be the classic N+1 on the busiest page in the product (Q5).
    */
   listVillagesByTehsil(districtId: number): Promise<Result<Map<number, string[]>, RequestError>>;
-  /**
-   * Replaces every ingested village in one transaction. Ingested places are identified by an
-   * `OSM-` code prefix so a re-run never touches curated rows (DS-5).
-   */
-  replaceIngestedVillages(villages: readonly IngestedVillage[]): Promise<Result<number, RequestError>>;
 }
 
 export interface TehsilRef {
@@ -121,15 +138,6 @@ export interface TehsilRef {
   nameEn: string;
 }
 
-export interface IngestedVillage {
-  code: string;
-  slug: string;
-  nameEn: string;
-  nameHi: string | null;
-  parentId: number;
-  lat: number;
-  lng: number;
-}
 
 export interface UpsertBoundaryInput {
   areaId: number;
@@ -394,68 +402,132 @@ class AreaRepositoryImpl implements IAreaRepository {
     }
   }
 
-  async replaceIngestedVillages(
-    villages: readonly IngestedVillage[],
-  ): Promise<Result<number, RequestError>> {
-    if (villages.length === 0) return ok(0);
+
+  /**
+   * Places every village by geometry, in SQL.
+   *
+   * This replaced a hand-rolled point-in-polygon pass in TypeScript: a ray cast per ring
+   * with a bounding-box pre-filter, run for ~13,500 places against 78 tehsils. That code
+   * was correct, but it was a spatial index reimplemented by hand — and it required every
+   * tehsil polygon to be held in memory and re-parsed on every run.
+   *
+   * `ST_Covers` against the GIST index on `area_boundaries.geom` does the same test. Covers
+   * rather than Contains deliberately: a village sitting exactly ON a tehsil border is
+   * inside it for this purpose, whereas ST_Contains excludes the boundary and would drop it.
+   *
+   * The places go into a TEMP table first rather than one enormous VALUES list. Postgres
+   * caps a statement at 65,535 parameters and there are five per place, so a single
+   * statement could not carry them; staging also lets the planner see the real row count
+   * before choosing how to join.
+   */
+  async replaceVillagesByGeometry(
+    places: readonly CandidatePlace[],
+  ): Promise<Result<PlacementResult, RequestError>> {
+    if (places.length === 0) return ok({ placed: 0, unplaced: 0 });
 
     const client = await db.connect();
     try {
       await client.query('BEGIN');
 
-      // Only ingested rows are cleared. A curated village added by hand would not carry the
-      // OSM prefix and must survive a re-run untouched.
-      await client.query(
-        `DELETE FROM ${AREAS_TABLE} WHERE type = $1 AND code LIKE 'OSM-V-%'`,
-        [AreaType.Village],
-      );
+      // Dropped at COMMIT, so nothing survives the transaction.
+      await client.query(`
+        CREATE TEMP TABLE staged_places (
+          osm_id   BIGINT PRIMARY KEY,
+          name_en  VARCHAR(128) NOT NULL,
+          name_hi  VARCHAR(128),
+          point    geometry(Point, 4326) NOT NULL
+        ) ON COMMIT DROP
+      `);
 
-      /*
-       * Chunked because Postgres caps a statement at 65,535 bound parameters. Eight columns
-       * per village puts the ceiling near 8,000 rows, and there are ~13,000 villages — so
-       * this is a hard limit, not a tuning choice.
-       */
       const CHUNK = 1000;
-      for (let i = 0; i < villages.length; i += CHUNK) {
-        const chunk = villages.slice(i, i + CHUNK);
-
-        // Built by hand rather than with `bulkValues`: the centroid slot is a constructed
-        // point wrapping two placeholders, not a placeholder of its own.
+      for (let i = 0; i < places.length; i += CHUNK) {
+        const chunk = places.slice(i, i + CHUNK);
         const params: unknown[] = [];
         const tuples: string[] = [];
 
-        for (const village of chunk) {
+        for (const place of chunk) {
           const base = params.length;
-          params.push(
-            AreaType.Village,
-            village.code,
-            village.slug,
-            village.nameEn,
-            village.nameHi,
-            village.parentId,
-            village.lng,
-            village.lat,
-          );
-          const p = (offset: number) => `$${base + offset}`;
+          // lng then lat — ST_MakePoint takes X before Y.
+          params.push(place.osmId, place.name.slice(0, 128), place.nameHi?.slice(0, 128) ?? null,
+            place.lng, place.lat);
+          const p = (n: number) => `$${base + n}`;
           tuples.push(
-            `(${p(1)}, ${p(2)}, ${p(3)}, ${p(4)}, ${p(5)}, ${p(6)}, ` +
-              `ST_SetSRID(ST_MakePoint(${p(7)}, ${p(8)}), 4326)::geography)`,
+            `(${p(1)}, ${p(2)}, ${p(3)}, ST_SetSRID(ST_MakePoint(${p(4)}, ${p(5)}), 4326))`,
           );
         }
 
         await client.query(
-          `INSERT INTO ${AREAS_TABLE}
-             (type, code, slug, name_en, name_hi, parent_id, centroid)
-           VALUES ${tuples.join(', ')}`,
+          `INSERT INTO staged_places (osm_id, name_en, name_hi, point) VALUES ${tuples.join(', ')}
+           ON CONFLICT (osm_id) DO NOTHING`,
           params,
         );
       }
 
+      // Only ingested rows are cleared. A curated village added by hand would not carry the
+      // OSM prefix and must survive a re-run untouched.
+      await client.query(`DELETE FROM ${AREAS_TABLE} WHERE type = $1 AND code LIKE 'OSM-V-%'`, [
+        AreaType.Village,
+      ]);
+
+      /*
+       * The placement itself. `DISTINCT ON (osm_id)` because a point on a shared border is
+       * covered by both tehsils — the lower area id wins, deterministically, rather than the
+       * row order deciding.
+       *
+       * Slugs are de-duplicated with ROW_NUMBER rather than a Set in application code:
+       * village names repeat across the state, and the suffix has to be stable between runs
+       * or every re-ingestion would renumber them.
+       */
+      const inserted = await client.query(
+        `WITH covered AS (
+           SELECT DISTINCT ON (s.osm_id)
+                  s.osm_id, s.name_en, s.name_hi, s.point, t.id AS tehsil_id
+             FROM staged_places s
+             JOIN ${AREA_BOUNDARIES_TABLE} b ON ST_Covers(b.geom, s.point)
+             JOIN ${AREAS_TABLE} t ON t.id = b.area_id AND t.type = $1
+            ORDER BY s.osm_id, t.id
+         ),
+         slugged AS (
+           SELECT c.*,
+                  -- Mirrors the old JS: strip to ASCII, lowercase, hyphenate, fall back to
+                  -- the OSM id when a name leaves nothing usable.
+                  COALESCE(
+                    NULLIF(regexp_replace(lower(regexp_replace(c.name_en, '[^[:ascii:]]', '', 'g')), '[^a-z0-9]+', '-', 'g'), ''),
+                    'place-' || c.osm_id
+                  ) AS stem,
+                  ROW_NUMBER() OVER (
+                    PARTITION BY COALESCE(
+                      NULLIF(regexp_replace(lower(regexp_replace(c.name_en, '[^[:ascii:]]', '', 'g')), '[^a-z0-9]+', '-', 'g'), ''),
+                      'place-' || c.osm_id
+                    )
+                    ORDER BY c.osm_id
+                  ) AS n
+             FROM covered c
+         )
+         INSERT INTO ${AREAS_TABLE} (type, code, slug, name_en, name_hi, parent_id, centroid)
+         SELECT $2,
+                'OSM-V-' || osm_id,
+                left(
+                  CASE WHEN n = 1 THEN 'v-' || btrim(stem, '-')
+                       ELSE 'v-' || btrim(stem, '-') || '-' || n END,
+                  128
+                ),
+                left(name_en, 128),
+                left(name_hi, 128),
+                tehsil_id,
+                point::geography
+           FROM slugged
+         ON CONFLICT (slug) DO NOTHING`,
+        [AreaType.Tehsil, AreaType.Village],
+      );
+
+      const placed = inserted.rowCount ?? 0;
       await client.query('COMMIT');
-      return ok(villages.length);
+
+      return ok({ placed, unplaced: places.length - placed });
     } catch (error) {
       await client.query('ROLLBACK');
-      logger.error('replaceIngestedVillages failed', { count: villages.length, error });
+      logger.error('replaceVillagesByGeometry failed', { count: places.length, error });
       return err(ERRORS.DATABASE_ERROR);
     } finally {
       client.release();

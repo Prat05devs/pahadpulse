@@ -22,7 +22,7 @@ const mockAreaRepo: jest.Mocked<IAreaRepository> = {
   upsertBoundary: jest.fn(),
   listTehsils: jest.fn(),
   listVillagesByTehsil: jest.fn(),
-  replaceIngestedVillages: jest.fn(),
+  replaceVillagesByGeometry: jest.fn(),
 };
 const mockAlertRepo: jest.Mocked<IAlertRepository> = {
   upsert: jest.fn(),

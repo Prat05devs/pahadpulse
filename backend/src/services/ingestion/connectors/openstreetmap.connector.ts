@@ -5,15 +5,12 @@ import {
   OVERPASS,
   UTTARAKHAND_DISTRICT_COUNT,
 } from '../../../config/constants.js';
-import { AreaRepository, type IngestedVillage } from '../../../repositories/area.repository.js';
+import { AreaRepository } from '../../../repositories/area.repository.js';
 import { ERRORS, type RequestError } from '../../../utils/errors.js';
 import {
   assembleRings,
   countPositions,
-  pointInAnyRing,
-  ringBounds,
   simplifyGeometry,
-  type BBox,
   type Geometry,
   type Position,
 } from '../../../utils/geojson.js';
@@ -168,12 +165,22 @@ class OpenStreetMapConnector implements SourceConnector {
     }
 
     const relations = parseOverpassRelations(boundaryBody.value);
-    if (relations.isErr()) return { written: 0, note: 'Villages skipped: tehsil boundaries unparseable.' };
+    if (relations.isErr()) {
+      return { written: 0, note: 'Villages skipped: tehsil boundaries unparseable.' };
+    }
 
     const candidates = tehsils.value.map((tehsil) => ({ key: tehsil.slug, name: tehsil.nameEn }));
     const bySlug = new Map(tehsils.value.map((tehsil) => [tehsil.slug, tehsil]));
 
-    const areas: { tehsilId: number; rings: Position[][]; bounds: BBox }[] = [];
+    /*
+     * Tehsil boundaries are STORED rather than held in memory for the length of this run.
+     *
+     * They used to be parsed, matched, and thrown away every time, purely to feed an
+     * in-process point-in-polygon pass. Persisting them makes the placement below a plain
+     * SQL join against a spatial index, and makes the boundaries themselves queryable data
+     * — the map can draw tehsils now, which it never could before.
+     */
+    let boundariesStored = 0;
     let unmatchedPolygons = 0;
 
     for (const relation of relations.value) {
@@ -185,10 +192,25 @@ class OpenStreetMapConnector implements SourceConnector {
       }
 
       const rings = assembleRings(relation.ways);
-      const bounds = ringBounds(rings);
-      if (rings.length === 0 || bounds === null) continue;
+      if (rings.length === 0) continue;
 
-      areas.push({ tehsilId: tehsil.id, rings, bounds });
+      const geometry: Geometry =
+        rings.length === 1
+          ? { type: 'Polygon', coordinates: [rings[0] as Position[]] }
+          : { type: 'MultiPolygon', coordinates: rings.map((ring) => [ring]) };
+
+      const upserted = await AreaRepository.upsertBoundary({
+        areaId: tehsil.id,
+        geojson: geometry,
+        simplifiedGeojson: simplifyGeometry(geometry, BOUNDARY_SIMPLIFY_TOLERANCE_DEGREES),
+        isPlaceholder: false,
+        sourceNote: `OpenStreetMap relation, admin_level=${OVERPASS.TEHSIL_ADMIN_LEVEL}, via Overpass. Map data (c) OpenStreetMap contributors, ODbL.`,
+      });
+      if (upserted.isOk()) boundariesStored += 1;
+    }
+
+    if (boundariesStored === 0) {
+      return { written: 0, note: 'Villages skipped: no tehsil boundary could be stored.' };
     }
 
     const placeBody = await this.fetchPlaces();
@@ -197,72 +219,37 @@ class OpenStreetMapConnector implements SourceConnector {
     const places = parseOverpassPlaces(placeBody.value);
     if (places.isErr()) return { written: 0, note: 'Villages skipped: place nodes unparseable.' };
 
-    const villages: IngestedVillage[] = [];
-    const usedSlugs = new Set<string>();
-    let unplaced = 0;
-
-    for (const place of places.value) {
-      const point: Position = [place.lng, place.lat];
-
-      const area = areas.find(
-        (candidate) =>
-          point[0] >= candidate.bounds[0] &&
-          point[0] <= candidate.bounds[2] &&
-          point[1] >= candidate.bounds[1] &&
-          point[1] <= candidate.bounds[3] &&
-          pointInAnyRing(point, candidate.rings),
-      );
-
-      if (area === undefined) {
-        unplaced += 1;
-        continue;
-      }
-
-      // Village names repeat across the state, so the slug is district-scoped and then
-      // de-duplicated. The OSM id in the code keeps every row traceable to its source.
-      const base = place.name
-        .normalize('NFKD')
-        .replace(/[^\x20-\x7E]/g, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-      const stem = base.length > 0 ? base : `place-${place.osmId}`;
-
-      let slug = `v-${stem}`;
-      let suffix = 2;
-      while (usedSlugs.has(slug)) {
-        slug = `v-${stem}-${suffix}`;
-        suffix += 1;
-      }
-      usedSlugs.add(slug);
-
-      villages.push({
-        code: `OSM-V-${place.osmId}`,
-        slug: slug.slice(0, 128),
-        nameEn: place.name.slice(0, 128),
-        nameHi: place.nameHi === null ? null : place.nameHi.slice(0, 128),
-        parentId: area.tehsilId,
+    /*
+     * Placement happens in the database now.
+     *
+     * What stood here was a ray cast per ring with a bounding-box pre-filter, run for every
+     * place against every tehsil — a spatial index reimplemented by hand, in TypeScript,
+     * over polygons that had to be parsed into memory first. `ST_Covers` against the GIST
+     * index does the same test, and the slug de-duplication that needed a `Set` is now a
+     * window function that produces the same suffixes stably across runs.
+     */
+    const stored = await AreaRepository.replaceVillagesByGeometry(
+      places.value.map((place) => ({
+        osmId: place.osmId,
+        name: place.name,
+        nameHi: place.nameHi,
         lat: place.lat,
         lng: place.lng,
+      })),
+    );
+    if (stored.isErr()) return { written: 0, note: 'Villages skipped: write failed.' };
+
+    if (unmatchedPolygons > 0) {
+      logger.warn('some OSM tehsil relations did not match a known tehsil', {
+        count: unmatchedPolygons,
       });
     }
 
-    const stored = await AreaRepository.replaceIngestedVillages(villages);
-    if (stored.isErr()) return { written: 0, note: 'Villages skipped: write failed.' };
-
-    logger.info('villages ingested', {
-      placed: villages.length,
-      unplaced,
-      tehsilPolygons: areas.length,
-      unmatchedPolygons,
-    });
-
     return {
-      written: stored.value,
+      written: stored.value.placed,
       note:
-        `${stored.value} villages placed across ${areas.length} tehsils` +
-        (unplaced > 0 ? `; ${unplaced} fell outside every matched tehsil and were skipped` : '') +
-        '.',
+        `${stored.value.placed} villages placed across ${boundariesStored} tehsils; ` +
+        `${stored.value.unplaced} fell outside every stored tehsil boundary and were skipped.`,
     };
   }
 

@@ -273,52 +273,6 @@ export function parseCapPolygon(raw: string): Result<PolygonGeometry, RequestErr
   return ok({ type: 'Polygon', coordinates: [positions] });
 }
 
-/** Axis-aligned bounds as [west, south, east, north]. */
-export type BBox = [number, number, number, number];
 
-export function ringBounds(rings: readonly Position[][]): BBox | null {
-  let west = Infinity;
-  let south = Infinity;
-  let east = -Infinity;
-  let north = -Infinity;
 
-  for (const ring of rings) {
-    for (const [x, y] of ring) {
-      if (x < west) west = x;
-      if (y < south) south = y;
-      if (x > east) east = x;
-      if (y > north) north = y;
-    }
-  }
 
-  return Number.isFinite(west) ? [west, south, east, north] : null;
-}
-
-/**
- * Ray casting: is the point inside this ring?
- *
- * Used to place a village node inside a tehsil. Deliberately plain — no spatial library —
- * because the caller filters by bounding box first, so this only runs on genuine candidates.
- * A point exactly on an edge is not guaranteed either way, which is acceptable: a village
- * sitting precisely on a tehsil boundary is arbitrary in the source data too.
- */
-export function pointInRing(point: Position, ring: readonly Position[]): boolean {
-  const [x, y] = point;
-  let inside = false;
-
-  for (let i = 0; i < ring.length - 1; i += 1) {
-    const [x1, y1] = ring[i] as Position;
-    const [x2, y2] = ring[i + 1] as Position;
-
-    const straddles = y1 > y !== y2 > y;
-    if (straddles && x < ((x2 - x1) * (y - y1)) / (y2 - y1) + x1) {
-      inside = !inside;
-    }
-  }
-
-  return inside;
-}
-
-export function pointInAnyRing(point: Position, rings: readonly Position[][]): boolean {
-  return rings.some((ring) => pointInRing(point, ring));
-}
