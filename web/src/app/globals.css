@@ -258,3 +258,35 @@ button {
     display: none;
   }
 }
+
+/**
+ * The cooperative-gestures hint ("use ctrl + scroll to zoom the map").
+ *
+ * MapLibre ships this as an opaque black scrim, which on the full-bleed home page reads as
+ * an error rather than an instruction. Restyled to the same frosted panel the floating
+ * cards use, so a momentary hint looks like part of the page.
+ */
+.maplibregl-cooperative-gesture-screen {
+  background: rgb(15 23 42 / 0.28);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  font: inherit;
+  transition: opacity 220ms ease;
+}
+
+.maplibregl-cooperative-gesture-screen .maplibregl-desktop-message,
+.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message {
+  background: rgb(255 255 255 / 0.9);
+  color: rgb(15 23 42);
+  border-radius: 0.75rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  box-shadow: 0 6px 20px rgb(15 23 42 / 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maplibregl-cooperative-gesture-screen {
+    transition: none;
+  }
+}

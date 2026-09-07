@@ -234,6 +234,21 @@ export function TerrainMap({
         ],
         maxZoom: 15,
         attributionControl: false,
+        /**
+         * The wheel scrolls the PAGE, not the map. Zooming needs ctrl/cmd + wheel, or the
+         * +/- buttons; on touch, one finger scrolls the page and two fingers pan the map.
+         *
+         * This fixes a trap rather than adding a nicety. Every map here sits inside a
+         * scrolling page, and on the home page it fills the whole viewport — so with
+         * MapLibre's default `scrollZoom` a visitor who scrolled down the hero just zoomed
+         * the map and the page never moved. The entire dashboard below it (the counters,
+         * the state figures, the district grid, the source panel, the footer) was
+         * unreachable by the first gesture anyone tries.
+         *
+         * Applied to every map, not only the full-bleed one: the district pages embed a map
+         * mid-article, where capturing the wheel strands the reader in exactly the same way.
+         */
+        cooperativeGestures: true,
       });
     } catch {
       // WebGL unavailable — an old device or a locked-down browser. The page must still
