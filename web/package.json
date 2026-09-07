@@ -10,8 +10,9 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "storybook": "storybook dev -p 6006",
-    "test": "vitest",
-    "e2e": "cypress open"
+    "test": "vitest run",
+    "e2e": "cypress open",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.45.0",

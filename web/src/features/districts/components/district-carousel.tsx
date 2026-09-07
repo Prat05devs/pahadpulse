@@ -139,12 +139,12 @@ function DistrictCard({
       <div className="relative flex h-full flex-col justify-end p-4 sm:p-7 lg:p-9">
         <div className="flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-x-8">
           <div className="min-w-0">
-            {landmark.name !== '' && (
-              <p className="text-[0.68rem] font-medium uppercase tracking-[0.18em] text-white/70 sm:text-xs">
-                {landmark.name}
-              </p>
-            )}
-            <h2 className="mt-1 font-display text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+            {/* The landmark's name is deliberately not printed on the card. The photograph
+                is there to give the district a face, not to caption a viewpoint, and the
+                eyebrow competed with the district name for the same glance. It survives in
+                the image's alt text, where it describes the photograph for a screen reader
+                without adding a second heading to the card. */}
+            <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
               {district.name.en}
             </h2>
             <p className="text-sm text-white/70 sm:text-base">{district.name.hi}</p>

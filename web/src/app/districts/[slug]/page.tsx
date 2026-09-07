@@ -42,6 +42,31 @@ export async function generateMetadata({ params }: DistrictDetailPageProps): Pro
  *  alerts page's caution more closely than the weather page's hourly cadence. */
 export const revalidate = 120;
 
+/**
+ * Prerender all 13 districts at build time.
+ *
+ * Without this the route is rendered on demand for every visit — `revalidate` alone does not
+ * make a dynamic segment static, so each district page was paying the full round trip to the
+ * API on every navigation. These are the most-visited pages in the product and there are
+ * exactly 13 of them, a fixed set that changes only if the state creates a district, so
+ * there is no reason to build them per request.
+ *
+ * Returning an empty list on failure is deliberate: the pages then fall back to on-demand
+ * rendering, which is exactly today's behaviour. A build must not fail because the API was
+ * briefly unreachable.
+ */
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  try {
+    const districts = await apiClient.get(
+      '/areas/districts',
+      z.array(z.object({ slug: z.string() }))
+    );
+    return districts.map((district) => ({ slug: district.slug }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function DistrictDetailPage({ params }: DistrictDetailPageProps) {
   const { slug } = await params;
   let district = null;
