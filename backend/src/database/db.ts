@@ -12,18 +12,33 @@ const logger = createLogger('@database');
  * timestamps. Both defaults are wrong for this codebase, so they are overridden once here
  * rather than compensated for in seven repositories.
  *
- * TIMESTAMP (1114) and TIMESTAMPTZ (1184) are returned as raw strings, matching the
+ * TIMESTAMP (1114) and TIMESTAMPTZ (1184) are returned as strings, matching the
  * `dateStrings: true` contract the MySQL pool had. Every timestamp in this system is UTC
  * by convention and is converted deliberately at the edges by `toIsoUtc` — letting the
  * driver build a `Date` in the server's local zone is exactly the silent shift that
  * `toIsoUtc` exists to prevent.
  *
+ * The fractional seconds are TRIMMED, and that is a bug fix rather than a preference.
+ * MySQL's `DATETIME` stored whole seconds, so the API published `YYYY-MM-DD HH:mm:ss` and
+ * the web app's Zod schemas validate exactly that shape. Postgres `timestamp` defaults to
+ * microsecond precision and returned `2026-09-07 08:48:30.409254`, which those schemas
+ * reject — so after the migration every provenance-bearing response failed validation and
+ * the pages fell back through `.catch(() => null)` to empty dashes. The state population and
+ * forest-cover figures on the home page rendered as "—" while the API was serving them
+ * correctly, which reads as missing data rather than as the parse failure it was.
+ *
+ * Trimming here keeps the published contract identical to the one the clients were written
+ * against, in the single place where a Postgres timestamp becomes a string, instead of
+ * loosening three separate client schemas to accept a precision nothing needs.
+ *
  * int8 (20) is left as a string by default because it can exceed `Number.MAX_SAFE_INTEGER`.
  * Every count in this schema is far below that, and a string count breaks arithmetic
  * downstream, so it is parsed.
  */
-pg.types.setTypeParser(1114, (value: string) => value);
-pg.types.setTypeParser(1184, (value: string) => value);
+const toSecondPrecision = (value: string): string => value.replace(/\.\d+/, '');
+
+pg.types.setTypeParser(1114, toSecondPrecision);
+pg.types.setTypeParser(1184, toSecondPrecision);
 pg.types.setTypeParser(20, (value: string) => Number.parseInt(value, 10));
 
 /*

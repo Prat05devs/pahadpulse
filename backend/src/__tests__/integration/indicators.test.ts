@@ -243,3 +243,45 @@ describe('GET /api/indicators/:key/ranking', () => {
     expect(res.body.error.code).toBe(ERRORS.INDICATOR_NOT_FOUND.code);
   });
 });
+
+/**
+ * The published timestamp format.
+ *
+ * This exists because of a regression the other 326 tests all missed. MySQL's `DATETIME`
+ * held whole seconds, so the API published `YYYY-MM-DD HH:mm:ss` and the web app's Zod
+ * schemas were written against exactly that. Postgres `timestamp` defaults to microsecond
+ * precision, so after the migration every provenance-bearing response carried
+ * `...:30.409254` and failed validation in the browser — the home page's population and
+ * forest-cover figures rendered as "—" while these same endpoints returned 200 with correct
+ * values. Nothing here failed, because every assertion was about the VALUES.
+ *
+ * The format is part of the contract, so it is asserted like the rest of the contract.
+ */
+describe('published timestamp format', () => {
+  const SECOND_PRECISION = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+
+  maybe('emits second-precision UTC datetimes, never fractional seconds', async () => {
+    const res = await request(app).get('/api/areas/uttarakhand/indicators');
+    expect(res.status).toBe(200);
+    expect(res.body.data.length).toBeGreaterThan(0);
+
+    for (const entry of res.body.data as Array<{
+      fetchedAt: string;
+      provenance: { fetchedAt: string } | null;
+    }>) {
+      expect(entry.fetchedAt).toMatch(SECOND_PRECISION);
+      if (entry.provenance !== null) {
+        expect(entry.provenance.fetchedAt).toMatch(SECOND_PRECISION);
+      }
+    }
+  });
+
+  maybe('keeps a vintage a plain calendar date, with no time and no zone shift', async () => {
+    // Guards the DATE type parser: left to itself `pg` builds a local-midnight Date, which
+    // in IST turned the Census vintage 2011-03-01 into 2011-02-28T18:30:00.000Z.
+    const res = await request(app).get('/api/areas/uttarakhand/indicators');
+    for (const entry of res.body.data as Array<{ vintage: string }>) {
+      expect(entry.vintage).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
+});
