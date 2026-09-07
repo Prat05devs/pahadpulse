@@ -61,6 +61,16 @@ services:
       # certificate chain and the hostname.
       - key: DB_SSL
         value: 'true'
+      # Required, not optional, on Supabase. The pooler presents
+      # *.pooler.supabase.com <- Supabase Intermediate 2021 CA <- Supabase Root 2021 CA,
+      # and that root is self-signed and absent from Node's trust store — so without this
+      # every connection fails with SELF_SIGNED_CERT_IN_CHAIN. The certificate is public,
+      # not a secret, and is the same value for every service here; it is `sync: false`
+      # only because it is deployment-specific. Generate the single-line value with
+      # `npx tsx scripts/ca-to-env.ts <cert>` after downloading it from
+      # Project Settings -> Database -> SSL Configuration.
+      - key: DB_SSL_CA
+        sync: false
       - key: DB_POOL_LIMIT
         value: '10'
 
@@ -103,6 +113,10 @@ services:
         sync: false
       - key: DB_SSL
         value: 'true'
+      # Same Supabase root CA as the API service — see the note there. A cron without it
+      # fails on connect, which would show up as ingestion silently never running.
+      - key: DB_SSL_CA
+        sync: false
       # A cron container is short-lived and single-purpose; it needs very few connections.
       - key: DB_POOL_LIMIT
         value: '4'
