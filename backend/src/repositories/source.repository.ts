@@ -17,6 +17,7 @@ import { ERRORS, type RequestError } from '../utils/errors.js';
 import { freshnessOf } from '../utils/freshness.js';
 import createLogger from '../utils/logger.js';
 import { toPage } from '../utils/pagination.js';
+import { describeError } from '../utils/describe-error.js';
 
 const logger = createLogger('@source.repository');
 
@@ -122,7 +123,7 @@ class SourceRepositoryImpl implements ISourceRepository {
       );
       return ok(rows.map((row) => toSource(row, now)));
     } catch (error) {
-      logger.error('listAll failed', { error });
+      logger.error('listAll failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }
@@ -294,7 +295,7 @@ class SourceRepositoryImpl implements ISourceRepository {
       );
       return ok(result.rowCount ?? 0);
     } catch (error) {
-      logger.error('expireStuckRuns failed', { error });
+      logger.error('expireStuckRuns failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }

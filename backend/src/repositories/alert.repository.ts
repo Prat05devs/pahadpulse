@@ -21,6 +21,7 @@ import {
 import { ERRORS, type RequestError } from '../utils/errors.js';
 import createLogger from '../utils/logger.js';
 import { toPage } from '../utils/pagination.js';
+import { describeError } from '../utils/describe-error.js';
 
 const logger = createLogger('@alert.repository');
 
@@ -312,7 +313,7 @@ class AlertRepositoryImpl implements IAlertRepository {
       );
       return ok(rows[0]?.total ?? 0);
     } catch (error) {
-      logger.error('countActive failed', { error });
+      logger.error('countActive failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }

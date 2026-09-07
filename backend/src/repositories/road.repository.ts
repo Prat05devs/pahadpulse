@@ -10,6 +10,7 @@ import {
 } from '../models/road.model.js';
 import { ERRORS, type RequestError } from '../utils/errors.js';
 import createLogger from '../utils/logger.js';
+import { describeError } from '../utils/describe-error.js';
 
 const logger = createLogger('@road.repository');
 
@@ -61,7 +62,7 @@ class RoadRepositoryImpl implements IRoadRepository {
       );
       return ok(rows.map(toRoadRoute));
     } catch (error) {
-      logger.error('listRoutes failed', { error });
+      logger.error('listRoutes failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }

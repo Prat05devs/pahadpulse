@@ -4,6 +4,7 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { closeDatabase, connectToDatabase } from './database/db.js';
 import createLogger from './utils/logger.js';
+import { describeError } from './utils/describe-error.js';
 
 const logger = createLogger('@server');
 
@@ -32,6 +33,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  logger.error('startup failed', { error });
+  logger.error('startup failed', { error: describeError(error) });
   process.exit(1);
 });

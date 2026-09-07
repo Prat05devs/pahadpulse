@@ -22,6 +22,7 @@ import {
 import { AreaType } from '../types/area.js';
 import { ERRORS, type RequestError } from '../utils/errors.js';
 import createLogger from '../utils/logger.js';
+import { describeError } from '../utils/describe-error.js';
 
 const logger = createLogger('@area.repository');
 
@@ -184,7 +185,7 @@ class AreaRepositoryImpl implements IAreaRepository {
       );
       return ok(rows.map(toDistrictSummary));
     } catch (error) {
-      logger.error('listDistricts failed', { error });
+      logger.error('listDistricts failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }
@@ -276,7 +277,7 @@ class AreaRepositoryImpl implements IAreaRepository {
       );
       return ok(rows.map(toMapLayer));
     } catch (error) {
-      logger.error('listMapLayers failed', { error });
+      logger.error('listMapLayers failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }
@@ -341,7 +342,7 @@ class AreaRepositoryImpl implements IAreaRepository {
         })),
       );
     } catch (error) {
-      logger.error('listDistrictBoundaries failed', { error });
+      logger.error('listDistrictBoundaries failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }
@@ -354,7 +355,7 @@ class AreaRepositoryImpl implements IAreaRepository {
       );
       return ok(rows.map((row) => ({ id: row.id, nameEn: row.name_en, nameHi: row.name_hi })));
     } catch (error) {
-      logger.error('listDistrictNames failed', { error });
+      logger.error('listDistrictNames failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }
@@ -367,7 +368,7 @@ class AreaRepositoryImpl implements IAreaRepository {
       );
       return ok(rows.map((row) => ({ id: row.id, slug: row.slug, nameEn: row.name_en })));
     } catch (error) {
-      logger.error('listTehsils failed', { error });
+      logger.error('listTehsils failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }

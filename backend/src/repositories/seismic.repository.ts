@@ -10,6 +10,7 @@ import {
 } from '../models/seismic.model.js';
 import { ERRORS, type RequestError } from '../utils/errors.js';
 import createLogger from '../utils/logger.js';
+import { describeError } from '../utils/describe-error.js';
 
 const logger = createLogger('@seismic.repository');
 
@@ -139,7 +140,7 @@ class SeismicRepositoryImpl implements ISeismicRepository {
       // Rows with an unconvertible timestamp are dropped, not emitted — see toSeismicEvent.
       return ok(rows.map(toSeismicEvent).filter((event): event is SeismicEvent => event !== null));
     } catch (error) {
-      logger.error('listRecent failed', { error });
+      logger.error('listRecent failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }
@@ -152,7 +153,7 @@ class SeismicRepositoryImpl implements ISeismicRepository {
       );
       return ok(rows[0]?.total ?? 0);
     } catch (error) {
-      logger.error('countSince failed', { error });
+      logger.error('countSince failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }
