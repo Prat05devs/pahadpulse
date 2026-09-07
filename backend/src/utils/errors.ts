@@ -46,6 +46,15 @@ export const ERRORS = {
   AREA_TYPE_NOT_SUPPORTED: new RequestError('Area type not supported', 40003, 400),
 
   // 90xxx — datasets (upstream and ingestion failures)
+  /*
+   * 85xxx — development projects. A range of its own rather than borrowing geography's:
+   * the register is curated by hand and its failures are its own (an unknown project, a
+   * district with nothing recorded), which a reader should be able to tell apart from a
+   * missing area.
+   */
+  PROJECT_NOT_FOUND: new RequestError('Development project not found', 85001, 404),
+  PROJECT_SECTOR_NOT_SUPPORTED: new RequestError('Unknown project sector', 85002, 400),
+
   SOURCE_NOT_FOUND: new RequestError('Data source not found', 90001, 404),
   UPSTREAM_UNAVAILABLE: new RequestError('Upstream data source is unavailable', 90002, 502),
   UPSTREAM_RESPONSE_INVALID: new RequestError(
