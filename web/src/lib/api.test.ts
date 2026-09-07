@@ -98,3 +98,64 @@ describe('apiClient timeout', () => {
     expect(seenSignal).toBe(controller.signal);
   });
 });
+
+/**
+ * The caching contract.
+ *
+ * These exist because of a live, safety-critical failure. `cache: 'force-cache'` with no
+ * stated lifetime pinned each response for the life of the deployment: the alerts page
+ * regenerated on its 60-second window — the CDN age reset every minute — while the fetch
+ * underneath replayed the body captured at build time. The site showed "No active alerts"
+ * for hours while the API served four. The Census figures beside them looked correct
+ * throughout, because a frozen cache is invisible on numbers that never change.
+ *
+ * The whole test suite passed while that was happening, because nothing asserted what the
+ * client asked the cache for. Now something does.
+ */
+describe('apiClient caching', () => {
+  function captureInit(): { init: RequestInit | undefined } {
+    const captured: { init: RequestInit | undefined } = { init: undefined };
+    vi.stubGlobal('fetch', (_url: string, init?: RequestInit) => {
+      captured.init = init;
+      return Promise.resolve(
+        new Response(JSON.stringify({ success: true, data: { ok: true }, message: '' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+    });
+    return captured;
+  }
+
+  it('always states an explicit revalidate window', async () => {
+    const captured = captureInit();
+    await apiClient.get('/anything', Schema);
+
+    const next = (captured.init as { next?: { revalidate?: number } } | undefined)?.next;
+    expect(typeof next?.revalidate).toBe('number');
+    expect(next?.revalidate).toBeGreaterThan(0);
+    // A minute at most: nothing on this site may be staler than the alerts window.
+    expect(next?.revalidate).toBeLessThanOrEqual(60);
+  });
+
+  it('never sends bare force-cache, which pins a response indefinitely', async () => {
+    const captured = captureInit();
+    await apiClient.get('/anything', Schema);
+    expect(captured.init?.cache).not.toBe('force-cache');
+  });
+
+  it('lets a caller demand a live read', async () => {
+    const captured = captureInit();
+    await apiClient.get('/anything', Schema, { cache: 'no-store' });
+    expect(captured.init?.cache).toBe('no-store');
+  });
+
+  it('lets a caller shorten the window', async () => {
+    const captured = captureInit();
+    await apiClient.get('/anything', Schema, {
+      next: { revalidate: 10 },
+    } as RequestInit);
+    const next = (captured.init as { next?: { revalidate?: number } } | undefined)?.next;
+    expect(next?.revalidate).toBe(10);
+  });
+});

@@ -48,6 +48,16 @@ const REQUEST_TIMEOUT_MS = 8_000;
 export const API_TIMEOUT_CODE = 10_408;
 
 /**
+ * How long a cached response may be replayed before it is refetched.
+ *
+ * Sixty seconds, matching the shortest window any page here declares — the alerts page, which
+ * is safety information. A single default keeps the guarantee simple: nothing on this site is
+ * ever more than a minute stale, whatever its page-level `revalidate` says. Pages that want
+ * longer are choosing when to REGENERATE, not asking to be served older data than this.
+ */
+const DEFAULT_REVALIDATE_SECONDS = 60;
+
+/**
  * `AbortSignal.timeout` with a manual fallback.
  *
  * The static method is not available on every runtime this builds for, and silently having
@@ -101,16 +111,23 @@ export const apiClient = {
     try {
       const response = await fetch(url, {
         /**
-         * Cacheable by default, so a page's `revalidate` actually takes effect.
+         * Cached with an EXPLICIT lifetime, never `force-cache` alone.
          *
-         * Next 15 makes `fetch` uncached unless told otherwise, and a single uncached fetch
-         * opts its whole route out of ISR and back into rendering on every request. Every
-         * page here sets its own `revalidate` window, and the segment's TTL is what governs
-         * how long these responses live — so the default is `force-cache` and the page
-         * decides the duration. A caller that genuinely needs a live read still passes
-         * `cache: 'no-store'` and wins, because `...options` is spread after this.
+         * `force-cache` was a real production bug, and a safety-critical one. It makes an
+         * entry immutable for the life of the deployment: the alerts page regenerated on its
+         * 60-second window exactly as designed — the CDN age reset every minute — but the
+         * underlying fetch kept replaying the body captured at build time, when no warnings
+         * were in force. The site showed "No active alerts" for hours while the API was
+         * serving four. Census figures on the same page looked fine throughout, because a
+         * frozen cache is invisible on numbers that never change.
+         *
+         * A page's `export const revalidate` governs when the PAGE regenerates. It is not a
+         * reliable ceiling on a `force-cache` fetch inside it, so the lifetime is stated
+         * here instead of inferred. Callers that need something shorter pass
+         * `next: { revalidate: n }`, and a genuinely live read still passes
+         * `cache: 'no-store'` — both win, because `...options` is spread after this.
          */
-        cache: 'force-cache',
+        next: { revalidate: DEFAULT_REVALIDATE_SECONDS },
         ...options,
         method: 'GET',
         // The caller's own signal wins if it passed one; otherwise the deadline applies.
