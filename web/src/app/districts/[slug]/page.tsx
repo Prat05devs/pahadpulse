@@ -38,7 +38,9 @@ export async function generateMetadata({ params }: DistrictDetailPageProps): Pro
   }
 }
 
-export const dynamic = 'force-dynamic';
+/** Two minutes: this page carries active alerts as well as weather, so it follows the
+ *  alerts page's caution more closely than the weather page's hourly cadence. */
+export const revalidate = 120;
 
 export default async function DistrictDetailPage({ params }: DistrictDetailPageProps) {
   const { slug } = await params;

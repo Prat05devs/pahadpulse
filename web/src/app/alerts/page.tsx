@@ -12,7 +12,15 @@ export const metadata: Metadata = {
   description: 'Active weather, disaster, road, and river alerts across Uttarakhand.',
 };
 
-export const dynamic = 'force-dynamic';
+/**
+ * Sixty seconds — the shortest window on the site, because this is safety information.
+ *
+ * The SACHET cron runs every 15 minutes, so a minute of staleness is well inside the rate
+ * at which warnings actually change, while still turning nearly every visit into a cache
+ * hit. It also makes an API outage far less visible: Next keeps serving the last good page
+ * and regenerates behind it, instead of the blank page this site showed for hours today.
+ */
+export const revalidate = 60;
 
 export default async function AlertsPage() {
   let alerts = null;

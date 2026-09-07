@@ -189,6 +189,175 @@ async function buildForecast(areaId: number): Promise<Result<ForecastDay[], Requ
   return ok([...days.values()].sort((a, b) => a.date.localeCompare(b.date)));
 }
 
+/** One district's entry in a state-wide batch response. */
+export interface DistrictWeatherEntry {
+  areaSlug: string;
+  areaName: { en: string; hi: string | null };
+  weather: AreaWeather | null;
+}
+
+export interface DistrictAirEntry {
+  areaSlug: string;
+  areaName: { en: string; hi: string | null };
+  air: AreaAirQuality | null;
+}
+
+/**
+ * Current conditions for every district, in one response.
+ *
+ * The districts page and the weather page each wanted thirteen of these and were fetching
+ * them one HTTP request at a time — thirteen round trips, each running three queries, for
+ * a page that renders them all together. This does the same work in three queries total:
+ * the stations, their latest readings, and the source registry.
+ *
+ * A district whose ingestion has not run yet comes back with `weather: null` rather than
+ * being omitted, so the caller still knows the district exists and can render it blank.
+ * Dropping it would silently shorten the list.
+ */
+export async function getAllDistrictWeather(
+  now: Date = new Date(),
+): Promise<Result<DistrictWeatherEntry[], RequestError>> {
+  const stations = await ObservationRepository.listActiveStationsWithArea(StationType.Weather);
+  if (stations.isErr()) return err(stations.error);
+  if (stations.value.length === 0) return ok([]);
+
+  const stationIds = stations.value.map((entry) => entry.station.id);
+  const readings = await ObservationRepository.latestForStations(stationIds, PANEL_METRICS);
+  if (readings.isErr()) return err(readings.error);
+
+  // Grouped by station once, rather than scanned per district inside the loop below.
+  const byStation = new Map<number, Map<Metric, Observation>>();
+  for (const row of readings.value) {
+    const observation = toObservation(row);
+    if (observation === null) continue;
+    const forStation = byStation.get(row.station_id) ?? new Map<Metric, Observation>();
+    forStation.set(row.metric, observation);
+    byStation.set(row.station_id, forStation);
+  }
+
+  const sourceIds = [...new Set(stations.value.map((entry) => entry.station.sourceId))];
+  const sources = await SourceRepository.findByIds(sourceIds, now);
+  if (sources.isErr()) return err(sources.error);
+
+  const entries: DistrictWeatherEntry[] = [];
+
+  for (const { station, areaSlug, areaNameEn, areaNameHi } of stations.value) {
+    const areaName = { en: areaNameEn, hi: areaNameHi };
+    const byMetric = byStation.get(station.id);
+    const source = sources.value.get(station.sourceId);
+
+    // DS-1/DS-6 apply here exactly as they do on the single-district endpoint: no source in
+    // the registry, or one we may not republish, emits nothing rather than a bare number.
+    if (byMetric === undefined || source === undefined || !source.mayRedistribute) {
+      entries.push({ areaSlug, areaName, weather: null });
+      continue;
+    }
+
+    const weatherCode = byMetric.get(Metric.WeatherCode);
+    const observedAt =
+      [...byMetric.values()].map((observation) => observation.observedAt).sort().at(-1) ?? null;
+
+    entries.push({
+      areaSlug,
+      areaName,
+      weather: {
+        station,
+        temperature: byMetric.get(Metric.TemperatureC),
+        rainfall: byMetric.get(Metric.RainfallMm),
+        humidity: byMetric.get(Metric.HumidityPct),
+        wind: byMetric.get(Metric.WindSpeedKmh),
+        windDirection: byMetric.get(Metric.WindDirectionDeg),
+        condition: weatherCode === undefined ? null : toCondition(weatherCode.value),
+        observedAt,
+        // Deliberately empty: the forecast is per-area and would be thirteen more queries
+        // for data no state-wide view shows. The single-district endpoint still carries it.
+        forecast: [],
+        source: {
+          id: station.sourceId,
+          key: source.key,
+          department: source.department,
+          attribution: source.attribution,
+        },
+      },
+    });
+  }
+
+  return ok(entries);
+}
+
+/** Air quality for every district, in one response. Same shape and rules as the weather batch. */
+export async function getAllDistrictAirQuality(
+  now: Date = new Date(),
+): Promise<Result<DistrictAirEntry[], RequestError>> {
+  const stations = await ObservationRepository.listActiveStationsWithArea(StationType.Weather);
+  if (stations.isErr()) return err(stations.error);
+  if (stations.value.length === 0) return ok([]);
+
+  const stationIds = stations.value.map((entry) => entry.station.id);
+  const readings = await ObservationRepository.latestForStations(stationIds, AIR_METRICS);
+  if (readings.isErr()) return err(readings.error);
+
+  const byStation = new Map<number, Map<Metric, Observation>>();
+  // The air readings carry their OWN source id, which is not the station's — the station was
+  // registered by the weather connector, these values came from the air-quality one.
+  const airSourceByStation = new Map<number, number>();
+
+  for (const row of readings.value) {
+    const observation = toObservation(row);
+    if (observation === null) continue;
+    const forStation = byStation.get(row.station_id) ?? new Map<Metric, Observation>();
+    forStation.set(row.metric, observation);
+    byStation.set(row.station_id, forStation);
+    airSourceByStation.set(row.station_id, observation.sourceId);
+  }
+
+  const sourceIds = [...new Set(airSourceByStation.values())];
+  const sources = await SourceRepository.findByIds(sourceIds, now);
+  if (sources.isErr()) return err(sources.error);
+
+  const entries: DistrictAirEntry[] = [];
+
+  for (const { station, areaSlug, areaNameEn, areaNameHi } of stations.value) {
+    const areaName = { en: areaNameEn, hi: areaNameHi };
+    const byMetric = byStation.get(station.id);
+    const sourceId = airSourceByStation.get(station.id);
+    const source = sourceId === undefined ? undefined : sources.value.get(sourceId);
+
+    if (byMetric === undefined || source === undefined || !source.mayRedistribute) {
+      entries.push({ areaSlug, areaName, air: null });
+      continue;
+    }
+
+    const aqi = byMetric.get(Metric.UsAqi);
+    const observedAt =
+      [...byMetric.values()].map((observation) => observation.observedAt).sort().at(-1) ?? null;
+
+    entries.push({
+      areaSlug,
+      areaName,
+      air: {
+        station,
+        aqi: aqi === undefined ? null : { value: aqi.value, band: classifyAqi(aqi.value) },
+        pm25: byMetric.get(Metric.Pm25),
+        pm10: byMetric.get(Metric.Pm10),
+        nitrogenDioxide: byMetric.get(Metric.NitrogenDioxide),
+        ozone: byMetric.get(Metric.Ozone),
+        sulphurDioxide: byMetric.get(Metric.SulphurDioxide),
+        carbonMonoxide: byMetric.get(Metric.CarbonMonoxide),
+        observedAt,
+        source: {
+          id: sourceId ?? station.sourceId,
+          key: source.key,
+          department: source.department,
+          attribution: source.attribution,
+        },
+      },
+    });
+  }
+
+  return ok(entries);
+}
+
 /**
  * Air quality for one area.
  *

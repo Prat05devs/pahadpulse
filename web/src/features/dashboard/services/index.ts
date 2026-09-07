@@ -16,9 +16,11 @@ import {
 } from '../schemas';
 
 export async function fetchImdCapLiveStatus(): Promise<ImdCapLiveStatus> {
-  return apiClient.get('/sources/imd-cap-alerts/live', ImdCapLiveStatusSchema, {
-    cache: 'no-store',
-  });
+  // No longer `no-store`: one uncached fetch makes the whole home page render on every
+  // request, and this is a connection-health badge whose value does not change faster than
+  // the page's own two-minute window. The freshness it reports is `checkedAt`, which is
+  // shown, so a slightly older check is visible rather than misleading.
+  return apiClient.get('/sources/imd-cap-alerts/live', ImdCapLiveStatusSchema);
 }
 
 export async function fetchLiveCounters(): Promise<LiveCounters> {

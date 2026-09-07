@@ -90,15 +90,28 @@ describe('GET /api/areas/districts/:slug', () => {
 });
 
 describe('GET /api/areas/:slug/boundary', () => {
-  maybe('marks seeded geometry as a placeholder', async () => {
+  /*
+   * GEO-7: a boundary always declares whether it is real or generated. It cannot assert
+   * WHICH, because that depends on what has been run against this database — `db:seed`
+   * writes placeholder hexagons, the OpenStreetMap connector writes surveyed boundaries,
+   * and both are legitimate states. Asserting `isPlaceholder === true` made the test pass
+   * or fail on ingestion history rather than on behaviour.
+   *
+   * The invariant that matters is that the flag is present, boolean, and that a placeholder
+   * says so in its source note — so nothing can render generated geometry as official.
+   */
+  maybe('always declares whether the geometry is real or generated', async () => {
     const res = await request(app).get('/api/areas/dehradun/boundary');
     if (res.status === 404) {
       expect(res.body.error.code).toBe(ERRORS.BOUNDARY_NOT_AVAILABLE.code);
       return;
     }
     expect(res.status).toBe(200);
-    expect(res.body.data.isPlaceholder).toBe(true);
+    expect(typeof res.body.data.isPlaceholder).toBe('boolean');
     expect(res.body.data.geojson.type).toMatch(/Polygon/);
+    if (res.body.data.isPlaceholder === true) {
+      expect(String(res.body.data.sourceNote)).toMatch(/placeholder/i);
+    }
   });
 });
 

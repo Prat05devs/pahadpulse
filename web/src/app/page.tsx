@@ -23,7 +23,11 @@ export const metadata: Metadata = {
   description: 'Live state-level overview of Uttarakhand with interactive map and key metrics.',
 };
 
-export const dynamic = 'force-dynamic';
+/**
+ * Two minutes. The home page carries the active-alert count, so it follows the alerts
+ * page's caution rather than the hourly cadence of the weather and Census figures beside it.
+ */
+export const revalidate = 120;
 
 export default async function HomePage() {
   let counters = null;

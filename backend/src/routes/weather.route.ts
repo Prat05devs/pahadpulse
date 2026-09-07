@@ -62,4 +62,48 @@ areaWeatherRouter.get(
   },
 );
 
-export { areaWeatherRouter };
+/*
+ * State-wide batch endpoints, on their own paths rather than under `/areas`.
+ *
+ * `/api/areas/weather` would never reach here: `areaRouter` is mounted first and its
+ * `/:slug` route matches any single segment, so the request would resolve as a lookup for
+ * an area literally named "weather" and 404 (RT6). These live at the top level instead,
+ * which is also the honest place for them — they are hydromet endpoints, not geography.
+ */
+const stateWeatherRouter = Router();
+
+stateWeatherRouter.get(
+  '/districts',
+  cacheMiddleware(CACHE_TTL_OBSERVATIONS),
+  async (_req: Request, res: Response, next: NextFunction) => {
+    const result = await observationController.getAllDistrictWeather();
+    result.match(
+      (data) => {
+        res.json(successResponse(data, 'District weather fetched successfully'));
+      },
+      (error) => {
+        next(error);
+      },
+    );
+  },
+);
+
+const stateAirRouter = Router();
+
+stateAirRouter.get(
+  '/districts',
+  cacheMiddleware(CACHE_TTL_OBSERVATIONS),
+  async (_req: Request, res: Response, next: NextFunction) => {
+    const result = await observationController.getAllDistrictAirQuality();
+    result.match(
+      (data) => {
+        res.json(successResponse(data, 'District air quality fetched successfully'));
+      },
+      (error) => {
+        next(error);
+      },
+    );
+  },
+);
+
+export { areaWeatherRouter, stateWeatherRouter, stateAirRouter };

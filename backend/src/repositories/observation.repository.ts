@@ -49,8 +49,29 @@ export interface ForecastInput {
   sourceId: number;
 }
 
+/** A station with the slug of the area it reports for, so a batch read needs no second query. */
+export interface StationWithArea {
+  station: Station;
+  areaSlug: string;
+  areaNameEn: string;
+  areaNameHi: string | null;
+}
+
 export interface IObservationRepository {
   listActiveStations(type: StationType): Promise<Result<Station[], RequestError>>;
+  /** Every active station of a type, joined to its area. One query for the whole state. */
+  listActiveStationsWithArea(type: StationType): Promise<Result<StationWithArea[], RequestError>>;
+  /**
+   * The latest reading per (station, metric) for MANY stations at once.
+   *
+   * The single-station version exists for the district page, which genuinely wants one.
+   * This exists because the state-wide pages wanted thirteen and were making thirteen HTTP
+   * requests, each running three queries, to get them.
+   */
+  latestForStations(
+    stationIds: readonly number[],
+    metrics: readonly Metric[],
+  ): Promise<Result<ObservationRow[], RequestError>>;
   findStationForArea(areaId: number, type: StationType): Promise<Result<Station, RequestError>>;
   /** HYD-1: upserts by (station, metric, observed_at). Safe to re-run (DS-5). */
   upsertObservations(inputs: readonly ObservationInput[]): Promise<Result<number, RequestError>>;
@@ -67,6 +88,74 @@ export interface IObservationRepository {
 }
 
 class ObservationRepositoryImpl implements IObservationRepository {
+  async listActiveStationsWithArea(
+    type: StationType,
+  ): Promise<Result<StationWithArea[], RequestError>> {
+    try {
+      const { rows } = await db.query<StationRow & {
+        area_slug: string;
+        area_name_en: string;
+        area_name_hi: string | null;
+      }>(
+        `SELECT s.id, s.source_id, s.source_station_code, s.type, s.name_en, s.name_hi,
+                s.area_id,
+                ST_Y(s.location::geometry) AS lat,
+                ST_X(s.location::geometry) AS lng,
+                s.river_name, s.is_active,
+                a.slug AS area_slug, a.name_en AS area_name_en, a.name_hi AS area_name_hi
+           FROM ${STATIONS_TABLE} s
+           JOIN areas a ON a.id = s.area_id
+          WHERE s.type = $1 AND s.is_active = TRUE
+          ORDER BY a.name_en ASC`,
+        [type],
+      );
+
+      return ok(
+        rows.map((row) => ({
+          station: toStation(row),
+          areaSlug: row.area_slug,
+          areaNameEn: row.area_name_en,
+          areaNameHi: row.area_name_hi,
+        })),
+      );
+    } catch (error) {
+      logger.error('listActiveStationsWithArea failed', { type, error });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  /**
+   * The latest reading per (station, metric) across many stations.
+   *
+   * `DISTINCT ON` rather than the correlated subquery the single-station version uses: for
+   * one station the subquery is an index seek, but running it per row across thirteen
+   * stations and eight metrics is a hundred seeks. `DISTINCT ON (station_id, metric)` with
+   * a matching ORDER BY walks `idx_obs_station_metric_time` once and takes the first row of
+   * each group — one pass, and the index is already ordered the right way.
+   */
+  async latestForStations(
+    stationIds: readonly number[],
+    metrics: readonly Metric[],
+  ): Promise<Result<ObservationRow[], RequestError>> {
+    if (stationIds.length === 0 || metrics.length === 0) return ok([]);
+
+    try {
+      const { rows } = await db.query<ObservationRow>(
+        `SELECT DISTINCT ON (o.station_id, o.metric)
+                o.station_id, o.metric, o.observed_at, o.value, o.unit, o.source_id, o.fetched_at
+           FROM ${OBSERVATIONS_TABLE} o
+          WHERE o.station_id = ANY($1::integer[])
+            AND o.metric = ANY($2::metric[])
+          ORDER BY o.station_id, o.metric, o.observed_at DESC`,
+        [[...stationIds], [...metrics]],
+      );
+      return ok(rows);
+    } catch (error) {
+      logger.error('latestForStations failed', { count: stationIds.length, error });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
   async listActiveStations(type: StationType): Promise<Result<Station[], RequestError>> {
     try {
       const { rows } = await db.query<StationRow>(

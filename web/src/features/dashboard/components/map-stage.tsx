@@ -27,9 +27,13 @@ const FLOATING_CARD =
 function Figure({ value, label, year }: { value: string; label: string; year?: string | null }) {
   return (
     <div>
-      <p className="font-mono text-lg font-semibold tabular-nums sm:text-xl">{value}</p>
-      <p className="text-[0.7rem] leading-tight text-muted-foreground">{label}</p>
-      {year != null && <p className="text-[0.62rem] text-muted-foreground/60">{year}</p>}
+      <p className="font-mono text-base font-semibold tabular-nums sm:text-xl">{value}</p>
+      <p className="text-[0.62rem] leading-tight text-muted-foreground sm:text-[0.7rem]">{label}</p>
+      {/* The vintage is dropped on a phone: four columns in 390px leaves ~80px each, and the
+          year is the least load-bearing of the three lines. It returns from `sm`. */}
+      {year != null && (
+        <p className="hidden text-[0.62rem] text-muted-foreground/60 sm:block">{year}</p>
+      )}
     </div>
   );
 }
@@ -88,16 +92,18 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
 
       {/* Top-left: the headline figures. */}
       <div className="pointer-events-none absolute inset-x-0 top-0 p-3 sm:p-4 lg:p-5">
-        <div className={`${FLOATING_CARD} pp-rise p-3 sm:p-4 lg:max-w-md`}>
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+        <div className={`${FLOATING_CARD} pp-rise p-2.5 sm:p-4 lg:max-w-md`}>
+          {/* Hidden on a phone: the h1 below already says what this is, and on a 390px
+              screen this eyebrow was costing a line of the map for no information. */}
+          <p className="hidden text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground sm:block">
             Uttarakhand overview
           </p>
           {/* The page's only h1: the old page header was removed so the map could have the
               full viewport at every size. */}
-          <h1 className="mt-0.5 font-display text-lg font-semibold tracking-tight text-text-light sm:mt-1 sm:text-xl lg:text-2xl">
+          <h1 className="font-display text-base font-semibold leading-tight tracking-tight text-text-light sm:mt-1 sm:text-xl lg:text-2xl">
             Uttarakhand, at a glance
           </h1>
-          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 sm:mt-3 sm:grid-cols-4 sm:gap-3">
+          <div className="mt-1.5 grid grid-cols-4 gap-x-2 gap-y-1 sm:mt-3 sm:gap-3">
             <Figure
               value={format(overview.population, (v) => `${(v / 1_000_000).toFixed(1)}M`)}
               label="Population"
@@ -118,7 +124,17 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
       </div>
 
       {/* Bottom: the three things worth acting on. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex snap-x snap-mandatory gap-3 overflow-x-auto p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:p-4 lg:grid lg:max-w-[64rem] lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:p-5">
+      <div /**
+         * `pointer-events-auto` below `lg`, and that is the fix for a real bug: this is a
+         * horizontal scroller on a phone, and `pointer-events-none` meant it never received
+         * the touch events needed to swipe it. The cards were tappable (they set
+         * `pointer-events-auto` themselves) but the strip would not move, so only the first
+         * card and a sliver of the second were ever reachable.
+         *
+         * From `lg` it becomes a three-column grid with gaps the map shows through, and
+         * there `pointer-events-none` is right — it keeps the map draggable between cards.
+         */
+        className="pointer-events-auto absolute inset-x-0 bottom-0 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:p-4 lg:pointer-events-none lg:grid lg:max-w-[64rem] lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:p-5">
         {/* Alerts first, and styled to stand out when there are any. This is an emergency
             -facing product; the warning card is the one that must not blend in. */}
         <article

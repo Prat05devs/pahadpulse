@@ -14,7 +14,9 @@ export const metadata: Metadata = {
   description: 'Side-by-side comparison of two districts across key indicators.',
 };
 
-export const dynamic = 'force-dynamic';
+/** An hour. Every figure here is Census 2011 or a published state statistic; they change
+ *  by migration, never between requests. */
+export const revalidate = 3600;
 
 const DistrictListSchema = z.array(DistrictSummarySchema);
 

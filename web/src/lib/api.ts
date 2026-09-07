@@ -100,6 +100,17 @@ export const apiClient = {
 
     try {
       const response = await fetch(url, {
+        /**
+         * Cacheable by default, so a page's `revalidate` actually takes effect.
+         *
+         * Next 15 makes `fetch` uncached unless told otherwise, and a single uncached fetch
+         * opts its whole route out of ISR and back into rendering on every request. Every
+         * page here sets its own `revalidate` window, and the segment's TTL is what governs
+         * how long these responses live — so the default is `force-cache` and the page
+         * decides the duration. A caller that genuinely needs a live read still passes
+         * `cache: 'no-store'` and wins, because `...options` is spread after this.
+         */
+        cache: 'force-cache',
         ...options,
         method: 'GET',
         // The caller's own signal wins if it passed one; otherwise the deadline applies.

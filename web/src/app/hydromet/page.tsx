@@ -1,13 +1,11 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { CloudSun, Wind } from 'lucide-react';
-import { z } from 'zod';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { apiClient } from '@/lib/api';
-import { DistrictSummarySchema } from '@/features/dashboard/schemas';
 import { WeatherDataSchema } from '@/features/weather/schemas';
 import { WeatherPanel } from '@/features/weather/components';
-import { fetchAirQualityForDistricts } from '@/features/air-quality/services';
+import { fetchAllDistrictAirQuality } from '@/features/weather/batch';
 import {
   AirQualityCard,
   AirQualitySummary,
@@ -19,7 +17,9 @@ export const metadata: Metadata = {
     'Current weather and air quality for every district of Uttarakhand, with the source behind every figure.',
 };
 
-export const dynamic = 'force-dynamic';
+/** Five minutes: the weather and air connectors both run hourly, so this is well inside
+ *  their own cadence while turning nearly every navigation into a cache hit. */
+export const revalidate = 300;
 
 /**
  * Weather and air quality for the whole state.
@@ -31,23 +31,21 @@ export const dynamic = 'force-dynamic';
  * the section says what is missing and why rather than showing a number.
  */
 export default async function WeatherPage() {
-  const districtsResult = await Promise.allSettled([
-    apiClient.get('/areas/districts', z.array(DistrictSummarySchema)),
-  ]);
-
-  const districts =
-    districtsResult[0].status === 'fulfilled' ? districtsResult[0].value : [];
-  const slugs = districts.map((district) => district.slug);
-
-  // Every fetch degrades on its own: one district with no reading must not blank the state.
-  const [airReadings, dehradunWeather] = await Promise.all([
-    slugs.length > 0 ? fetchAirQualityForDistricts(slugs) : Promise.resolve([]),
+  /*
+   * Two requests, not fifteen. The air readings for all thirteen districts come back in one
+   * batch; Dehradun's weather is fetched separately because this page shows its full 7-day
+   * forecast, which the batch deliberately omits.
+   *
+   * Each still degrades on its own: one failing must not blank the other.
+   */
+  const [airEntries, dehradunWeather] = await Promise.all([
+    fetchAllDistrictAirQuality().catch(() => []),
     apiClient.get('/areas/dehradun/weather', WeatherDataSchema).catch(() => null),
   ]);
 
-  const air = airReadings.filter((reading): reading is NonNullable<typeof reading> =>
-    reading !== null
-  );
+  const air = airEntries
+    .map((entry) => entry.air)
+    .filter((reading): reading is NonNullable<typeof reading> => reading !== null);
 
   return (
     <DashboardLayout>

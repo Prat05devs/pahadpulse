@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   description: 'Real-time visitor tracking for Char Dham and tourist destinations in Uttarakhand.',
 };
 
-export const dynamic = 'force-dynamic';
+/** An hour. No live source is wired to this page yet. */
+export const revalidate = 3600;
 
 export default async function TourismPage() {
   let destinations = null;

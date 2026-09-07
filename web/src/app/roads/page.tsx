@@ -11,7 +11,9 @@ export const metadata: Metadata = {
   description: 'National and State Highways running through Uttarakhand, drawn over terrain.',
 };
 
-export const dynamic = 'force-dynamic';
+/** An hour. The highway network comes from OpenStreetMap on a weekly cron — it changes on
+ *  the timescale of government notifications, not minutes. */
+export const revalidate = 3600;
 
 export default async function RoadsPage() {
   let network = null;

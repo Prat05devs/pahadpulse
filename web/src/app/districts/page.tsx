@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { apiClient } from '@/lib/api';
 import { DistrictSummarySchema } from '@/features/dashboard/schemas';
-import { WeatherDataSchema } from '@/features/weather/schemas';
+import { fetchAllDistrictWeather } from '@/features/weather/batch';
 import {
   DistrictCarousel,
   type CarouselDistrict,
@@ -16,7 +16,18 @@ export const metadata: Metadata = {
     'The thirteen districts of Uttarakhand, with current conditions and administrative figures.',
 };
 
-export const dynamic = 'force-dynamic';
+/**
+ * Cached for five minutes rather than rendered fresh on every navigation.
+ *
+ * `force-dynamic` meant every click re-rendered the page and re-fetched everything. Weather
+ * updates hourly and the district list changes by migration, so a five-minute window serves
+ * almost every visit from cache and still shows a reading well inside its own cadence.
+ *
+ * Next serves the cached page instantly and regenerates behind it, so a slow or failed API
+ * degrades to slightly older data rather than a slow page — which is also why the outage
+ * that took this site down would have been far less visible.
+ */
+export const revalidate = 300;
 
 export default async function DistrictsListPage() {
   let districts = null;
@@ -28,24 +39,21 @@ export default async function DistrictsListPage() {
     error = err instanceof Error ? err.message : 'Failed to load districts';
   }
 
-  /**
-   * Weather for each district, settled individually.
+  /*
+   * One request for all thirteen districts' weather, not thirteen.
    *
-   * Thirteen requests rather than one because there is no batch endpoint — and settling
-   * them separately matters more than the round trips: a district whose ingestion has not
-   * run returns 404, and one missing reading must leave that card without a temperature
-   * rather than stripping the weather from all thirteen.
+   * The batch endpoint returns an entry per district with `weather: null` where a reading
+   * is missing, so a district whose ingestion has not run still renders — the property the
+   * per-district version got from settling each call separately, kept without the round
+   * trips. Its own failure is caught so the carousel renders without temperatures rather
+   * than not at all.
    */
-  const weather = await Promise.all(
-    (districts ?? []).map((district) =>
-      apiClient
-        .get(`/areas/${district.slug}/weather`, WeatherDataSchema)
-        .catch(() => null)
-    )
+  const weatherByslug = new Map(
+    (await fetchAllDistrictWeather().catch(() => [])).map((entry) => [entry.areaSlug, entry.weather]),
   );
 
-  const cards: CarouselDistrict[] = (districts ?? []).map((district, index) => {
-    const reading = weather[index];
+  const cards: CarouselDistrict[] = (districts ?? []).map((district) => {
+    const reading = weatherByslug.get(district.slug) ?? null;
     return {
       id: district.id,
       slug: district.slug,
