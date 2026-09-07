@@ -53,7 +53,18 @@ export const AirQualitySchema = z.object({
         }),
       ),
     })
-    .nullable(),
+    /*
+     * `nullish`, not `nullable`, and that is a deployment concern rather than a modelling
+     * one. The web app and the API deploy from the same push but independently, and Vercel
+     * finishes in seconds while Render rebuilds a container for minutes. A REQUIRED field
+     * would make the new frontend reject the old API's payload for the whole of that
+     * window, and every air quality panel would quietly vanish.
+     *
+     * Tolerating an absent key costs nothing and makes the field additive: old API with new
+     * web renders without the index, exactly as a district with too little data does.
+     */
+    .nullable()
+    .default(null),
   pm25: ObservationSchema.optional(),
   pm10: ObservationSchema.optional(),
   nitrogenDioxide: ObservationSchema.optional(),
