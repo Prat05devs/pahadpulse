@@ -51,6 +51,18 @@ export const db = new pg.Pool({
   password: env.DB_PASSWORD,
   database: env.DB_NAME,
   max: env.DB_POOL_LIMIT,
+  /*
+   * `search_path` includes `extensions` because of where Supabase puts PostGIS.
+   *
+   * A self-hosted Postgres installs it into `public`, so unqualified `geometry(Point, 4326)`
+   * resolves. Supabase keeps extensions in a dedicated `extensions` schema, and without it
+   * on the path every geometry column in the schema fails to resolve its type — which
+   * surfaces as a migration erroring on a type that plainly exists.
+   *
+   * Naming a schema that does not exist is harmless: Postgres ignores missing entries in
+   * `search_path` rather than erroring, so this is correct on both.
+   */
+  options: '-c search_path=public,extensions',
   /**
    * Supabase terminates idle server-side connections, and a pooled client that has been
    * dropped upstream fails on its next use. Recycling well before that turns a confusing
