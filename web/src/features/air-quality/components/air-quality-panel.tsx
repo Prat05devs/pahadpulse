@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AirQuality, AqiBand } from '../schemas';
+import type { AirQuality, AqiBand, NationalAqiBand } from '../schemas';
 
 /**
  * Colour AND word for every band, never colour alone.
@@ -52,6 +52,69 @@ const BAND_STYLE: Record<AqiBand, { label: string; hindi: string; bar: string; c
   },
 };
 
+/**
+ * CPCB's own six categories, with CPCB's own words.
+ *
+ * Not a re-skin of the US bands above. The scales disagree about the same air — Dehradun
+ * reads 118 "Unhealthy for sensitive groups" on the US index and 171 "Moderate" on the
+ * National one — so the two sets of labels are kept apart to make it impossible to render a
+ * CPCB number under a US EPA word.
+ *
+ * Colour and word together, for the same reason as above: a meaningful fraction of officers
+ * are red-green colourblind and none of them will mention it.
+ */
+const NATIONAL_BAND_STYLE: Record<
+  NationalAqiBand,
+  { label: string; hindi: string; bar: string; chip: string }
+> = {
+  good: {
+    label: 'Good',
+    hindi: 'अच्छी',
+    bar: 'bg-emerald-500',
+    chip: 'bg-emerald-50 text-emerald-900 border-emerald-200',
+  },
+  satisfactory: {
+    label: 'Satisfactory',
+    hindi: 'संतोषजनक',
+    bar: 'bg-lime-500',
+    chip: 'bg-lime-50 text-lime-900 border-lime-200',
+  },
+  moderate: {
+    label: 'Moderate',
+    hindi: 'मध्यम',
+    bar: 'bg-yellow-400',
+    chip: 'bg-yellow-50 text-yellow-900 border-yellow-200',
+  },
+  poor: {
+    label: 'Poor',
+    hindi: 'ख़राब',
+    bar: 'bg-orange-500',
+    chip: 'bg-orange-50 text-orange-900 border-orange-200',
+  },
+  very_poor: {
+    label: 'Very poor',
+    hindi: 'बहुत ख़राब',
+    bar: 'bg-red-500',
+    chip: 'bg-red-50 text-red-900 border-red-200',
+  },
+  severe: {
+    label: 'Severe',
+    hindi: 'गंभीर',
+    bar: 'bg-rose-900',
+    chip: 'bg-rose-100 text-rose-950 border-rose-300',
+  },
+};
+
+/** Readable names for the pollutant that set the index. */
+const POLLUTANT_LABEL: Record<string, string> = {
+  'pm2_5_ug_m3': 'PM2.5',
+  'pm10_ug_m3': 'PM10',
+  'nitrogen_dioxide_ug_m3': 'NO₂',
+  'ozone_ug_m3': 'O₃',
+  'sulphur_dioxide_ug_m3': 'SO₂',
+  'carbon_monoxide_ug_m3': 'CO',
+};
+
 /** The AQI axis tops out at 500; the bar is capped so an extreme value cannot overflow. */
 function barWidth(value: number): string {
   return `${Math.min(100, Math.max(2, (value / 300) * 100)).toFixed(1)}%`;
@@ -78,8 +141,16 @@ function Pollutant({ label, value, unit }: { label: string; value?: number; unit
  * flashing in at once.
  */
 export function AirQualityCard({ data, index = 0 }: { data: AirQuality; index?: number }) {
-  const band = data.aqi?.band ?? 'unknown';
-  const style = BAND_STYLE[band];
+  /*
+   * The chip, the bar and the word all follow the NATIONAL index, so the card never mixes
+   * scales — a CPCB number under a US EPA label would be the exact misreading this change
+   * exists to prevent. With no national index there is no band to show, so the card falls
+   * back to the neutral "not known" styling rather than borrowing the US band.
+   */
+  const style =
+    data.nationalAqi === null
+      ? BAND_STYLE.unknown
+      : NATIONAL_BAND_STYLE[data.nationalAqi.band];
 
   return (
     <article
@@ -98,21 +169,39 @@ export function AirQualityCard({ data, index = 0 }: { data: AirQuality; index?: 
         </span>
       </div>
 
+      {/* The National AQI leads. This is an Indian portal and CPCB's index is the one that
+          carries authority here — the US figure is kept below as a cross-reference, not
+          removed, because it is what the upstream source actually published. */}
       <div className="mt-3 flex items-baseline gap-2">
         <span className="font-mono text-3xl font-semibold tabular-nums">
-          {data.aqi === null ? '—' : Math.round(data.aqi.value)}
+          {data.nationalAqi === null ? '—' : data.nationalAqi.value}
         </span>
-        <span className="text-xs text-muted-foreground">US AQI</span>
+        <span className="text-xs text-muted-foreground">National AQI</span>
       </div>
+
+      {data.nationalAqi === null ? (
+        /* Absence is stated, never implied. A missing index is a data gap, not clean air,
+           and CPCB's own rules are what withhold it. */
+        <p className="mt-1 text-[0.68rem] leading-relaxed text-muted-foreground">
+          Not enough readings yet for a National AQI — CPCB requires three pollutants
+          averaged over 24 hours.
+        </p>
+      ) : (
+        <p className="mt-1 text-[0.68rem] text-muted-foreground">
+          Set by {POLLUTANT_LABEL[data.nationalAqi.dominantPollutant] ?? 'the worst pollutant'}
+          {' · '}CPCB scale
+          {data.aqi !== null && ` · US AQI ${Math.round(data.aqi.value)}`}
+        </p>
+      )}
 
       {/* The bar grows from zero once, so length registers before the number is read. */}
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        {data.aqi !== null && (
+        {data.nationalAqi !== null && (
           <div
             className={`pp-grow-x h-full rounded-full ${style.bar}`}
             style={
               {
-                width: barWidth(data.aqi.value),
+                width: barWidth(data.nationalAqi.value),
                 '--pp-delay': `${Math.min(index * 45 + 160, 700)}ms`,
               } as React.CSSProperties
             }

@@ -16,6 +16,11 @@ import { SourceRepository } from '../repositories/source.repository.js';
 import { Metric, StationType } from '../types/hydromet.js';
 import { toIsoUtc } from '../utils/datetime.js';
 import { ERRORS, type RequestError } from '../utils/errors.js';
+import {
+  AVERAGING_HOURS,
+  computeNationalAqi,
+  withAdequateCoverage,
+} from '../models/cpcb-aqi.js';
 
 /** The pollutants the air quality panel reads. */
 const AIR_METRICS: readonly Metric[] = [
@@ -317,6 +322,24 @@ export async function getAllDistrictAirQuality(
 
   const entries: DistrictAirEntry[] = [];
 
+  /*
+   * National AQI for every station in one query — see the note in `getAreaAirQuality` for
+   * why this is computed rather than taken from the source. Degrades to an empty map, which
+   * simply yields `nationalAqi: null` per district.
+   */
+  const averageRows = await ObservationRepository.pollutantAveragesForStations(
+    stations.value.map((entry) => entry.station.id),
+    AQI_WINDOWS,
+  );
+  const averagesByStation = new Map<number, Array<{ metric: Metric; average: number; sampleCount: number }>>();
+  if (averageRows.isOk()) {
+    for (const row of averageRows.value) {
+      const list = averagesByStation.get(row.station_id) ?? [];
+      list.push({ metric: row.metric, average: row.average, sampleCount: row.sample_count });
+      averagesByStation.set(row.station_id, list);
+    }
+  }
+
   for (const { station, areaSlug, areaNameEn, areaNameHi } of stations.value) {
     const areaName = { en: areaNameEn, hi: areaNameHi };
     const byMetric = byStation.get(station.id);
@@ -338,6 +361,9 @@ export async function getAllDistrictAirQuality(
       air: {
         station,
         aqi: aqi === undefined ? null : { value: aqi.value, band: classifyAqi(aqi.value) },
+        nationalAqi: computeNationalAqi(
+          withAdequateCoverage(averagesByStation.get(station.id) ?? []),
+        ),
         pm25: byMetric.get(Metric.Pm25),
         pm10: byMetric.get(Metric.Pm10),
         nitrogenDioxide: byMetric.get(Metric.NitrogenDioxide),
@@ -365,6 +391,12 @@ export async function getAllDistrictAirQuality(
  * the ingestion side: the two come from different upstream models and either can be stale
  * while the other is current. Merging them would force one freshness state onto both.
  */
+/** The averaging windows the National AQI is defined over, as the repository wants them. */
+const AQI_WINDOWS = Object.entries(AVERAGING_HOURS).map(([metric, hours]) => ({
+  metric: metric as Metric,
+  hours,
+}));
+
 export async function getAreaAirQuality(
   areaSlug: string,
   now: Date = new Date(),
@@ -406,6 +438,35 @@ export async function getAreaAirQuality(
   if (!source.mayRedistribute) return err(ERRORS.SOURCE_NOT_REDISTRIBUTABLE);
 
   const aqi = byMetric.get(Metric.UsAqi);
+
+  /*
+   * India's National AQI, computed here rather than taken from the source.
+   *
+   * Open-Meteo publishes `us_aqi`, a US EPA index. CPCB's National AQI uses different
+   * breakpoints and different band names, so the same air produces a different number and
+   * often a different category — relabelling the US figure would have misreported it to an
+   * Indian audience. The index is therefore derived from the concentrations, over the
+   * averaging windows CPCB defines (24 hours, 8 for CO and ozone).
+   *
+   * Degrades to null rather than failing the request: air quality without an index is still
+   * useful, and a partial index is not an index.
+   */
+  const averages = await ObservationRepository.pollutantAveragesForStation(
+    station.value.id,
+    AQI_WINDOWS,
+  );
+  const nationalAqi = averages.isErr()
+    ? null
+    : computeNationalAqi(
+        withAdequateCoverage(
+          averages.value.map((row) => ({
+            metric: row.metric,
+            average: row.average,
+            sampleCount: row.sample_count,
+          })),
+        ),
+      );
+
   const observedAt =
     [...byMetric.values()].map((observation) => observation.observedAt).sort().at(-1) ?? null;
   const resolvedSourceId = airSourceId ?? station.value.sourceId;
@@ -413,6 +474,7 @@ export async function getAreaAirQuality(
   return ok({
     station: station.value,
     aqi: aqi === undefined ? null : { value: aqi.value, band: classifyAqi(aqi.value) },
+    nationalAqi,
     pm25: byMetric.get(Metric.Pm25),
     pm10: byMetric.get(Metric.Pm10),
     nitrogenDioxide: byMetric.get(Metric.NitrogenDioxide),

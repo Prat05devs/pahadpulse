@@ -197,6 +197,33 @@ export const OPEN_METEO_AIR = {
     'ozone',
     'us_aqi',
   ] as const,
+  /**
+   * The same pollutants again, as an hourly series.
+   *
+   * India's National AQI is defined over 24-hour averages (8-hour for CO and ozone), so the
+   * spot reading `current` returns cannot produce one. Without this the index would have to
+   * wait 16 hours after a fresh deployment before the hourly cron had accumulated CPCB's
+   * minimum coverage — and would silently be an hourly value wearing a 24-hour label if
+   * that minimum were not enforced.
+   *
+   * `us_aqi` is deliberately absent: it is a derived index, and storing a 72-hour series of
+   * someone else's index has no use that the concentrations do not serve better.
+   */
+  HOURLY_FIELDS: [
+    'pm10',
+    'pm2_5',
+    'carbon_monoxide',
+    'nitrogen_dioxide',
+    'sulphur_dioxide',
+    'ozone',
+  ] as const,
+  /**
+   * Two days back. A 24-hour window needs 24 hours of history, and the second day is margin
+   * for a cron that has missed a run — not an appetite for history. Re-ingesting the same
+   * hours is free: observations upsert on (station, metric, observed_at), so a repeated run
+   * rewrites rows rather than multiplying them (HYD-1, DS-5).
+   */
+  PAST_DAYS: 2,
   TIMEZONE: 'Asia/Kolkata',
   FETCH_TIMEOUT_MS: 15_000,
   FETCH_RETRIES: 2,

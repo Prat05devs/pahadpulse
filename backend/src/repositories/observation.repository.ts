@@ -15,6 +15,7 @@ import {
 import { Metric, StationType } from '../types/hydromet.js';
 import { ERRORS, type RequestError } from '../utils/errors.js';
 import createLogger from '../utils/logger.js';
+import { describeError } from '../utils/describe-error.js';
 
 const logger = createLogger('@observation.repository');
 
@@ -50,6 +51,21 @@ export interface ForecastInput {
 }
 
 /** A station with the slug of the area it reports for, so a batch read needs no second query. */
+/** As `PollutantAverageRow`, but carrying the station it belongs to. */
+export interface StationPollutantAverageRow extends PollutantAverageRow {
+  station_id: number;
+}
+
+/** One pollutant's mean over its averaging window, with the coverage behind it. */
+export interface PollutantAverageRow {
+  metric: Metric;
+  average: number;
+  /** Hourly readings that went into the mean — CPCB requires adequate coverage, not any. */
+  sample_count: number;
+  window_hours: number;
+  window_end: string;
+}
+
 export interface StationWithArea {
   station: Station;
   areaSlug: string;
@@ -79,6 +95,22 @@ export interface IObservationRepository {
     stationId: number,
     metrics: readonly Metric[],
   ): Promise<Result<ObservationRow[], RequestError>>;
+  /**
+   * Per-pollutant averages over each pollutant's own CPCB averaging window.
+   *
+   * India's National AQI is defined over 24-hour averages (8-hour for CO and O3), not over
+   * a spot reading, so this is what makes a real CPCB index possible rather than an
+   * hourly value dressed up as one.
+   */
+  pollutantAveragesForStation(
+    stationId: number,
+    windows: ReadonlyArray<{ metric: Metric; hours: number }>,
+  ): Promise<Result<PollutantAverageRow[], RequestError>>;
+  /** The same averages for MANY stations in one query, for the state-wide view. */
+  pollutantAveragesForStations(
+    stationIds: readonly number[],
+    windows: ReadonlyArray<{ metric: Metric; hours: number }>,
+  ): Promise<Result<StationPollutantAverageRow[], RequestError>>;
   replaceForecasts(
     areaId: number,
     sourceId: number,
@@ -257,6 +289,113 @@ class ObservationRepositoryImpl implements IObservationRepository {
       return ok(rows);
     } catch (error) {
       logger.error('latestForStation failed', { stationId, error });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  /**
+   * Averages each pollutant over its own window, anchored on the station's latest reading.
+   *
+   * Anchored on the newest observation rather than `now()` so a lagging ingestion produces
+   * a complete window slightly in the past instead of a half-empty one ending now. Staleness
+   * is not hidden by that choice: `window_end` is returned, and the panel already reports
+   * `observedAt` and its freshness (DS-3) alongside.
+   *
+   * `sample_count` comes back with the mean because CPCB requires adequate coverage before a
+   * 24-hour average counts, and a mean of two readings must not be presented as one of
+   * twenty-four. The caller applies the threshold — the repository reports, it does not judge.
+   */
+  async pollutantAveragesForStation(
+    stationId: number,
+    windows: ReadonlyArray<{ metric: Metric; hours: number }>,
+  ): Promise<Result<PollutantAverageRow[], RequestError>> {
+    if (windows.length === 0) return ok([]);
+
+    try {
+      const metrics = windows.map((w) => w.metric);
+      const hours = windows.map((w) => w.hours);
+
+      const { rows } = await db.query<PollutantAverageRow>(
+        `WITH anchor AS (
+           SELECT MAX(observed_at) AS window_end
+             FROM ${OBSERVATIONS_TABLE}
+            WHERE station_id = $1 AND metric = ANY($2::metric[])
+         ),
+         windows AS (
+           SELECT UNNEST($2::metric[]) AS metric, UNNEST($3::int[]) AS hours
+         )
+         SELECT w.metric,
+                AVG(o.value)::float8            AS average,
+                COUNT(*)::int                   AS sample_count,
+                w.hours                         AS window_hours,
+                a.window_end                    AS window_end
+           FROM windows w
+           CROSS JOIN anchor a
+           JOIN ${OBSERVATIONS_TABLE} o
+             ON o.metric = w.metric
+            AND o.station_id = $1
+            AND o.observed_at > a.window_end - make_interval(hours => w.hours)
+            AND o.observed_at <= a.window_end
+          GROUP BY w.metric, w.hours, a.window_end`,
+        [stationId, metrics, hours],
+      );
+      return ok(rows);
+    } catch (error) {
+      logger.error('pollutantAveragesForStation failed', {
+        stationId,
+        error: describeError(error),
+      });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  /**
+   * The plural form, kept as one query for the same reason the batch endpoints exist: the
+   * state-wide air page shows thirteen districts, and thirteen round trips to compute one
+   * index each is the pattern those endpoints were built to remove.
+   *
+   * The anchor is per-station, not global — a station whose ingestion lagged gets its own
+   * complete window rather than being measured against another station's clock.
+   */
+  async pollutantAveragesForStations(
+    stationIds: readonly number[],
+    windows: ReadonlyArray<{ metric: Metric; hours: number }>,
+  ): Promise<Result<StationPollutantAverageRow[], RequestError>> {
+    if (stationIds.length === 0 || windows.length === 0) return ok([]);
+
+    try {
+      const metrics = windows.map((w) => w.metric);
+      const hours = windows.map((w) => w.hours);
+
+      const { rows } = await db.query<StationPollutantAverageRow>(
+        `WITH anchors AS (
+           SELECT station_id, MAX(observed_at) AS window_end
+             FROM ${OBSERVATIONS_TABLE}
+            WHERE station_id = ANY($1::integer[]) AND metric = ANY($2::metric[])
+            GROUP BY station_id
+         ),
+         windows AS (
+           SELECT UNNEST($2::metric[]) AS metric, UNNEST($3::int[]) AS hours
+         )
+         SELECT o.station_id,
+                w.metric,
+                AVG(o.value)::float8  AS average,
+                COUNT(*)::int         AS sample_count,
+                w.hours               AS window_hours,
+                a.window_end          AS window_end
+           FROM anchors a
+           CROSS JOIN windows w
+           JOIN ${OBSERVATIONS_TABLE} o
+             ON o.station_id = a.station_id
+            AND o.metric = w.metric
+            AND o.observed_at > a.window_end - make_interval(hours => w.hours)
+            AND o.observed_at <= a.window_end
+          GROUP BY o.station_id, w.metric, w.hours, a.window_end`,
+        [stationIds, metrics, hours],
+      );
+      return ok(rows);
+    } catch (error) {
+      logger.error('pollutantAveragesForStations failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }

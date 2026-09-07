@@ -1,6 +1,7 @@
 import { AqiBand, Metric, StationType, WeatherCondition } from '../types/hydromet.js';
 import { toIsoUtc } from '../utils/datetime.js';
 import type { LocalisedText } from './alert.model.js';
+import type { NationalAqi } from './cpcb-aqi.js';
 
 export const STATIONS_TABLE = 'stations';
 export const OBSERVATIONS_TABLE = 'observations';
@@ -207,8 +208,20 @@ export interface AqiOut {
 /** What `GET /api/areas/:slug/air-quality` returns. */
 export interface AreaAirQuality {
   station: Station;
-  /** Null when the source gave concentrations but no index. */
+  /**
+   * The US EPA index, as the source publishes it. Null when the source gave concentrations
+   * but no index. Kept alongside `nationalAqi` rather than replaced: it is what the upstream
+   * actually said, and removing it would leave nothing to reconcile the two scales against.
+   */
   aqi: AqiOut | null;
+  /**
+   * India's National AQI (CPCB), computed here from the concentrations.
+   *
+   * Null when CPCB's own requirements are not met — fewer than three pollutants, no
+   * particulate among them, or a window without enough hourly readings to be an average.
+   * Null means "not enough data for an index", never "clean air".
+   */
+  nationalAqi: NationalAqi | null;
   pm25?: Observation | undefined;
   pm10?: Observation | undefined;
   nitrogenDioxide?: Observation | undefined;

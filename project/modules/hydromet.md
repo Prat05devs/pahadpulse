@@ -101,6 +101,8 @@ and one metric cannot hold both bounds for a day.
 | HYD-5 | The source chain is ordered per metric and the source actually used is shown to the user. IMD and OpenWeatherMap must never be presented as interchangeable. |
 | HYD-6 | Observations older than their source's cadence are shown with their timestamp and a staleness state, never hidden and never presented as current. |
 | HYD-7 | Reservoir figures ingested manually from a PDF carry the same provenance as any API row, with `AccessMethod.Manual`. |
+| HYD-8 | The headline air quality index is India's National AQI (CPCB), computed by this module from concentrations. The source's `us_aqi` is a US EPA index on different breakpoints and may never be relabelled as the National AQI. Both may be shown, never conflated. |
+| HYD-9 | A National AQI is published only when CPCB's own requirements are met: at least three pollutants, one of them PM2.5 or PM10, each averaged over its defined window with adequate coverage. Otherwise the index is absent, and absence is stated as a data gap — never rendered as clean air. |
 
 ### Permissions
 
@@ -337,3 +339,52 @@ a bug and needs explaining in the UI.
 - [ ] THDC and UJVNL publication format and frequency — confirms whether reservoir data is
       manual weekly entry. — *owner:* `<TBD>`
 - [ ] Plausible-range bounds per metric for the validation in Failure modes. — *owner:* `<TBD>`
+
+### 2026-09-07 — The National AQI is computed here, not taken from the source
+
+The air quality panel showed Open-Meteo's `us_aqi` under the label "US AQI" to an
+audience in India. The label was accurate, but the wrong index was leading a national
+portal.
+
+Relabelling it was not an option. CPCB's National AQI uses different breakpoints and
+different category names from the US EPA scale, so the same air yields a different number
+and often a different verdict. Dehradun on the day this was written read **118 "Unhealthy
+for sensitive groups"** on the US index and **171 "Moderate"** on the National one. A
+CPCB word over a US EPA number would have misreported air quality on a government-facing
+site.
+
+So the index is derived from the concentrations the connector already stores, by the
+published CPCB method: a sub-index per pollutant by linear interpolation on the tabulated
+breakpoints, and the AQI is the maximum of those — the worst pollutant defines the air.
+
+Two details that are easy to get wrong and are pinned by tests:
+
+- The breakpoints are **inclusive integer ranges** (PM10's third band is 101–250, not
+  100–250) and the interpolation uses those bounds. Reading them as contiguous shifts every
+  sub-index and stops the function reproducing CPCB's own worked figures — PM10 at
+  175 µg/m³ is 150 by the standard and 151 by the contiguous reading.
+- CO's breakpoints are in **mg/m³** while the column is µg/m³. A factor of 1000, which
+  would pin CO to the top band unnoticed.
+
+**The averaging period is part of the standard, not a detail.** CPCB defines the index over
+24-hour averages, 8-hour for CO and ozone. The connector previously stored only Open-Meteo's
+`current`, so every window held a single reading — a spot value that would have been
+published as a 24-hour mean. It now also ingests the hourly series with `past_days=2`,
+which is what makes a real index possible, and rows upsert on `(station, metric,
+observed_at)` so re-running costs nothing (HYD-1, DS-5).
+
+Coverage is enforced rather than assumed: 16 readings of 24, and 6 of 8, per CPCB and
+standard monitoring practice. A pollutant short of its minimum is dropped, which may take
+the set below the three-pollutant rule — in which case there is no index, and the panel says
+why.
+
+**Known shortfall.** NH3 and Pb, two of CPCB's eight pollutants, are not published by
+Open-Meteo. Because the AQI is a maximum, their absence can only bias it **downward**, so
+the figure is a floor rather than an overstatement. `pollutantsUsed` reports what actually
+went in, so the gap is visible instead of implied. A CPCB source would remove this
+shortfall and should lead this one if its terms permit, exactly as IMD should lead
+Open-Meteo on weather.
+
+The `us_aqi` value is retained and shown as a cross-reference rather than deleted: it is
+what the upstream actually published, and keeping it is what allows the two scales to be
+reconciled.

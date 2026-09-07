@@ -31,9 +31,29 @@ const AirCurrentSchema = z.object({
   us_aqi: z.number().nullable().optional(),
 });
 
+/**
+ * The hourly series behind the National AQI. Open-Meteo returns parallel arrays: `time[i]`
+ * describes the same hour as `pm2_5[i]`, so they are validated as arrays of equal intent and
+ * zipped by index below.
+ */
+const AirHourlySchema = z.object({
+  time: z.array(z.string()),
+  pm10: z.array(z.number().nullable()).optional(),
+  pm2_5: z.array(z.number().nullable()).optional(),
+  carbon_monoxide: z.array(z.number().nullable()).optional(),
+  nitrogen_dioxide: z.array(z.number().nullable()).optional(),
+  sulphur_dioxide: z.array(z.number().nullable()).optional(),
+  ozone: z.array(z.number().nullable()).optional(),
+});
+
+type AirHourly = z.infer<typeof AirHourlySchema>;
+/** The pollutant array names on the hourly payload — `time` is handled separately. */
+type HourlyField = Exclude<keyof AirHourly, 'time'>;
+
 const AirResponseSchema = z.object({
   utc_offset_seconds: z.number(),
   current: AirCurrentSchema.optional(),
+  hourly: AirHourlySchema.optional(),
 });
 
 const UNITS = {
@@ -113,6 +133,9 @@ class OpenMeteoAirConnector implements SourceConnector {
       latitude: lat.toString(),
       longitude: lng.toString(),
       current: OPEN_METEO_AIR.CURRENT_FIELDS.join(','),
+      // The hourly series is what makes a CPCB 24-hour average possible at all.
+      hourly: OPEN_METEO_AIR.HOURLY_FIELDS.join(','),
+      past_days: OPEN_METEO_AIR.PAST_DAYS.toString(),
       timezone: OPEN_METEO_AIR.TIMEZONE,
     });
 
@@ -172,8 +195,70 @@ class OpenMeteoAirConnector implements SourceConnector {
         sourceId,
       });
     }
+
+    rows.push(
+      ...this.hourlyRows(parsed.data.hourly, parsed.data.utc_offset_seconds, stationId, sourceId),
+    );
+
     return rows;
   }
+
+  /**
+   * The hourly series flattened into observations.
+   *
+   * These share the primary key with the `current` rows they overlap, so the newest hour
+   * arrives twice in one run and simply upserts — the same property that makes the whole
+   * cron safe to re-run (DS-5). A future hour is skipped: Open-Meteo's hourly array runs
+   * past `now` into its forecast, and a forecast stored as an observation would quietly
+   * corrupt every average computed over it.
+   */
+  private hourlyRows(
+    hourly: AirHourly | undefined,
+    utcOffsetSeconds: number,
+    stationId: number,
+    sourceId: number,
+  ): ObservationInput[] {
+    if (hourly === undefined) return [];
+
+    const rows: ObservationInput[] = [];
+    const nowMs = Date.now();
+
+    const series: ReadonlyArray<readonly [Metric, HourlyField]> = [
+      [Metric.Pm25, 'pm2_5'],
+      [Metric.Pm10, 'pm10'],
+      [Metric.NitrogenDioxide, 'nitrogen_dioxide'],
+      [Metric.Ozone, 'ozone'],
+      [Metric.SulphurDioxide, 'sulphur_dioxide'],
+      [Metric.CarbonMonoxide, 'carbon_monoxide'],
+    ];
+
+    for (let index = 0; index < hourly.time.length; index += 1) {
+      const stamp = hourly.time[index];
+      if (stamp === undefined) continue;
+
+      const observedAt = localToUtc(stamp, utcOffsetSeconds);
+      if (observedAt === null) continue;
+      if (new Date(`${observedAt.replace(' ', 'T')}Z`).getTime() > nowMs) continue;
+
+      for (const [metric, field] of series) {
+        const values = hourly[field];
+        if (values === undefined) continue;
+        const value = values[index];
+        if (typeof value !== 'number') continue;
+        rows.push({
+          stationId,
+          metric,
+          observedAt,
+          value,
+          unit: UNITS[metric as keyof typeof UNITS],
+          sourceId,
+        });
+      }
+    }
+
+    return rows;
+  }
+
 }
 
 export const openMeteoAirConnector: SourceConnector = new OpenMeteoAirConnector();
