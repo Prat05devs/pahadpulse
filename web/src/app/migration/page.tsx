@@ -10,9 +10,16 @@ export const metadata: Metadata = {
     "Out-migration from Uttarakhand's gram panchayats, from the state Migration Commission's two survey rounds.",
 };
 
-/** A day. These are two published PDF reports; they cannot change between requests, and
- *  will not change again until the commission publishes a third round. */
-export const revalidate = 86400;
+/*
+ * An hour, not a day.
+ *
+ * These figures change quarterly at most, so a longer window costs nothing in freshness —
+ * but it is not freshness that sets this number. A page prerendered while the API is still
+ * deploying catches the failure and renders its error state, and Next caches THAT as a
+ * successful render for the whole window. An hour bounds a bad deploy to an hour; a day
+ * would leave a red error box up until someone noticed. Matches `roads` and `compare`.
+ */
+export const revalidate = 3600;
 
 const n = (value: number) => value.toLocaleString('en-IN');
 
@@ -41,8 +48,8 @@ export default async function MigrationPage() {
               Palayan — migration
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              How many people left Uttarakhand&apos;s gram panchayats, why, and where they went —
-              as counted by the state&apos;s Rural Development and Migration Commission in two
+              How many people left Uttarakhand&apos;s gram panchayats, why, and where they went — as
+              counted by the state&apos;s Rural Development and Migration Commission in two
               door-to-door survey rounds. Nothing here is modelled or projected.
             </p>
           </div>
@@ -106,7 +113,10 @@ export default async function MigrationPage() {
                 </h2>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {data.surveys.map((survey) => (
-                    <div key={survey.key} className="rounded-lg border border-border bg-surface p-4">
+                    <div
+                      key={survey.key}
+                      className="rounded-lg border border-border bg-surface p-4"
+                    >
                       <p className="font-medium text-text-light">{survey.label.en}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         Fieldwork covers {survey.coversFrom} to {survey.coversTo}; published{' '}
