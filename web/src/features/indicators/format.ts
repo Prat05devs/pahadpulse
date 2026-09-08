@@ -23,6 +23,16 @@ export function formatIndicatorValue(value: number, unit: string, decimals: numb
       return `${number} per 1,000`;
     case 'count':
       return number;
+    // A score out of 100 carries no suffix: the label already says it is an index, and
+    // "67 index" reads as a unit that does not exist.
+    case 'index':
+      return number;
+    // A rank is a position, not a quantity. The hash says so without the label having to
+    // repeat itself, and "2 rank" reads as a count of ranks.
+    case 'rank':
+      return `#${number}`;
+    case 'kg_per_day':
+      return `${number} kg/day`;
     default:
       return `${number} ${unit}`;
   }
