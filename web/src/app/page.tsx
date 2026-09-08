@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { AlertCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
+import { MigrationSummaryCard, fetchStateMigration } from '@/features/migration';
 import {
   DistrictOverviewGrid,
   LiveCounters,
@@ -39,13 +40,19 @@ export default async function HomePage() {
   let districtFeatures = null;
   let alertFeatures = null;
   let mapError: string | null = null;
+  let migration = null;
 
-  const [dashboardResult, imdStatusResult, mapResult] = await Promise.allSettled([
+  const [dashboardResult, imdStatusResult, mapResult, migrationResult] = await Promise.allSettled([
     Promise.all([fetchLiveCounters(), fetchStateOverview(), fetchAllDistricts()]),
     fetchImdCapLiveStatus(),
     // Settled independently: the map failing must not take the dashboard's figures with it.
     Promise.all([fetchDistrictFeatures(), fetchAlertFeatures()]),
+    // Settled independently too: two published PDF reports going missing must not blank the
+    // live dashboard, and the card simply does not render.
+    fetchStateMigration(),
   ]);
+
+  if (migrationResult.status === 'fulfilled') migration = migrationResult.value;
 
   if (mapResult.status === 'fulfilled') {
     [districtFeatures, alertFeatures] = mapResult.value;
@@ -77,7 +84,6 @@ export default async function HomePage() {
   return (
     <DashboardLayout>
       <div className="min-h-full">
-
         <div className="lg:relative">
           {!counters || !overview || !districts ? (
             <section
@@ -121,6 +127,16 @@ export default async function HomePage() {
                 <div className="pp-rise" style={{ '--pp-delay': '200ms' } as React.CSSProperties}>
                   <QuickAccessGrid />
                 </div>
+                {/* The migration headline. It sits above the district grid because it is the
+                    one figure on this page that is about the state's people rather than its
+                    weather, and because the grid below is where a reader goes next. Absent
+                    entirely if the fetch failed — a zero here would be a claim. */}
+                {migration !== null && (
+                  <div className="pp-rise" style={{ '--pp-delay': '240ms' } as React.CSSProperties}>
+                    <MigrationSummaryCard data={migration} />
+                  </div>
+                )}
+
                 <DistrictOverviewGrid districts={districts} />
 
                 {/* Connection health sits after the data it describes: it explains where the
