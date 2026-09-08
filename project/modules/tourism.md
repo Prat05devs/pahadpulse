@@ -82,8 +82,29 @@ Fully public, read-only.
 | Table | Purpose | Notes |
 |---|---|---|
 | `destinations` | registry | small, seeded |
-| `visitor_counts` | daily counts | one row per destination per day per basis |
+| `visitor_counts` | daily counts | one row per destination per day per basis. **Not built** — no daily feed obtained yet. |
+| `destination_annual_visitors` | published yearly totals | **Built.** One row per destination per year. |
 | `accommodation_snapshots` | availability | only if a source is obtained |
+
+### Why annual totals are a separate table
+
+`visitor_counts` is daily, keyed by `counted_on` with a registration/footfall basis. What the
+state actually publishes today is a yearly total per shrine. Writing 998,956 into a row dated
+2019-12-31 would claim a million people reached Kedarnath on one December day — false, and
+exactly what a daily table invites. So `destination_annual_visitors` keys on `year`, which is
+the precision the figure has, and `visitor_counts` stays free for the daily feed when one is
+obtained.
+
+The `destinations` registry was built alongside it so both tables name the same shrine rather
+than accumulating a second list of five spellings of Kedarnath.
+
+`daily_capacity` is NULL on every seeded row and is constrained to move with its source:
+TOU-4 forbids estimating one, none is published, and TOU-3 therefore leaves load `unknown`.
+The tourism page says outright that it cannot tell you how busy a shrine is today.
+
+The 2020 and 2021 figures are pandemic years — the yatra was suspended, then capped — and
+arrivals fell roughly tenfold. They are stored and displayed as published, never smoothed; a
+test asserts the collapse so a future seed cannot interpolate it away.
 
 ### Indexes and why
 
@@ -97,22 +118,44 @@ Fully public, read-only.
 
 | # | File | What |
 |---|---|---|
-| 012 | `012-create-destinations.sql` | destinations + capacity |
-| 013 | `013-create-visitor-counts.sql` | counts |
+| 043 | `043-destinations-and-annual-visitors.sql` | `destinations` + `destination_annual_visitors` |
+| 044 | `044-seed-char-dham-visitors.sql` | the five shrines and their 2019-2021 arrivals |
+| 045 | `045-widen-tourism-source-attribution.sql` | corrects text 040 wrote before arrivals existed |
+
+`visitor_counts` has no migration yet — it waits on a daily feed. The numbers 012/013 in an
+earlier draft of this doc were never written.
 
 Accommodation tables are deliberately not in the initial migration — see §9.
 
 ## 5. API
 
-| Method | Path | Auth | Cache | Paginated |
-|---|---|---|---|---|
-| GET | `/api/tourism/summary` | none | 15m | no |
-| GET | `/api/tourism/destinations` | none | 15m | no |
-| GET | `/api/tourism/destinations/:slug` | none | 15m | — |
-| GET | `/api/tourism/char-dham` | none | 15m | no |
-| GET | `/api/areas/:slug/tourism` | none | 15m | no |
+| Method | Path | Auth | Cache | Paginated | Status |
+|---|---|---|---|---|---|
+| GET | `/api/tourism/pilgrim-arrivals` | none | 24h | no | **built** |
+| GET | `/api/tourism/summary` | none | 15m | no | planned |
+| GET | `/api/tourism/destinations` | none | 15m | no | planned |
+| GET | `/api/tourism/destinations/:slug` | none | 15m | — | planned |
+| GET | `/api/tourism/char-dham` | none | 15m | no | planned |
+| GET | `/api/areas/:slug/tourism` | none | 15m | no | planned |
 
-### `GET /api/tourism/char-dham`
+Everything marked planned needs a daily visitor feed, which does not exist yet. The web app
+called `/tourism/char-dham` and `/destinations` before either was built, so the tourism page
+rendered its error state on every visit; it now reads `pilgrim-arrivals`.
+
+### `GET /api/tourism/pilgrim-arrivals`
+
+**Response 200** — `{ destinations, totals, years }`. Yearly arrivals per shrine with the
+district each sits in, plus per-year totals summed from the destinations actually served
+(DS-6), and the years present, oldest first.
+
+Named for arrivals rather than the Char Dham because Hemkund Sahib is in the state's figures
+and is not one of the four dhams — naming the endpoint for the dhams would make the fifth row
+look like a mistake. It is carried as `religious`, not relabelled a fifth dham.
+
+No load state is exposed: TOU-3 makes load `unknown` where no capacity is published, and none
+is.
+
+### `GET /api/tourism/char-dham` (planned)
 
 The specification's headline tourism view: all four sites with their latest counts, basis,
 capacity, computed load state, and a link to each route's status in `roads`.

@@ -74,6 +74,7 @@ package alongside `lucide-react`; their versions must remain aligned.
 | `hydromet`   | weather, rainfall, river levels, dams                        | `modules/hydromet.md`   |
 | `roads`      | road network, closures, live traffic                         | `modules/roads.md`      |
 | `tourism`    | tourist flow, Char Dham, carrying capacity                   | `modules/tourism.md`    |
+| `migration`  | Palayan Ayog survey rounds, district out-migration           | `modules/migration.md`  |
 
 ### Dependencies between modules
 
@@ -87,6 +88,7 @@ flowchart TD
   hydromet[hydromet]
   roads[roads]
   tourism[tourism]
+  migration[migration]
 
   indicators --> geography
   indicators --> datasets
@@ -99,6 +101,8 @@ flowchart TD
   roads --> datasets
   tourism --> geography
   tourism --> datasets
+  migration --> geography
+  migration --> datasets
 ```
 
 No cycles. `geography` and `datasets` are the spine: every domain module joins its rows to a
@@ -118,15 +122,20 @@ alert _content_ is fully public and readable with no account.
 | `hydromet`   | geography, datasets           | —                  |
 | `roads`      | geography, datasets           | —                  |
 | `tourism`    | geography, datasets           | —                  |
+| `migration`  | geography, datasets           | —                  |
 
 ### Deferred — documented, not built
 
 | Part                                        | Why deferred                                                                                                                                            | Reserved range |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| `migration` (Palayan tracker)               | out of v1 scope. Village-scope migration and ghost villages. The Palayan Ayog data request is filed in week 1 regardless — it is the slowest to obtain. | `55xxx`        |
 | `governance` (officer dashboard + AI layer) | out of v1 scope. Lives in this repo as a `/gov` route group when built; `accounts` already carries the officer role so nothing blocks it.               | `95xxx`        |
 
-Neither has a module doc yet. Write one from `_TEMPLATE.md` when work starts.
+`governance` has no module doc yet. Write one from `_TEMPLATE.md` when work starts.
+
+`migration` was on this list and is now built at district scope — the Palayan Ayog reports
+arrived as PDFs and were transcribed. Village-scope migration and ghost villages remain out
+of scope; see `modules/migration.md` §8 for what is still open, including the 95 development
+blocks, which `area_type` cannot yet express.
 
 ---
 
@@ -211,7 +220,7 @@ revising a warning must revise ours, not add a second contradictory one.
 | Observation | A time-stamped measurement from a station — rainfall, river level, temperature. Distinct from an indicator: high-frequency, not comparable across districts by definition. |
 | Alert       | A time-bounded warning from an authority, with a severity and an affected area. Expires.                                                                                   |
 | Char Dham   | The four pilgrimage sites — Kedarnath, Badrinath, Gangotri, Yamunotri. Drives the tourism module's peak load.                                                              |
-| Palayan     | Out-migration from hill villages. The deferred `migration` module.                                                                                                         |
+| Palayan     | Out-migration from hill villages. The `migration` module.                                                                                                                 |
 
 ---
 
@@ -244,7 +253,7 @@ Things that shape decisions across every module.
 | `30xxx` | accounts                                   |
 | `40xxx` | geography                                  |
 | `50xxx` | indicators                                 |
-| `55xxx` | _reserved_ — migration                     |
+| `55xxx` | `migration`                                |
 | `60xxx` | alerts                                     |
 | `70xxx` | hydromet                                   |
 | `80xxx` | roads                                      |
