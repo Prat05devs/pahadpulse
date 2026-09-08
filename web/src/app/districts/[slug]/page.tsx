@@ -13,6 +13,7 @@ import { WeatherPanel } from '@/features/weather/components';
 import { TerrainMap, fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
 import { formatIndicatorValue } from '@/features/indicators/format';
 import { AreaMigrationSchema, MigrationPanel } from '@/features/migration';
+import { ConnectivityPanel, DistrictNetworkSchema } from '@/features/connectivity';
 
 const DistrictDetailSchema = z.object({
   district: AreaSchema,
@@ -76,6 +77,7 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
   let indicators = null;
   let weather = null;
   let migration = null;
+  let network = null;
   let districts = null;
   let mapAlerts = null;
   let error = null;
@@ -87,6 +89,7 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
       indicatorsData,
       weatherData,
       migrationData,
+      networkData,
       districtFeatures,
       alertFeatures,
     ] = await Promise.all([
@@ -95,6 +98,7 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
       apiClient.get(`/areas/${slug}/indicators`, AreaIndicatorsSchema).catch(() => null),
       apiClient.get(`/areas/${slug}/weather`, WeatherDataSchema).catch(() => null),
       apiClient.get(`/areas/${slug}/migration`, AreaMigrationSchema).catch(() => null),
+      apiClient.get(`/areas/${slug}/connectivity`, DistrictNetworkSchema).catch(() => null),
       // The map degrades to absent rather than failing the page (geography.md §7).
       fetchDistrictFeatures().catch(() => null),
       fetchAlertFeatures().catch(() => null),
@@ -105,6 +109,7 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
     indicators = indicatorsData;
     weather = weatherData;
     migration = migrationData;
+    network = networkData;
     districts = districtFeatures;
     mapAlerts = alertFeatures;
   } catch (err) {
@@ -218,6 +223,21 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
                 })}
               </div>
             </div>
+          )}
+
+          {/* Measured internet speed. Rendered even with no measurements: the panel then
+              says nobody ran a speed test here, which is a fact about the data rather than
+              about the district's connection. */}
+          {network !== null && (
+            <section aria-labelledby="district-connectivity">
+              <h2
+                id="district-connectivity"
+                className="mb-3 text-lg font-semibold tracking-tight sm:text-xl"
+              >
+                Connectivity
+              </h2>
+              <ConnectivityPanel data={network} />
+            </section>
           )}
 
           {/* Figures the catalogue expects for a district but which nothing published has

@@ -32,6 +32,8 @@ export const CADENCE_INTERVAL_SECONDS = {
   hourly: 60 * 60,
   daily: 24 * 60 * 60,
   monthly: 30 * 24 * 60 * 60,
+  // Ookla publishes one quarter at a time, a few weeks after it closes.
+  quarterly: 91 * 24 * 60 * 60,
   annual: 365 * 24 * 60 * 60,
   static: Number.POSITIVE_INFINITY,
 } as const;

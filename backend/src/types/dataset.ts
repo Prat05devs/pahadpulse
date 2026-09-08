@@ -22,6 +22,7 @@ export enum Cadence {
   Hourly = 'hourly',
   Daily = 'daily',
   Monthly = 'monthly',
+  Quarterly = 'quarterly',
   Annual = 'annual',
   Static = 'static',
 }
