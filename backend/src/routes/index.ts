@@ -9,6 +9,7 @@ import projectRouter from './projects.route.js';
 import roadRouter from './roads.route.js';
 import seismicRouter from './seismic.route.js';
 import sourceRouter from './sources.route.js';
+import tourismRouter from './tourism.route.js';
 import { areaWeatherRouter, stateAirRouter, stateWeatherRouter } from './weather.route.js';
 
 const apiRouter = Router();
@@ -25,6 +26,7 @@ apiRouter.use('/alerts', alertRouter);
 apiRouter.use('/projects', projectRouter);
 apiRouter.use('/roads', roadRouter);
 apiRouter.use('/migration', migrationRouter);
+apiRouter.use('/tourism', tourismRouter);
 apiRouter.use('/seismic', seismicRouter);
 // Batch reads for the state-wide pages. Not under `/areas` — see weather.route.ts.
 apiRouter.use('/weather', stateWeatherRouter);
