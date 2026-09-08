@@ -57,22 +57,44 @@ export const IndicatorValueSchema = z.object({
 
 export type IndicatorValue = z.infer<typeof IndicatorValueSchema>;
 
-export const AreaIndicatorsSchema = z.object({
-  values: z.array(
-    IndicatorValueSchema.extend({
-      provenance: ProvenanceSchema,
-    })
-  ),
-  /**
-   * Catalogue indicators in scope for this area that have no published figure yet.
-   *
-   * Carried so a district page can say a number is still being compiled rather than just
-   * not drawing a row — an absent row and a broken page look the same to a reader. An
-   * indicator withheld under DS-6 is not in here: that figure exists and may not be shown,
-   * which is a different statement from one that has not been collected.
-   */
-  pending: z.array(IndicatorSchema),
+const AreaIndicatorValueSchema = IndicatorValueSchema.extend({
+  provenance: ProvenanceSchema,
 });
+
+/**
+ * One area's indicators: the ones we have, and the ones we do not have yet.
+ *
+ * DEPLOY-ORDER TOLERANCE — accepts BOTH the current object and the bare array this endpoint
+ * used to return.
+ *
+ * The web app and the API ship from the same push but deploy independently, and Vercel
+ * finishes in seconds while Render rebuilds a container for minutes. This endpoint changed
+ * shape rather than merely gaining a field, so for the length of that window the new
+ * frontend would meet the old API's array, reject it, and take the district Statistics panel
+ * and the home page's state figures down with it — the same self-inflicted outage the
+ * `nationalAqi` field caused.
+ *
+ * An array from an old API normalises to `{ values, pending: [] }`: an empty `pending` is
+ * honest there, because an API that cannot report gaps has not told us of any. Remove this
+ * union once the API has been deployed for longer than a rollback would reach back.
+ */
+export const AreaIndicatorsSchema = z
+  .union([
+    z.object({
+      values: z.array(AreaIndicatorValueSchema),
+      /**
+       * Catalogue indicators in scope for this area that have no published figure yet.
+       *
+       * Carried so a district page can say a number is still being compiled rather than
+       * just not drawing a row — an absent row and a broken page look the same to a reader.
+       * An indicator withheld under DS-6 is not in here: that figure exists and may not be
+       * shown, which is a different statement from one that has not been collected.
+       */
+      pending: z.array(IndicatorSchema),
+    }),
+    z.array(AreaIndicatorValueSchema),
+  ])
+  .transform((parsed) => (Array.isArray(parsed) ? { values: parsed, pending: [] } : parsed));
 
 const ComparedValueSchema = IndicatorValueSchema.extend({
   provenance: ProvenanceSchema,
