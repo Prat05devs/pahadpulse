@@ -33,15 +33,36 @@ export async function listIndicators(
   return IndicatorRepository.listCatalogue(category);
 }
 
+/** One area's indicators: the ones we have, and the ones we do not have yet. */
+export interface AreaIndicators {
+  values: AreaIndicatorValueOut[];
+  /**
+   * Catalogue indicators in scope for this area type that have no value for it.
+   *
+   * Returned so a district page can SAY a figure is still being compiled instead of simply
+   * not drawing a row. An absent row is indistinguishable from a broken page, and a reader
+   * who cannot tell the difference learns to distrust both. This is also the honest answer:
+   * the catalogue is the list of figures the product intends to carry, so an entry with no
+   * value is a known gap rather than a question nobody asked.
+   *
+   * An indicator dropped by DS-6 — present, but from a source that forbids redistribution —
+   * is NOT listed here. It is not being compiled; it exists and may not be shown, which is a
+   * different statement, and claiming otherwise would promise a figure that will never come.
+   */
+  pending: Indicator[];
+}
+
 /**
- * Every indicator with a stored value for one area, provenance-stamped.
+ * Every indicator with a stored value for one area, provenance-stamped, plus the ones with
+ * no value yet.
+ *
  * Values whose source may not be redistributed are dropped (DS-6), not merely hidden
  * client-side — the API itself never emits them.
  */
 export async function getAreaIndicators(
   areaSlug: string,
   now?: Date,
-): Promise<Result<AreaIndicatorValueOut[], RequestError>> {
+): Promise<Result<AreaIndicators, RequestError>> {
   const area = await AreaRepository.findBySlug(areaSlug);
   if (area.isErr()) return err(area.error);
 
@@ -51,7 +72,21 @@ export async function getAreaIndicators(
   const stamped = await attachProvenance(values.value, now);
   if (stamped.isErr()) return err(stamped.error);
 
-  return ok(publiclyDisplayable(stamped.value));
+  const visible = publiclyDisplayable(stamped.value);
+
+  const catalogue = await IndicatorRepository.listCatalogue();
+  if (catalogue.isErr()) return err(catalogue.error);
+
+  // Held before DS-6 filtering, so a redistribution-blocked indicator is not reported as
+  // "coming soon" — we have that figure and may not publish it, which is not the same thing.
+  const held = new Set(values.value.map((value) => value.indicator.key));
+
+  const pending = catalogue.value.filter(
+    (indicator) =>
+      scopeMatchesAreaType(indicator.scope, area.value.type) && !held.has(indicator.key),
+  );
+
+  return ok({ values: visible, pending });
 }
 
 export interface ComparisonResult {

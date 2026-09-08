@@ -84,9 +84,9 @@ describe('GET /api/areas/:slug/indicators', () => {
   maybe('returns provenance-stamped published values for a district', async () => {
     const res = await request(app).get('/api/areas/dehradun/indicators');
     expect(res.status).toBe(200);
-    expect((res.body.data as unknown[]).length).toBeGreaterThan(0);
+    expect((res.body.data.values as unknown[]).length).toBeGreaterThan(0);
 
-    for (const value of res.body.data as {
+    for (const value of res.body.data.values as {
       provenance: {
         sourceKey: string;
         department: { en: string };
@@ -113,9 +113,44 @@ describe('GET /api/areas/:slug/indicators', () => {
   /** IND-2 — vintage is always displayed with the value. */
   maybe('carries vintage on every value', async () => {
     const res = await request(app).get('/api/areas/dehradun/indicators');
-    for (const value of res.body.data as { vintage: string }[]) {
+    for (const value of res.body.data.values as { vintage: string }[]) {
       expect(value.vintage).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
+  });
+
+  maybe('names the indicators a district has no figure for yet', async () => {
+    const res = await request(app).get('/api/areas/champawat/indicators');
+    expect(res.status).toBe(200);
+
+    const pending = res.body.data.pending as Array<{ key: string; scope: string }>;
+    const held = new Set(
+      (res.body.data.values as Array<{ indicator: { key: string } }>).map(
+        (value) => value.indicator.key,
+      ),
+    );
+
+    // The point of the list: a district page can say "being compiled" instead of drawing
+    // nothing, which a reader cannot tell apart from a broken page.
+    for (const entry of pending) {
+      expect(held.has(entry.key)).toBe(false);
+      // A state indicator is not a gap in a district's page.
+      expect(entry.scope).toBe('district');
+    }
+
+    // Champawat has no district report, so the school and hospital figures that Almora,
+    // Pithoragarh and Pauri carry must show up here rather than silently vanishing.
+    expect(pending.map((entry) => entry.key)).toEqual(
+      expect.arrayContaining(['schools_count', 'hospital_beds']),
+    );
+  });
+
+  maybe('reports no gap for an indicator the district already has', async () => {
+    const res = await request(app).get('/api/areas/almora/indicators');
+    const keys = (res.body.data.pending as Array<{ key: string }>).map((entry) => entry.key);
+    // Almora has a district report, so it holds schools and hospital beds — they must not
+    // be advertised as forthcoming when they are already on the page.
+    expect(keys).not.toContain('schools_count');
+    expect(keys).not.toContain('hospital_beds');
   });
 
   maybe('404s for an unknown slug', async () => {
@@ -277,9 +312,9 @@ describe('published timestamp format', () => {
   maybe('emits second-precision UTC datetimes, never fractional seconds', async () => {
     const res = await request(app).get('/api/areas/uttarakhand/indicators');
     expect(res.status).toBe(200);
-    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data.values.length).toBeGreaterThan(0);
 
-    for (const entry of res.body.data as Array<{
+    for (const entry of res.body.data.values as Array<{
       fetchedAt: string;
       provenance: { fetchedAt: string } | null;
     }>) {
@@ -294,7 +329,7 @@ describe('published timestamp format', () => {
     // Guards the DATE type parser: left to itself `pg` builds a local-midnight Date, which
     // in IST turned the Census vintage 2011-03-01 into 2011-02-28T18:30:00.000Z.
     const res = await request(app).get('/api/areas/uttarakhand/indicators');
-    for (const entry of res.body.data as Array<{ vintage: string }>) {
+    for (const entry of res.body.data.values as Array<{ vintage: string }>) {
       expect(entry.vintage).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
   });

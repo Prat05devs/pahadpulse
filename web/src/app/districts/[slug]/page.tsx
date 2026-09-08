@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
+import { Clock3 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { apiClient } from '@/lib/api';
 import { z } from 'zod';
@@ -88,17 +89,16 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
       migrationData,
       districtFeatures,
       alertFeatures,
-    ] =
-      await Promise.all([
-        apiClient.get(`/areas/districts/${slug}`, DistrictDetailSchema),
-        apiClient.get(`/areas/${slug}/alerts`, ActiveAlertsSchema).catch(() => null),
-        apiClient.get(`/areas/${slug}/indicators`, AreaIndicatorsSchema).catch(() => null),
-        apiClient.get(`/areas/${slug}/weather`, WeatherDataSchema).catch(() => null),
-        apiClient.get(`/areas/${slug}/migration`, AreaMigrationSchema).catch(() => null),
-        // The map degrades to absent rather than failing the page (geography.md §7).
-        fetchDistrictFeatures().catch(() => null),
-        fetchAlertFeatures().catch(() => null),
-      ]);
+    ] = await Promise.all([
+      apiClient.get(`/areas/districts/${slug}`, DistrictDetailSchema),
+      apiClient.get(`/areas/${slug}/alerts`, ActiveAlertsSchema).catch(() => null),
+      apiClient.get(`/areas/${slug}/indicators`, AreaIndicatorsSchema).catch(() => null),
+      apiClient.get(`/areas/${slug}/weather`, WeatherDataSchema).catch(() => null),
+      apiClient.get(`/areas/${slug}/migration`, AreaMigrationSchema).catch(() => null),
+      // The map degrades to absent rather than failing the page (geography.md §7).
+      fetchDistrictFeatures().catch(() => null),
+      fetchAlertFeatures().catch(() => null),
+    ]);
 
     district = districtData;
     alerts = alertsData;
@@ -136,7 +136,9 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
           <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">
             {districtData.name.en}
           </h1>
-          <p className="mt-1.5 text-sm text-text-dark/70 sm:mt-2 sm:text-base">{districtData.name.hi}</p>
+          <p className="mt-1.5 text-sm text-text-dark/70 sm:mt-2 sm:text-base">
+            {districtData.name.hi}
+          </p>
         </div>
 
         <div className="space-y-5 px-4 py-5 sm:px-6 md:space-y-6 md:py-6">
@@ -180,24 +182,26 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
               Every figure carries its source and the year it describes — that pairing is the
               product's core promise, so it renders next to the number rather than in a
               footnote, and a synthetic value says so plainly. */}
-          {indicators && indicators.length > 0 && (
+          {indicators && indicators.values.length > 0 && (
             <div className="bg-surface border border-border rounded-lg p-4">
               <h2 className="font-bold text-lg mb-4">Statistics</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {indicators.map((ind) => {
+                {indicators.values.map((ind) => {
                   const isDemo = ind.provenance?.sourceKey === 'pahad-pulse-demo-data';
                   return (
                     <div key={ind.indicator.key} className="border-b border-border pb-3">
                       <p className="text-sm text-text-light/60">{ind.indicator.label.en}</p>
                       <p className="text-xl font-bold">
-                        {formatIndicatorValue(ind.value, ind.indicator.unit, ind.indicator.decimals)}
+                        {formatIndicatorValue(
+                          ind.value,
+                          ind.indicator.unit,
+                          ind.indicator.decimals
+                        )}
                       </p>
                       <p className="text-xs text-text-light/40 mt-1">
                         {ind.vintage.slice(0, 4)} ·{' '}
                         {isDemo ? (
-                          <span className="text-warning">
-                            Demo data — no published figure yet
-                          </span>
+                          <span className="text-warning">Demo data — no published figure yet</span>
                         ) : (
                           <a
                             href={ind.provenance?.url ?? '#'}
@@ -213,6 +217,38 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Figures the catalogue expects for a district but which nothing published has
+              supplied yet. Named rather than left out: a row that simply is not drawn cannot
+              be told apart from a page that failed, and a reader who cannot tell learns to
+              distrust both. Saying which figures are missing also keeps a district in a
+              comparison honestly — it can be compared on what exists and state the rest. */}
+          {indicators && indicators.pending.length > 0 && (
+            <div className="rounded-lg border border-border bg-muted/40 p-4">
+              <h2 className="flex items-center gap-2 font-bold text-lg">
+                <Clock3
+                  className="size-5 text-muted-foreground"
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                />
+                Still being compiled
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                We have no published figure for {districtData.name.en} on these yet. They will
+                appear here as soon as a named government source covers this district.
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {indicators.pending.map((ind) => (
+                  <li
+                    key={ind.key}
+                    className="rounded-full border border-border bg-surface px-3 py-1 text-sm text-text-light"
+                  >
+                    {ind.label.en}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -288,9 +324,9 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
                 >
                   OpenStreetMap contributors
                 </a>{' '}
-                (ODbL), placed by geometry. Uttarakhand has about 16,800 villages in total, so
-                this is a partial list — not every village is mapped, and a few may sit in a
-                neighbouring tehsil.
+                (ODbL), placed by geometry. Uttarakhand has about 16,800 villages in total, so this
+                is a partial list — not every village is mapped, and a few may sit in a neighbouring
+                tehsil.
               </p>
             </div>
           )}

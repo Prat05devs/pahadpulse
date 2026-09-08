@@ -59,7 +59,7 @@ export async function fetchStateOverview(): Promise<StateOverview> {
     apiClient.get('/areas/uttarakhand/indicators', AreaIndicatorsSchema).catch(() => null),
   ]);
 
-  const byKey = new Map((indicators ?? []).map((entry) => [entry.indicator.key, entry]));
+  const byKey = new Map((indicators?.values ?? []).map((entry) => [entry.indicator.key, entry]));
 
   const figure = (key: string): StateFigure => {
     const entry = byKey.get(key);
@@ -99,7 +99,9 @@ export async function fetchAllDistricts(): Promise<DistrictSummary[]> {
   const [areas, populations, alertSummaries] = await Promise.all([
     apiClient.get('/areas/districts', z.array(DistrictSummarySchema)),
     apiClient.get('/indicators/population/ranking', PopulationRankingSchema).catch(() => null),
-    apiClient.get('/alerts/active', z.array(z.object({ areas: z.array(z.object({ slug: z.string() })) }))).catch(() => null),
+    apiClient
+      .get('/alerts/active', z.array(z.object({ areas: z.array(z.object({ slug: z.string() })) })))
+      .catch(() => null),
   ]);
 
   const populationBySlug = new Map(

@@ -137,6 +137,9 @@ beforeEach(() => {
   for (const fn of Object.values(mockIndicatorRepo)) fn.mockReset();
   for (const fn of Object.values(mockSourceRepo)) fn.mockReset();
   mockSourceRepo.findByIds.mockResolvedValue(ok(new Map([[1, redistributableSource()]])));
+  // Most tests here are about values, not gaps; an empty catalogue means no indicator is
+  // reported pending unless a test says so.
+  mockIndicatorRepo.listCatalogue.mockResolvedValue(ok([]));
 });
 
 describe('getAreaIndicators', () => {
@@ -147,9 +150,46 @@ describe('getAreaIndicators', () => {
     const result = await controller.getAreaIndicators('dehradun', NOW);
 
     expect(result.isOk()).toBe(true);
-    const values = result._unsafeUnwrap();
+    const { values } = result._unsafeUnwrap();
     expect(values).toHaveLength(1);
     expect(values[0]?.provenance?.sourceKey).toBe('pahad-pulse-demo-data');
+  });
+
+  /**
+   * A district page must be able to say a figure is still being compiled. An absent row and
+   * a broken page look the same to a reader, so the gap is reported rather than left silent.
+   */
+  it('reports in-scope catalogue indicators that have no value', async () => {
+    mockAreaRepo.findBySlug.mockResolvedValue(ok(district()));
+    mockIndicatorRepo.latestValuesForArea.mockResolvedValue(ok([areaValue()]));
+    mockIndicatorRepo.listCatalogue.mockResolvedValue(
+      ok([
+        indicator(),
+        indicator({ key: 'schools_count', scope: IndicatorScope.District }),
+        // Out of scope for a district, so it is not a gap in this district's page.
+        indicator({ key: 'state_population', scope: IndicatorScope.State }),
+      ]),
+    );
+
+    const { pending } = (await controller.getAreaIndicators('dehradun', NOW))._unsafeUnwrap();
+    expect(pending.map((entry) => entry.key)).toEqual(['schools_count']);
+  });
+
+  /**
+   * DS-6 drops a value we HOLD. That is not the same as not having it, and promising it is
+   * "coming soon" would promise a figure that will never arrive.
+   */
+  it('does not call a redistribution-blocked indicator pending', async () => {
+    mockAreaRepo.findBySlug.mockResolvedValue(ok(district()));
+    mockIndicatorRepo.latestValuesForArea.mockResolvedValue(ok([areaValue()]));
+    mockIndicatorRepo.listCatalogue.mockResolvedValue(ok([indicator()]));
+    mockSourceRepo.findByIds.mockResolvedValue(
+      ok(new Map([[1, redistributableSource({ mayRedistribute: false })]])),
+    );
+
+    const result = (await controller.getAreaIndicators('dehradun', NOW))._unsafeUnwrap();
+    expect(result.values).toHaveLength(0);
+    expect(result.pending).toHaveLength(0);
   });
 
   /** DS-6 — a value whose source may not be redistributed is dropped, not just hidden. */
@@ -161,7 +201,7 @@ describe('getAreaIndicators', () => {
     );
 
     const result = await controller.getAreaIndicators('dehradun', NOW);
-    expect(result._unsafeUnwrap()).toHaveLength(0);
+    expect(result._unsafeUnwrap().values).toHaveLength(0);
   });
 
   it('propagates AREA_NOT_FOUND without re-wrapping', async () => {

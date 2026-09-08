@@ -30,7 +30,9 @@ export type Indicator = z.infer<typeof IndicatorSchema>;
  * rather than collapsed into one "date" field.
  */
 const DateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
-const UtcDateTime = z.string().regex(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/, 'expected UTC datetime');
+const UtcDateTime = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/, 'expected UTC datetime');
 
 export const ProvenanceSchema = z
   .object({
@@ -55,11 +57,22 @@ export const IndicatorValueSchema = z.object({
 
 export type IndicatorValue = z.infer<typeof IndicatorValueSchema>;
 
-export const AreaIndicatorsSchema = z.array(
-  IndicatorValueSchema.extend({
-    provenance: ProvenanceSchema,
-  })
-);
+export const AreaIndicatorsSchema = z.object({
+  values: z.array(
+    IndicatorValueSchema.extend({
+      provenance: ProvenanceSchema,
+    })
+  ),
+  /**
+   * Catalogue indicators in scope for this area that have no published figure yet.
+   *
+   * Carried so a district page can say a number is still being compiled rather than just
+   * not drawing a row — an absent row and a broken page look the same to a reader. An
+   * indicator withheld under DS-6 is not in here: that figure exists and may not be shown,
+   * which is a different statement from one that has not been collected.
+   */
+  pending: z.array(IndicatorSchema),
+});
 
 const ComparedValueSchema = IndicatorValueSchema.extend({
   provenance: ProvenanceSchema,

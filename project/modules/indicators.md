@@ -150,6 +150,37 @@ value referencing them.
 | GET | `/api/indicators/:key/series` | none | 6h | no |
 | GET | `/api/indicators/:key/ranking` | none | 6h | cursor |
 
+### `GET /api/areas/:slug/indicators`
+
+| | |
+|---|---|
+| Auth | none |
+| Cache | `cacheMiddleware(CACHE_TTL_INDICATORS)` |
+
+**Response 200** — `{ values, pending }`.
+
+- `values` — the latest value per indicator for this area, provenance-stamped. Values whose
+  source forbids redistribution are dropped by the API itself (DS-6), never merely hidden
+  client-side.
+- `pending` — catalogue indicators **in scope for this area's type** that have no stored
+  value for it.
+
+`pending` exists so a district page can say a figure is still being compiled instead of
+simply not drawing a row. An absent row is indistinguishable from a broken page, and a
+reader who cannot tell the difference learns to distrust both. The catalogue is the list of
+figures the product intends to carry, so an entry without a value is a known gap rather than
+a question nobody asked.
+
+`pending` is computed **before** the DS-6 filter. An indicator we hold but may not publish is
+therefore *not* listed as pending: "being compiled" promises a figure will arrive, and that
+one never will. The two states must not look the same.
+
+**Errors**
+
+| Constant | Code | HTTP | When |
+|---|---|---|---|
+| `AREA_NOT_FOUND` | `40001` | 404 | slug unknown |
+
 ### `GET /api/indicators/compare`
 
 | | |
