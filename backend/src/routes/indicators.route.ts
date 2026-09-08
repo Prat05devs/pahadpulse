@@ -6,10 +6,12 @@ import {
   CACHE_TTL_INDICATORS,
   PAGINATION,
 } from '../config/constants.js';
+import * as comparisonController from '../controllers/comparison.controller.js';
 import * as indicatorController from '../controllers/indicator.controller.js';
 import { cacheMiddleware } from '../middleware/cache.middleware.js';
 import { validateRequest } from '../middleware/validate-request.middleware.js';
 import { IndicatorCategory } from '../types/indicator.js';
+import { ERRORS } from '../utils/errors.js';
 import { successResponse } from '../utils/response.js';
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -63,6 +65,12 @@ const SCHEMA = {
 } as const;
 
 const indicatorRouter = Router();
+
+/** Two district slugs. Untrusted input, so shape is enforced before it reaches a query. */
+const ComparisonQuerySchema = z.object({
+  a: z.string().regex(/^[a-z0-9-]+$/),
+  b: z.string().regex(/^[a-z0-9-]+$/),
+});
 
 indicatorRouter.get(
   '/',
@@ -143,6 +151,37 @@ indicatorRouter.get(
           pagination: data.pagination,
           timestamp: new Date().toISOString(),
         });
+      },
+      (error) => {
+        next(error);
+      },
+    );
+  },
+);
+
+/**
+ * The full district comparison: theme scores, development activity, and the verdicts that
+ * follow from them.
+ *
+ * Separate from `/compare` rather than an extension of it. That endpoint answers "what do
+ * these two districts measure on these indicators" and is a pure table; this one answers
+ * "how do they compare", which is a derived claim. Keeping them apart means a client can
+ * still get the raw pairs without any scoring attached.
+ */
+indicatorRouter.get(
+  '/comparison',
+  cacheMiddleware(CACHE_TTL_INDICATORS),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const parsed = ComparisonQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      next(ERRORS.INVALID_PARAMS);
+      return;
+    }
+
+    const result = await comparisonController.compareDistricts(parsed.data.a, parsed.data.b);
+    result.match(
+      (data) => {
+        res.json(successResponse(data, 'District comparison built successfully'));
       },
       (error) => {
         next(error);

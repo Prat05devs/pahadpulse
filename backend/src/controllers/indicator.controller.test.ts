@@ -40,6 +40,7 @@ const mockIndicatorRepo: jest.Mocked<IIndicatorRepository> = {
   latestValuesForArea: jest.fn(),
   seriesForAreaIndicator: jest.fn(),
   latestVintageFor: jest.fn(),
+  latestValuesForAllAreas: jest.fn(),
   ranking: jest.fn(),
 };
 

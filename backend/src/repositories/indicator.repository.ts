@@ -17,6 +17,7 @@ import {
 } from '../models/indicator.model.js';
 import { ERRORS, type RequestError } from '../utils/errors.js';
 import createLogger from '../utils/logger.js';
+import { describeError } from '../utils/describe-error.js';
 
 const logger = createLogger('@indicator.repository');
 
@@ -46,6 +47,15 @@ export interface RankingPage {
   pagination: { hasNext: boolean; nextCursor: number | null };
 }
 
+/** One district's latest value for one indicator, as the comparison layer wants it. */
+export interface StatewideValueRow {
+  indicator_key: string;
+  area_slug: string;
+  value: string;
+  vintage: string;
+  source_id: number;
+}
+
 export interface IIndicatorRepository {
   listCatalogue(category?: string): Promise<Result<Indicator[], RequestError>>;
   findByKey(key: string): Promise<Result<Indicator, RequestError>>;
@@ -55,6 +65,14 @@ export interface IIndicatorRepository {
     areaId: number,
   ): Promise<Result<SeriesPoint[], RequestError>>;
   latestVintageFor(indicatorKey: string): Promise<Result<string | null, RequestError>>;
+  /**
+   * The latest value of every district indicator, for every district, in one query.
+   *
+   * The comparison layer scores a district by its POSITION among all thirteen, so it needs
+   * the whole state even when two districts are being displayed. Fetching per district would
+   * be thirteen round trips to answer one question.
+   */
+  latestValuesForAllAreas(scope: string): Promise<Result<StatewideValueRow[], RequestError>>;
   ranking(
     indicator: Indicator,
     vintage: string,
@@ -178,6 +196,32 @@ class IndicatorRepositoryImpl implements IIndicatorRepository {
    * (guidelines/backend/12-pagination.md). Ordered by value in the direction
    * `higherIsBetter` implies; ties break on area name for a stable, deterministic order.
    */
+  /**
+   * `DISTINCT ON` picks each (indicator, area) pair's newest vintage in one pass.
+   *
+   * Districts do not always share a vintage — a figure may be revised for some and not
+   * others — so taking a single MAX(vintage) across the state would silently drop every
+   * district still on the older one.
+   */
+  async latestValuesForAllAreas(
+    scope: string,
+  ): Promise<Result<StatewideValueRow[], RequestError>> {
+    try {
+      const { rows } = await db.query<StatewideValueRow>(
+        `SELECT DISTINCT ON (v.indicator_key, a.slug)
+                v.indicator_key, a.slug AS area_slug, v.value, v.vintage, v.source_id
+           FROM ${INDICATOR_VALUES_TABLE} v
+           JOIN areas a ON a.id = v.area_id AND a.type = $1
+          ORDER BY v.indicator_key, a.slug, v.vintage DESC`,
+        [scope],
+      );
+      return ok(rows);
+    } catch (error) {
+      logger.error('latestValuesForAllAreas failed', { scope, error: describeError(error) });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
   async ranking(
     indicator: Indicator,
     vintage: string,
