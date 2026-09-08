@@ -86,13 +86,27 @@ describe('GET /api/areas/:slug/indicators', () => {
     expect(res.status).toBe(200);
     expect((res.body.data as unknown[]).length).toBeGreaterThan(0);
 
-    for (const value of res.body.data as { provenance: { sourceKey: string } | null }[]) {
+    for (const value of res.body.data as {
+      provenance: {
+        sourceKey: string;
+        department: { en: string };
+        mayRedistribute: boolean;
+      } | null;
+    }[]) {
       // DS-1 — a value that cannot name its source is never displayed.
       expect(value.provenance).not.toBeNull();
-      // A district carries figures from more than one publisher — Census 2011 for
-      // demography, the state Directorate of Economics & Statistics for income — so the
-      // invariant is that the source is a real, named one, not that it is any single key.
-      expect(['census-2011', 'uk-des-ddp']).toContain(value.provenance?.sourceKey);
+      /*
+       * The invariant is that the source is a REAL, NAMED, redistributable one — not that
+       * it is any particular key.
+       *
+       * This previously listed the two keys that happened to exist, which meant adding a
+       * legitimate third publisher broke the test even though the behaviour was correct.
+       * An allowlist of data that is expected to grow tests the fixture, not the rule.
+       */
+      expect(value.provenance?.sourceKey).toMatch(/^[a-z0-9-]+$/);
+      expect(value.provenance?.department.en.length).toBeGreaterThan(0);
+      // DS-6 — nothing reaches a reader whose terms forbid it.
+      expect(value.provenance?.mayRedistribute).toBe(true);
     }
   });
 

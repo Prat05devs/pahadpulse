@@ -16,6 +16,9 @@ export enum IndicatorCategory {
   Economy = 'economy',
   Industry = 'industry',
   Connectivity = 'connectivity',
+  /** Added in migration 040, with the district SDG composite index. */
+  Development = 'development',
+  Tourism = 'tourism',
 }
 
 /** Which area type an indicator's values attach to. */

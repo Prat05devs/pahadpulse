@@ -28,10 +28,28 @@ const NORMALISATION: Readonly<Record<string, Normalisation>> = {
   schools_count: 'per_1000_people',
   health_facilities_count: 'per_1000_people',
   registered_industries_count: 'per_1000_people',
+  hospital_beds: 'per_1000_people',
+  // Tourism capacity is a count of rooms and beds. Haridwar has more of everything than
+  // Rudraprayag largely because it is bigger, and ranking the raw totals would tell an
+  // investor that the biggest district is the best opportunity — which is the opposite of
+  // what someone looking for an underserved place needs to know.
+  tourist_accommodation_units: 'per_1000_people',
+  tourist_accommodation_beds: 'per_1000_people',
+  govt_accommodation_beds: 'per_1000_people',
+  pilgrim_shelter_capacity: 'per_1000_people',
 };
 
 /** Indicators that describe a district without ranking it. Shown, never scored. */
-const CONTEXT_ONLY = new Set(['population']);
+const CONTEXT_ONLY = new Set([
+  'population',
+  /*
+   * The SDG rank is the SDG score sorted. Scoring both would count one measurement twice
+   * inside the development theme and make it look twice as well-evidenced as it is, while
+   * the two are perfectly correlated by construction so the mean would not even move.
+   * The score is scored; the rank is shown beside it.
+   */
+  'sdg_composite_rank',
+]);
 
 export interface ComparedDistrict {
   slug: string;
@@ -73,6 +91,8 @@ const THEMES: IndicatorCategory[] = [
   IndicatorCategory.Health,
   IndicatorCategory.Industry,
   IndicatorCategory.Connectivity,
+  IndicatorCategory.Development,
+  IndicatorCategory.Tourism,
 ];
 
 const THEME_LABEL: Record<string, string> = {
@@ -82,6 +102,8 @@ const THEME_LABEL: Record<string, string> = {
   health: 'health',
   industry: 'industry',
   connectivity: 'connectivity',
+  development: 'overall development (SDG index)',
+  tourism: 'tourism capacity per resident',
 };
 
 /**
