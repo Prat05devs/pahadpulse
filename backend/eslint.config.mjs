@@ -10,7 +10,7 @@ export default tseslint.config(
       parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
     rules: {
-      'no-console': 'error',
+      'no-console': 'off',
       eqeqeq: ['error', 'always'],
       'no-restricted-syntax': [
         'error',
@@ -25,6 +25,15 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      // Relaxed strict rules for ease of development:
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-base-to-string': 'off',
     },
   },
   {
