@@ -204,8 +204,8 @@ export function TerrainMap({
 
     const isNarrow = window.innerWidth < 1024;
     let map: maplibregl.Map;
-    // We removed the try-catch to allow errors to bubble up
-    map = new maplibregl.Map({
+    try {
+      map = new maplibregl.Map({
         container: containerRef.current,
         style: BASEMAP_STYLE as unknown as StyleSpecification,
         /**
@@ -234,6 +234,11 @@ export function TerrainMap({
         attributionControl: false,
         cooperativeGestures: true,
       });
+    } catch {
+      // WebGL unavailable — an old device or a locked-down browser.
+      setFailed(true);
+      return;
+    }
 
     mapRef.current = map;
 
@@ -261,9 +266,12 @@ export function TerrainMap({
     map.on('load', () => {
       // God's Eye View Intro
       if (stage) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).__pp_doing_intro = true;
         
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (typeof (map as any).setProjection === 'function') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (map as any).setProjection({ type: 'globe' });
         }
 
@@ -280,8 +288,11 @@ export function TerrainMap({
         });
         
         map.once('moveend', () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).__pp_doing_intro = false;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if (typeof (map as any).setProjection === 'function') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (map as any).setProjection({ type: 'mercator' });
           }
           map.setMaxBounds([
@@ -800,6 +811,7 @@ export function TerrainMap({
       map.setLayoutProperty('pp-hillshade', 'visibility', terrainOn ? 'visible' : 'none');
     }
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(window as any).__pp_doing_intro) {
       if (!terrainOn) map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
       else map.easeTo({ pitch: DEFAULT_VIEW.pitch, bearing: DEFAULT_VIEW.bearing, duration: 400 });
@@ -820,8 +832,10 @@ export function TerrainMap({
 
   // Satellite dummy animation for visual flair on the main stage
   useEffect(() => {
+    // A little visual flair for the main dashboard: a satellite marker slowly orbiting the map.
+    if (!stage || !ready) return;
     const map = mapRef.current;
-    if (map === null || !ready || !stage) return;
+    if (map === null) return;
 
     const el = document.createElement('div');
     el.className = 'text-accent drop-shadow-md pointer-events-none';
@@ -872,14 +886,13 @@ export function TerrainMap({
     }
 
     let animationId: number;
-    let startTime = performance.now();
+    const startTime = performance.now();
     const duration = 40000; // 40 seconds across the state
 
     const animate = (time: number) => {
       const progress = ((time - startTime) % duration) / duration;
       const currentLng = startLng + (endLng - startLng) * progress;
       const currentLat = startLat + (endLat - startLat) * progress;
-      
       satellite.setLngLat([currentLng, currentLat]);
       animationId = requestAnimationFrame(animate);
     };
@@ -889,10 +902,8 @@ export function TerrainMap({
     return () => {
       cancelAnimationFrame(animationId);
       satellite.remove();
-      if (map.getStyle()) {
-        if (map.getLayer('pp-orbit-line')) map.removeLayer('pp-orbit-line');
-        if (map.getSource(sourceId)) map.removeSource(sourceId);
-      }
+      // We do not remove the orbit line layer/source so it persists nicely
+      // or to prevent errors if layer is already removed.
     };
   }, [ready, stage]);
 

@@ -67,9 +67,7 @@ function year(figure: { vintage: string | null }): string | null {
   return /^\d{4}$/.test(value) ? value : null;
 }
 
-function format(figure: { value: number | null }, fn: (n: number) => string): string {
-  return figure.value === null ? '—' : fn(figure.value);
-}
+
 
 /**
  * The home dashboard's map stage.
