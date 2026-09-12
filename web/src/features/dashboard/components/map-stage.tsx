@@ -1,9 +1,12 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { AlertTriangle, ArrowRight, CloudSun, Landmark } from 'lucide-react';
 import { TerrainMap } from '@/features/map';
 import type { AlertCollection, DistrictCollection } from '@/features/map/schemas';
 import type { LiveCounters as LiveCountersData, StateOverview } from '../types';
+import NumberFlow from '@number-flow/react';
 
 interface MapStageProps {
   districts: DistrictCollection | null;
@@ -22,12 +25,32 @@ interface MapStageProps {
  * frosted look — the blur is there only to soften the seam, not to show the map through.
  */
 const FLOATING_CARD =
-  'surface-card pointer-events-auto bg-surface/95 backdrop-blur-sm shadow-card';
+  'surface-card pointer-events-auto bg-white/70 dark:bg-black/60 backdrop-blur-[20px] backdrop-saturate-[180%] shadow-card ring-1 ring-white/20';
 
-function Figure({ value, label, year }: { value: string; label: string; year?: string | null }) {
+function Figure({ value, label, year, isNumeric = false }: { value: string | number | null; label: string; year?: string | null; isNumeric?: boolean }) {
+  const isPop = label === 'Population';
+  const isPercent = label === 'Forest cover' || label === 'Literacy';
+  const isCompact = label === 'Population';
+  
   return (
     <div>
-      <p className="font-mono text-base font-semibold tabular-nums sm:text-xl">{value}</p>
+      <p className="font-mono text-base font-semibold tabular-nums sm:text-xl">
+        {isNumeric && typeof value === 'number' ? (
+          <NumberFlow 
+            value={value} 
+            trend={1}
+            format={{ 
+              notation: isCompact ? 'compact' : 'standard', 
+              maximumFractionDigits: isPop ? 1 : (isPercent ? 1 : 0),
+              style: isPercent ? 'percent' : 'decimal'
+            }}
+            transformTiming={{ duration: 600, easing: 'ease-out' }}
+            spinTiming={{ duration: 600, easing: 'ease-out' }}
+          />
+        ) : (
+          value === null ? '—' : value
+        )}
+      </p>
       <p className="text-[0.62rem] leading-tight text-muted-foreground sm:text-[0.7rem]">{label}</p>
       {/* The vintage is dropped on a phone: four columns in 390px leaves ~80px each, and the
           year is the least load-bearing of the three lines. It returns from `sm`. */}
@@ -69,12 +92,6 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
   return (
     <section
       aria-label="Uttarakhand overview map and live figures"
-      /**
-       * Full-bleed at every size. `dvh` rather than `vh` on small screens because mobile
-       * browsers shrink the viewport when their toolbars appear, and `vh` keeps the old
-       * taller value — which would push the bottom card row under the address bar.
-       * The 4rem subtracted is the mobile nav header, which is hidden from `lg` up.
-       */
       className="relative h-[calc(100dvh-4rem)] lg:h-screen"
     >
       {mapError !== null && (
@@ -100,24 +117,27 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
           </p>
           {/* The page's only h1: the old page header was removed so the map could have the
               full viewport at every size. */}
-          <h1 className="font-display text-base font-semibold leading-tight tracking-tight text-text-light sm:mt-1 sm:text-xl lg:text-2xl">
+          <h1 className="font-display text-base font-semibold leading-tight tracking-[-0.02em] text-text-light sm:mt-1 sm:text-xl lg:text-2xl">
             Uttarakhand, at a glance
           </h1>
           <div className="mt-1.5 grid grid-cols-4 gap-x-2 gap-y-1 sm:mt-3 sm:gap-3">
             <Figure
-              value={format(overview.population, (v) => `${(v / 1_000_000).toFixed(1)}M`)}
+              value={overview.population.value}
               label="Population"
               year={year(overview.population)}
+              isNumeric={true}
             />
             <Figure
-              value={format(overview.districts, (v) => v.toString())}
+              value={overview.districts.value}
               label="Districts"
+              isNumeric={true}
             />
-            <Figure value={alertCount.toString()} label="Active alerts" />
+            <Figure value={alertCount} label="Active alerts" isNumeric={true} />
             <Figure
-              value={format(overview.forestCoverage, (v) => `${v.toFixed(0)}%`)}
+              value={overview.forestCoverage.value ? overview.forestCoverage.value / 100 : null}
               label="Forest cover"
               year={year(overview.forestCoverage)}
+              isNumeric={true}
             />
           </div>
         </div>
@@ -207,19 +227,22 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
           </div>
           <div className="mt-3 grid grid-cols-3 gap-3">
             <Figure
-              value={format(overview.areaKmSq, (v) => v.toLocaleString('en-IN'))}
+              value={overview.areaKmSq.value}
               label="km² area"
               year={year(overview.areaKmSq)}
+              isNumeric={true}
             />
             <Figure
-              value={format(overview.literacy, (v) => `${v.toFixed(1)}%`)}
+              value={overview.literacy.value ? overview.literacy.value / 100 : null}
               label="Literacy"
               year={year(overview.literacy)}
+              isNumeric={true}
             />
             <Figure
-              value={format(overview.villages, (v) => v.toLocaleString('en-IN'))}
+              value={overview.villages.value}
               label="Villages"
               year={year(overview.villages)}
+              isNumeric={true}
             />
           </div>
         </article>

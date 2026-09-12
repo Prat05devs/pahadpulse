@@ -86,11 +86,26 @@ Operator ingestion HTTP endpoints remain deferred until authenticated operator a
 ## Production
 
 The [Render Blueprint](../render.yaml) runs migrations before API rollout and uses the same
-Docker image for ingestion jobs. Scripts require `tsx` and the source SQL migration files,
-so the image deliberately keeps devDependencies and source alongside the compiled server.
+Docker image for ingestion jobs. `npm start` also runs migrations before starting the API,
+so an existing service without the Blueprint pre-deploy hook cannot skip them. Concurrent
+migration runners serialize on a PostgreSQL advisory lock. A migration failure stops startup.
+Scripts require `tsx` and source SQL files, so the image keeps devDependencies and source.
 
-The Blueprint creates private MySQL with a persistent disk and automatically wires the API
-and jobs to its application credentials. It uses `DB_SSL=false` for this private connection.
-After MySQL initialization and migrations, run initial ingestion.
+Production uses Supabase PostgreSQL. Configure the same `DB_*` settings on the API and
+cron services, including `DB_SSL=true` and `DB_SSL_CA`. Use the session pooler (port 5432)
+for migrations, which require a session connection for the advisory lock.
+
+If connectivity or tourism returns `Database operation failed`, inspect `schema_migrations`:
+these modules require migrations through `050`. Run `npm run db:migrate` from the backend
+with the production database configuration, then verify `/api/connectivity` and
+`/api/tourism/pilgrim-arrivals`. Deploy the web changes to clear previously cached error pages.
+
+Creating a web service manually does not create the Blueprint's cron jobs. Ensure
+`pahadpulse-ingest-alerts` exists and is enabled on Render with schedule `*/15 * * * *`,
+command `npm run ingest -- sachet-ndma`, and the same database configuration as the API.
+Run it once immediately, then verify a second successful `ingestion_runs` record after the
+next scheduled run. Failed or partial ingestion exits nonzero so Render can flag it.
+An empty active-alert response alone does not verify that ingestion is healthy.
+
 See [deployment instructions](../README.md#deployment) and the
 [operations notes](../project/operations.md) for TLS, schedules, CORS, and post-deploy checks.

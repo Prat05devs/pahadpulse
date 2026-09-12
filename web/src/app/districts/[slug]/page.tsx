@@ -12,7 +12,6 @@ import { WeatherDataSchema } from '@/features/weather/schemas';
 import { WeatherPanel } from '@/features/weather/components';
 import { TerrainMap, fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
 import { formatIndicatorValue } from '@/features/indicators/format';
-import { AreaMigrationSchema, MigrationPanel } from '@/features/migration';
 import { ConnectivityPanel, DistrictNetworkSchema } from '@/features/connectivity';
 
 const DistrictDetailSchema = z.object({
@@ -76,7 +75,6 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
   let alerts = null;
   let indicators = null;
   let weather = null;
-  let migration = null;
   let network = null;
   let districts = null;
   let mapAlerts = null;
@@ -88,7 +86,6 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
       alertsData,
       indicatorsData,
       weatherData,
-      migrationData,
       networkData,
       districtFeatures,
       alertFeatures,
@@ -97,7 +94,6 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
       apiClient.get(`/areas/${slug}/alerts`, ActiveAlertsSchema).catch(() => null),
       apiClient.get(`/areas/${slug}/indicators`, AreaIndicatorsSchema).catch(() => null),
       apiClient.get(`/areas/${slug}/weather`, WeatherDataSchema).catch(() => null),
-      apiClient.get(`/areas/${slug}/migration`, AreaMigrationSchema).catch(() => null),
       apiClient.get(`/areas/${slug}/connectivity`, DistrictNetworkSchema).catch(() => null),
       // The map degrades to absent rather than failing the page (geography.md §7).
       fetchDistrictFeatures().catch(() => null),
@@ -108,7 +104,6 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
     alerts = alertsData;
     indicators = indicatorsData;
     weather = weatherData;
-    migration = migrationData;
     network = networkData;
     districts = districtFeatures;
     mapAlerts = alertFeatures;
@@ -270,21 +265,6 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
                 ))}
               </ul>
             </div>
-          )}
-
-          {/* Out-migration, from the state Migration Commission's two survey rounds.
-              Rendered even when the district has no figures: the panel then states that they
-              are being compiled. A silently absent panel and a broken one look the same. */}
-          {migration !== null && (
-            <section aria-labelledby="district-migration">
-              <h2
-                id="district-migration"
-                className="mb-3 text-lg font-semibold tracking-tight sm:text-xl"
-              >
-                Migration
-              </h2>
-              <MigrationPanel data={migration} />
-            </section>
           )}
 
           {/* Tehsils and their villages.

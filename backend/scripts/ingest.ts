@@ -14,6 +14,7 @@ import { closeDatabase } from '../src/database/db.js';
 import * as sourceController from '../src/controllers/source.controller.js';
 import { runSource } from '../src/services/ingestion/index.js';
 import createLogger from '../src/utils/logger.js';
+import { RunStatus } from '../src/types/dataset.js';
 
 const logger = createLogger('@ingest');
 
@@ -57,6 +58,8 @@ async function runOne(key: string): Promise<void> {
   const { status, rowsWritten, rowsRejected, notes } = report.value;
   logger.info('run finished', { sourceKey: key, status, rowsWritten, rowsRejected });
   if (notes !== null) console.log(`  ${notes}`);
+  // The runner records upstream failures as reports; cron still needs a failing exit.
+  if (status === RunStatus.Failed || status === RunStatus.PartialSuccess) process.exitCode = 1;
 }
 
 async function runAll(): Promise<void> {

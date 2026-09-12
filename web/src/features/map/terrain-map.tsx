@@ -149,16 +149,13 @@ export function TerrainMap({
 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
-  /**
-   * 2D by default; 3D is opt-in.
-   *
-   * The tilted terrain view is the more impressive first impression, but it is the wrong
-   * default for the job: a pitched map makes northern districts recede and read as smaller
-   * than southern ones, and anyone comparing districts or reading an alert extent is doing
-   * geometry that a flat map answers correctly and a tilted one distorts. Relief is the
-   * right tool for a specific question, so it is a button rather than the starting state.
-   */
-  const [terrainOn, setTerrainOn] = useState(false);
+  const [terrainOn, setTerrainOn] = useState(() => {
+    // Start with 3D terrain if we are doing the cinematic intro, so the dive looks epic.
+    if (typeof window !== 'undefined' && sessionStorage.getItem('pp_seen_intro') !== 'true') {
+      return true;
+    }
+    return false;
+  });
   const [alertsOn, setAlertsOn] = useState(true);
   const [selected, setSelected] = useState<SelectedAlert | null>(null);
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
@@ -207,8 +204,8 @@ export function TerrainMap({
 
     const isNarrow = window.innerWidth < 1024;
     let map: maplibregl.Map;
-    try {
-      map = new maplibregl.Map({
+    // We removed the try-catch to allow errors to bubble up
+    map = new maplibregl.Map({
         container: containerRef.current,
         style: BASEMAP_STYLE as unknown as StyleSpecification,
         /**
@@ -220,55 +217,37 @@ export function TerrainMap({
          * `bounds` asks MapLibre to compute whatever zoom actually fits, which is correct
          * at any size and needs no per-device guessing. The desktop path is untouched.
          */
-        ...(isNarrow
+        ...(stage 
+          ? { center: UTTARAKHAND_CENTER, zoom: 1 } // Start in space for cinematic dive
+          : isNarrow
           ? { bounds: UTTARAKHAND_BOUNDS, fitBoundsOptions: { padding: fitPadding() } }
           : { center: UTTARAKHAND_CENTER, zoom: DEFAULT_VIEW.zoom }),
         // Flat and north-up on load, to match the 2D default above.
         pitch: 0,
         bearing: 0,
-        // Keeps the map on Uttarakhand. This is a state portal; panning to Kerala is not a
-        // feature, and the terrain tiles are only paid attention to over this extent.
-        maxBounds: [
+        // Keeps the map on Uttarakhand unless in stage mode where we fly in from space
+        maxBounds: stage ? undefined : [
           [UTTARAKHAND_BOUNDS[0] - 1.5, UTTARAKHAND_BOUNDS[1] - 1.5],
           [UTTARAKHAND_BOUNDS[2] + 1.5, UTTARAKHAND_BOUNDS[3] + 1.5],
         ],
         maxZoom: 15,
         attributionControl: false,
-        /**
-         * The wheel scrolls the PAGE, not the map. Zooming needs ctrl/cmd + wheel, or the
-         * +/- buttons; on touch, one finger scrolls the page and two fingers pan the map.
-         *
-         * This fixes a trap rather than adding a nicety. Every map here sits inside a
-         * scrolling page, and on the home page it fills the whole viewport — so with
-         * MapLibre's default `scrollZoom` a visitor who scrolled down the hero just zoomed
-         * the map and the page never moved. The entire dashboard below it (the counters,
-         * the state figures, the district grid, the source panel, the footer) was
-         * unreachable by the first gesture anyone tries.
-         *
-         * Applied to every map, not only the full-bleed one: the district pages embed a map
-         * mid-article, where capturing the wheel strands the reader in exactly the same way.
-         */
         cooperativeGestures: true,
       });
-    } catch {
-      // WebGL unavailable — an old device or a locked-down browser. The page must still
-      // work: every figure on it is reachable without the map.
-      setFailed(true);
-      return;
-    }
 
     mapRef.current = map;
 
     // In stage mode both move to the right edge: the stage owns the top-left corner and
-    // the full bottom strip, so bottom-left would put the scale bar under a card.
+    // the legend sits at bottom-left.
     map.addControl(
-      new maplibregl.NavigationControl({ visualizePitch: true }),
-      stage ? 'bottom-right' : 'top-right',
+      new maplibregl.NavigationControl({ showCompass: true, showZoom: true, visualizePitch: true }),
+      stage ? 'bottom-right' : 'top-left'
     );
     map.addControl(
-      new maplibregl.ScaleControl({ unit: 'metric' }),
-      stage ? 'bottom-right' : 'bottom-left',
+      new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }),
+      stage ? 'top-right' : 'bottom-left'
     );
+
     map.on('error', (event) => {
       // A single failed tile must not blank the map, so this never throws. It is not silent
       // either: swallowing map errors outright hides real breakage (a missing glyph, a bad
@@ -280,6 +259,39 @@ export function TerrainMap({
     });
 
     map.on('load', () => {
+      // God's Eye View Intro
+      if (stage) {
+        (window as any).__pp_doing_intro = true;
+        
+        if (typeof (map as any).setProjection === 'function') {
+          (map as any).setProjection({ type: 'globe' });
+        }
+
+        // Trigger the cinematic dive immediately upon load
+        map.flyTo({
+          ...(isNarrow
+            ? { center: UTTARAKHAND_CENTER, zoom: 6 }
+            : { center: UTTARAKHAND_CENTER, zoom: DEFAULT_VIEW.zoom }),
+          pitch: DEFAULT_VIEW.pitch,
+          bearing: DEFAULT_VIEW.bearing,
+          speed: 1.5,
+          curve: 1.5,
+          essential: true,
+        });
+        
+        map.once('moveend', () => {
+          (window as any).__pp_doing_intro = false;
+          if (typeof (map as any).setProjection === 'function') {
+            (map as any).setProjection({ type: 'mercator' });
+          }
+          map.setMaxBounds([
+            [UTTARAKHAND_BOUNDS[0] - 1.5, UTTARAKHAND_BOUNDS[1] - 1.5],
+            [UTTARAKHAND_BOUNDS[2] + 1.5, UTTARAKHAND_BOUNDS[3] + 1.5],
+          ]);
+          setTerrainOn(true);
+        });
+      }
+
       map.addSource(TERRAIN_SOURCE, {
         type: 'raster-dem',
         tiles: [TERRAIN_TILES],
@@ -787,8 +799,11 @@ export function TerrainMap({
     if (map.getLayer('pp-hillshade') !== undefined) {
       map.setLayoutProperty('pp-hillshade', 'visibility', terrainOn ? 'visible' : 'none');
     }
-    if (!terrainOn) map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
-    else map.easeTo({ pitch: DEFAULT_VIEW.pitch, bearing: DEFAULT_VIEW.bearing, duration: 400 });
+    
+    if (!(window as any).__pp_doing_intro) {
+      if (!terrainOn) map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+      else map.easeTo({ pitch: DEFAULT_VIEW.pitch, bearing: DEFAULT_VIEW.bearing, duration: 400 });
+    }
   }, [terrainOn, ready]);
 
   useEffect(() => {
@@ -802,6 +817,84 @@ export function TerrainMap({
     }
     if (!alertsOn) setSelected(null);
   }, [alertsOn, ready]);
+
+  // Satellite dummy animation for visual flair on the main stage
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null || !ready || !stage) return;
+
+    const el = document.createElement('div');
+    el.className = 'text-accent drop-shadow-md pointer-events-none';
+    // Lucide Satellite icon
+    el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 9 3 5 7l4 4"/><path d="m17 11 4 4-4 4-4-4"/><path d="m8 12 4 4 6-6-4-4Z"/><path d="m16 8 3-3"/><path d="M9 21a6 6 0 0 0-6-6"/></svg>`;
+    
+    const startLng = 76.5;
+    const endLng = 81.8;
+    const startLat = 31.8;
+    const endLat = 28.2;
+    
+    // The Lucide satellite points top-right natively. 
+    // We are moving from top-left (NW) to bottom-right (SE).
+    // Rotating it 90 degrees makes it point bottom-right along the path!
+    el.style.transform = `rotate(90deg)`;
+
+    const satellite = new maplibregl.Marker({ element: el })
+      .setLngLat([startLng, startLat])
+      .addTo(map);
+
+    const sourceId = 'pp-orbit-path';
+    if (!map.getSource(sourceId)) {
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: [
+              [startLng, startLat],
+              [endLng, endLat]
+            ]
+          }
+        }
+      });
+      map.addLayer({
+        id: 'pp-orbit-line',
+        type: 'line',
+        source: sourceId,
+        paint: {
+          'line-color': '#e11d48', // matches typical accent
+          'line-width': 1.5,
+          'line-dasharray': [4, 4],
+          'line-opacity': 0.4
+        }
+      }, 'pp-district-boundaries-thick'); // Draw below district boundaries if possible
+    }
+
+    let animationId: number;
+    let startTime = performance.now();
+    const duration = 40000; // 40 seconds across the state
+
+    const animate = (time: number) => {
+      const progress = ((time - startTime) % duration) / duration;
+      const currentLng = startLng + (endLng - startLng) * progress;
+      const currentLat = startLat + (endLat - startLat) * progress;
+      
+      satellite.setLngLat([currentLng, currentLat]);
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      satellite.remove();
+      if (map.getStyle()) {
+        if (map.getLayer('pp-orbit-line')) map.removeLayer('pp-orbit-line');
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+      }
+    };
+  }, [ready, stage]);
 
   if (failed) {
     return (

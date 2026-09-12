@@ -28,8 +28,8 @@
   --radius-md: calc(var(--radius) - 0.125rem);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 0.25rem);
-  --shadow-card: 0 1px 2px rgb(70 82 115 / 0.025);
-  --shadow-card-hover: 0 2px 8px rgb(70 82 115 / 0.055);
+  --shadow-card: 0 1px 3px rgb(15 23 42 / 0.04), 0 1px 2px rgb(15 23 42 / 0.06);
+  --shadow-card-hover: 0 4px 12px rgb(15 23 42 / 0.08), 0 2px 4px rgb(15 23 42 / 0.04);
 }
 
 :root {
@@ -38,26 +38,37 @@
   --font-heading: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   --radius: 0.625rem;
-  --background: oklch(0.982 0.006 264);
-  --foreground: oklch(0.29 0.025 264);
-  --surface: oklch(0.998 0.002 264);
-  --surface-hover: oklch(0.968 0.012 264);
-  --muted: oklch(0.95 0.013 264);
-  --muted-foreground: oklch(0.53 0.025 264);
-  --sidebar: oklch(0.965 0.013 260);
-  --sidebar-foreground: oklch(0.34 0.03 264);
-  --accent: oklch(0.56 0.11 267);
-  --accent-foreground: oklch(0.99 0.003 264);
-  --border: oklch(0.9 0.013 264);
-  --success: oklch(0.48 0.085 151);
-  --success-soft: oklch(0.955 0.035 151);
-  --warning: oklch(0.55 0.1 78);
-  --warning-soft: oklch(0.965 0.04 83);
-  --danger: oklch(0.55 0.12 20);
-  --danger-soft: oklch(0.965 0.028 18);
-  --info: oklch(0.52 0.09 243);
-  --info-soft: oklch(0.958 0.027 242);
-  --ring: oklch(0.62 0.09 267);
+
+  /* ── Surfaces ─────────────────────────────────────────────────────────── */
+  --background: oklch(0.985 0.008 250);
+  --foreground: oklch(0.22 0.03 250);
+  --surface: oklch(0.995 0.004 250);
+  --surface-hover: oklch(0.965 0.015 245);
+  --muted: oklch(0.955 0.012 250);
+  --muted-foreground: oklch(0.48 0.03 250);
+
+  /* ── Sidebar (dark navy) ──────────────────────────────────────────────── */
+  --sidebar: oklch(0.22 0.04 250);
+  --sidebar-foreground: oklch(0.95 0.01 250);
+
+  /* ── Brand ────────────────────────────────────────────────────────────── */
+  --accent: oklch(0.55 0.18 245);
+  --accent-foreground: oklch(0.99 0.005 250);
+
+  /* ── Structure ────────────────────────────────────────────────────────── */
+  --border: oklch(0.88 0.015 250);
+
+  /* ── Semantic: data encoding ──────────────────────────────────────────── */
+  --success: oklch(0.52 0.14 155);
+  --success-soft: oklch(0.945 0.055 155);
+  --warning: oklch(0.58 0.15 75);
+  --warning-soft: oklch(0.955 0.06 78);
+  --danger: oklch(0.55 0.17 25);
+  --danger-soft: oklch(0.955 0.05 22);
+  --info: oklch(0.55 0.15 240);
+  --info-soft: oklch(0.945 0.05 240);
+
+  --ring: oklch(0.62 0.14 245);
 }
 
 * {

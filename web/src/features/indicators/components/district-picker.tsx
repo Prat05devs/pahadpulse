@@ -26,9 +26,14 @@ interface DistrictPickerProps {
  */
 export function DistrictPicker({ districts, selectedA, selectedB }: DistrictPickerProps) {
   const router = useRouter();
+  
+  const [localA, setLocalA] = React.useState(selectedA || '');
+  const [localB, setLocalB] = React.useState(selectedB || '');
 
-  const go = (a: string, b: string) => {
-    router.push(`/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
+  const go = () => {
+    if (localA && localB) {
+      router.push(`/compare?a=${encodeURIComponent(localA)}&b=${encodeURIComponent(localB)}`);
+    }
   };
 
   const renderOptions = (disabledSlug: string) =>
@@ -43,50 +48,60 @@ export function DistrictPicker({ districts, selectedA, selectedB }: DistrictPick
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
   return (
-    <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-end">
-      <label className="flex-1">
-        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          First district
-        </span>
-        <select
-          className={selectClass}
-          value={selectedA}
-          onChange={(event) => {
-            go(event.target.value, selectedB);
-          }}
-        >
-          {/* The other district is disabled rather than hidden: seeing it greyed out explains
-              why it cannot be picked, where removing it silently would just look like a gap. */}
-          {renderOptions(selectedB)}
-        </select>
-      </label>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-end">
+        <label className="flex-1">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            First district
+          </span>
+          <select
+            className={selectClass}
+            value={localA}
+            onChange={(event) => setLocalA(event.target.value)}
+          >
+            <option value="" disabled>Select district...</option>
+            {renderOptions(localB)}
+          </select>
+        </label>
 
-      <button
-        type="button"
-        onClick={() => {
-          go(selectedB, selectedA);
-        }}
-        aria-label="Swap the two districts"
-        title="Swap"
-        className="mb-0.5 self-center rounded-md border border-border bg-surface p-2.5 text-muted-foreground transition hover:bg-surface-hover hover:text-text-light focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-      >
-        <ArrowLeftRight className="size-4" aria-hidden="true" />
-      </button>
-
-      <label className="flex-1">
-        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Second district
-        </span>
-        <select
-          className={selectClass}
-          value={selectedB}
-          onChange={(event) => {
-            go(selectedA, event.target.value);
+        <button
+          type="button"
+          onClick={() => {
+            const temp = localA;
+            setLocalA(localB);
+            setLocalB(temp);
           }}
+          aria-label="Swap the two districts"
+          title="Swap"
+          className="mb-0.5 self-center rounded-md border border-border bg-surface p-2.5 text-muted-foreground transition hover:bg-surface-hover hover:text-text-light focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          {renderOptions(selectedA)}
-        </select>
-      </label>
+          <ArrowLeftRight className="size-4" aria-hidden="true" />
+        </button>
+
+        <label className="flex-1">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Second district
+          </span>
+          <select
+            className={selectClass}
+            value={localB}
+            onChange={(event) => setLocalB(event.target.value)}
+          >
+            <option value="" disabled>Select district...</option>
+            {renderOptions(localA)}
+          </select>
+        </label>
+      </div>
+      <div>
+        <button
+          type="button"
+          onClick={go}
+          disabled={!localA || !localB}
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-accent/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Compare
+        </button>
+      </div>
     </div>
   );
 }

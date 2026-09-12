@@ -35,7 +35,7 @@ from a source or it does not exist.
 | ------- | ------------------------------------------------------------------------ | ---------- |
 | API     | Express 5 · TypeScript ESM · PostgreSQL 16 · neverthrow · Zod                  | `backend/` |
 | Web     | Next.js 15 App Router · React 19 · TanStack Query · Tailwind v4 · shadcn | `web/`     |
-| Mobile  | **Not in this repo.** Deferred; no work started.                         | —          |
+| Mobile  | Expo SDK 57 · React Native 0.86 · React 19.2 · Expo Router · TanStack Query · Zustand · Zod | `mobile/`  |
 | Hosting | Planned: Render Singapore (private Postgres + API + cron), Vercel (web) | `render.yaml` |
 
 Deviations from `guidelines/common/13-approved-libraries.md`, each needing a logged decision in
@@ -47,6 +47,38 @@ the module doc that introduces it:
 | a map renderer (MapLibre GL proposed) | the interactive district map               | `geography.md` §8                             |
 | `fast-xml-parser`                     | CAP alert feed parsing                     | `alerts.md` §8                                |
 | `morphicons`                          | accessible icon state transitions          | cross-cutting navigation                      |
+| `zustand`                             | client state on mobile                     | mobile — decision below                       |
+
+### 2026-09-10 — Use Zustand for client state in the mobile app
+
+**Decision:** The mobile app holds client state in Zustand rather than React Context, which is
+what `guidelines/common/13-approved-libraries.md` names as the default. Its scope is
+deliberately narrow: the reader's language, theme choice, followed districts and whether the
+intro has been seen. Server data stays in TanStack Query.
+
+**Because:** Those four values are read from the tab bar, the home screen, every district card
+and the settings screen, and three of them are persisted across launches. Context would either
+re-render every consumer whenever any one of them changed, or need splitting into four
+providers wrapped around the root. Zustand gives per-field subscriptions and the AsyncStorage
+persistence in one small module, with no provider at all.
+
+**Costs:** A second state library alongside TanStack Query, and a rule that has to be held to:
+anything the API owns does not go in the store. Two copies of server data would disagree the
+moment one refreshed. The store's `partialize` persists data only, never actions.
+
+### 2026-09-10 — Bundle Noto Sans rather than use the platform font
+
+**Decision:** The mobile app ships Noto Sans and Noto Sans Devanagari, loads one font family
+per weight, and disables Android's `includeFontPadding`.
+
+**Because:** iOS defaults to San Francisco and Android to Roboto, whose differing metrics make
+the same card a different height on each platform — labels wrap on one and not the other, and
+tile grids stop aligning. Android also ignores `fontWeight` on a custom font, so weight has to
+be carried by the family name. The two Noto cuts share vertical metrics, so a district name
+occupies the same line box in Hindi as in English.
+
+**Costs:** Roughly 8 font files in the bundle, and the splash screen is held until they load.
+`fontWeight` is banned in favour of the `Text` atom's `weight` prop.
 
 ### 2026-09-04 — Use Morphicons for meaningful icon state changes
 

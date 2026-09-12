@@ -11,16 +11,8 @@ export const metadata: Metadata = {
     'Published pilgrim arrivals at the Char Dham shrines and Hemkund Sahib, by year and district.',
 };
 
-/*
- * An hour, not a day.
- *
- * These figures change quarterly at most, so a longer window costs nothing in freshness —
- * but it is not freshness that sets this number. A page prerendered while the API is still
- * deploying catches the failure and renders its error state, and Next caches THAT as a
- * successful render for the whole window. An hour bounds a bad deploy to an hour; a day
- * would leave a red error box up until someone noticed. Matches `roads` and `compare`.
- */
-export const revalidate = 3600;
+// Fetch at request time so deploy-time failures and expired alerts are not cached as pages.
+export const dynamic = 'force-dynamic';
 
 const n = (value: number) => value.toLocaleString('en-IN');
 

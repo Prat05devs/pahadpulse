@@ -285,7 +285,7 @@ class SourceRepositoryImpl implements ISourceRepository {
             SET status = $1, finished_at = (now() AT TIME ZONE 'utc'), error_code = $2,
                 notes = 'Run abandoned - exceeded the run timeout and was expired.'
           WHERE status = $3
-            AND started_at <= ((now() AT TIME ZONE 'utc') - INTERVAL $4 SECOND)`,
+            AND started_at <= ((now() AT TIME ZONE 'utc') - ($4 * INTERVAL '1 second'))`,
         [
           RunStatus.Failed,
           ERRORS.UPSTREAM_UNAVAILABLE.code,

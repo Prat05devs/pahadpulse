@@ -1,19 +1,29 @@
 services:
   db:
-    image: mysql:8.0
+    # PostgreSQL, matching the `pg` driver, the `$1` placeholders in every repository, and
+    # `pg_advisory_lock` in the migration runner. This file was left on mysql:8.0 when the
+    # backend moved to Postgres, which is why nothing could reach a database locally.
+    #
+    # Alpine rather than the full image: it is ~300MB smaller and behaves identically for
+    # local development.
+    image: postgres:16-alpine
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-pahadpulse}
-      MYSQL_DATABASE: ${DB_NAME:-pahad_pulse}
-      MYSQL_USER: ${DB_USER:-pahad}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-pahad}
+      POSTGRES_DB: ${DB_NAME:-pahad_pulse}
+      POSTGRES_USER: ${DB_USER:-pahad}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-pahad}
+      # Every timestamp the API stores and serves is UTC.
+      TZ: UTC
+      PGTZ: UTC
     ports:
-      - '${DB_HOST_PORT:-3306}:3306'
-    command: ['--default-time-zone=+00:00']
+      - '${DB_HOST_PORT:-5432}:5432'
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      # `-U` matters: without it pg_isready checks the OS user, which does not exist in the
+      # database, and the container is reported healthy before it can actually answer.
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-pahad} -d ${DB_NAME:-pahad_pulse}']
       interval: 5s
+      timeout: 5s
       retries: 10
 
   migrate:
@@ -27,7 +37,7 @@ services:
       SERVER_URL: http://localhost:3000
       # Compose values win over backend/.env, which points DB_HOST at the host loopback.
       DB_HOST: db
-      DB_PORT: '3306'
+      DB_PORT: '5432'
       DB_USER: ${DB_USER:-pahad}
       DB_PASSWORD: ${DB_PASSWORD:-pahad}
       DB_NAME: ${DB_NAME:-pahad_pulse}

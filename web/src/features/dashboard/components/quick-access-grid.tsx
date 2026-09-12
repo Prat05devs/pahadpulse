@@ -10,6 +10,7 @@ import {
   MapPinned,
   Mountain,
   Route,
+  Briefcase,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -50,6 +51,12 @@ const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
     href: '/hydromet',
     icon: CloudRain,
     description: 'Rainfall, forecasts and river levels',
+  },
+  {
+    label: 'Business ease',
+    href: '/compare#business',
+    icon: Briefcase,
+    description: 'Find profitable locations for ventures',
   },
   {
     label: 'Roads & traffic',

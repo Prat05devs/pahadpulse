@@ -6,7 +6,7 @@
 | **Status** | in progress — backend implemented, web not started |
 | **Backend** | `backend/src/{models,repositories,controllers,routes}/area*.ts` |
 | **Web** | `src/features/geography/` |
-| **Mobile** | not in this repo |
+| **Mobile** | `mobile/src/features/map/` — the Map tab, and `mobile/src/features/areas/` |
 
 ---
 
@@ -28,7 +28,9 @@ It holds no statistics, no measurements and no alerts — only *where things are
 
 **Does not own**
 - Any value measured about an area — see `indicators.md`, `hydromet.md`
-- The *rendering* of the map; that is web-side composition. This module defines what can be drawn.
+- The *rendering* of the map; that is client-side composition. This module defines what can be
+  drawn. Two clients now render it: the web app directly with `maplibre-gl`, and the mobile app
+  with the same library inside a WebView, both fed by `GET /api/map/districts`.
 - Live traffic geometry — Google-sourced and never stored, see `roads.md`
 
 **Used by other modules via**

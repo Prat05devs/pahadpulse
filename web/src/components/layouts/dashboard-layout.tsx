@@ -21,7 +21,11 @@ import {
   RadioTower,
   Route,
   Users,
+  SignalHigh,
+  Tent,
+  Wifi,
   X,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -55,7 +59,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { label: 'Home', href: '/', icon: Home },
       { label: 'Live Alerts', href: '/alerts', icon: AlertTriangle },
-      { label: 'Districts', href: '/districts', icon: Map },
+      { label: 'Districts', href: '/districts', icon: Building2 },
       { label: 'Compare', href: '/compare', icon: GitCompareArrows },
     ],
   },
@@ -119,9 +123,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-bg-light lg:flex lg:h-screen">
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 text-text-light backdrop-blur lg:hidden">
         <Link href="/" className="flex min-h-11 items-center gap-3 rounded-md px-1">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-info-soft text-info">
-            <Mountain className="size-5" aria-hidden="true" />
-          </span>
+          <span className="flex size-9 items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Pahad Pulse logo" className="size-full object-contain" />
+            </span>
           <span>
             <span className="block font-display text-lg font-bold leading-none">Pahad Pulse</span>
             <span className="mt-1 block text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">
@@ -202,7 +206,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       >
         <div
           className={clsx(
-            'flex min-h-24 items-center border-b border-border',
+            'flex min-h-20 items-center border-b border-white/10',
             showLabels ? 'px-5' : 'lg:justify-center lg:px-0'
           )}
         >
@@ -211,13 +215,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             className="flex min-h-11 items-center gap-3 rounded-md"
             title={showLabels ? undefined : 'Pahad Pulse'}
           >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-info-soft text-info">
-              <Mountain className="size-5" aria-hidden="true" />
+            <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Pahad Pulse logo" className="size-full object-contain" />
             </span>
             <span className={clsx(!showLabels && 'lg:hidden')}>
-              <span className="block font-display text-xl font-bold leading-none">Pahad Pulse</span>
-              <span className="mt-1.5 block text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
-                Uttarakhand public data
+              <span className="block font-display text-lg font-extrabold leading-none tracking-tight text-white">Pahad Pulse</span>
+              <span className="mt-1 block text-[0.6rem] font-medium uppercase tracking-[0.2em] text-white/50">
+                Uttarakhand Intelligence
               </span>
             </span>
           </Link>
@@ -225,7 +229,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             type="button"
             aria-label="Close navigation"
             onClick={() => setIsMenuOpen(false)}
-            className="ml-auto flex size-11 items-center justify-center rounded-lg lg:hidden"
+            className="ml-auto flex size-11 items-center justify-center rounded-lg text-white/70 hover:text-white lg:hidden"
           >
             <X className="size-5" aria-hidden="true" />
           </button>
@@ -235,20 +239,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             open it) and a panel-close mark (the rail is open, tap to shrink it), so the
             control states what it will DO rather than what it currently is. */}
 
-        <nav id="primary-navigation" aria-label="Primary" className="flex-1 space-y-5 px-3 py-5">
+        <nav id="primary-navigation" aria-label="Primary" className="flex-1 space-y-6 px-3 py-5">
           {NAV_GROUPS.map((group) => (
             <div key={group.label}>
-              {/* Collapsed, the group heading has no room — but it still names the group for
-                  a screen reader, so it is hidden visually rather than removed. */}
               <p
                 className={clsx(
-                  'mb-1.5 px-3 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground/75',
+                  'mb-2 px-3 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-white/40',
                   !showLabels && 'lg:sr-only'
                 )}
               >
                 {group.label}
               </p>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const isActive =
                     item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
@@ -259,17 +261,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       href={item.href}
                       aria-current={isActive ? 'page' : undefined}
-                      // The label is the accessible name when it is visible; collapsed, the
-                      // title attribute carries it for pointer users and aria-label for the
-                      // rest, so the link is never an unlabelled icon.
                       title={showLabels ? undefined : item.label}
                       aria-label={showLabels ? undefined : item.label}
                       className={clsx(
-                        'group flex min-h-11 items-center gap-3 rounded-lg text-sm font-medium transition-colors duration-150 active:scale-[0.98]',
+                        'group flex min-h-10 items-center gap-3 rounded-lg text-[0.8125rem] font-medium transition-colors duration-150 active:scale-[0.98]',
                         showLabels ? 'px-3' : 'px-3 lg:justify-center lg:px-0',
                         isActive
-                          ? 'bg-surface text-text-light shadow-card'
-                          : 'text-muted-foreground hover:bg-surface/65 hover:text-text-light'
+                          ? 'bg-white/[0.12] text-white'
+                          : 'text-white/60 hover:bg-white/[0.07] hover:text-white/90'
                       )}
                     >
                       <Icon
@@ -277,7 +276,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                           'size-[1.125rem] shrink-0 transition-colors duration-150',
                           isActive
                             ? 'text-accent'
-                            : 'text-muted-foreground/70 group-hover:text-accent'
+                            : 'text-white/45 group-hover:text-white/75'
                         )}
                         strokeWidth={1.8}
                         aria-hidden="true"
@@ -300,15 +299,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        <div className={clsx('border-t border-border py-4', showLabels ? 'px-5' : 'lg:px-0')}>
+        <div className={clsx('border-t border-white/10 py-4', showLabels ? 'px-5' : 'lg:px-0')}>
           <div
             className={clsx(
-              'flex items-center gap-2 text-xs text-muted-foreground',
+              'flex items-center gap-2 text-xs text-white/40',
               !showLabels && 'lg:justify-center'
             )}
             title={showLabels ? undefined : 'Public data portal · v0.1'}
           >
-            <Gauge className="size-3.5 shrink-0 text-success" aria-hidden="true" />
+            <Gauge className="size-3.5 shrink-0 text-emerald-400" aria-hidden="true" />
             <span className={clsx(!showLabels && 'lg:hidden')}>Public data portal</span>
             <span className={clsx('ml-auto font-mono text-[0.65rem]', !showLabels && 'lg:hidden')}>
               v0.1

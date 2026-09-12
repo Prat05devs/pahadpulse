@@ -1,5 +1,19 @@
 import type { Metadata } from 'next';
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-ui',
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-heading',
+  weight: ['500', '600', '700', '800'],
+});
 
 /**
  * The canonical origin, used to make every relative metadata URL absolute.
@@ -22,7 +36,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
       <body>
         <a
           href="#main-content"

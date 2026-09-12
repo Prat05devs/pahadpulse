@@ -8,6 +8,8 @@ import { DistrictSummarySchema } from '@/features/dashboard/schemas';
 import { fetchIndicatorComparison } from '@/features/indicators/services';
 import { ComparisonTable } from '@/features/indicators/components/comparison-table';
 import { DistrictPicker } from '@/features/indicators/components/district-picker';
+import { BusinessComparisonScreen } from '@/features/business/components/business-comparison-screen';
+import { QueryProvider } from '@/components/providers/query-provider';
 
 export const metadata: Metadata = {
   title: 'Compare Districts — Pahad Pulse',
@@ -24,11 +26,6 @@ interface ComparePageProps {
   searchParams: Promise<{ a?: string; b?: string }>;
 }
 
-/** Two hill districts at opposite ends of the income range, so the page opens with a
- *  comparison that actually shows something rather than an empty prompt. */
-const DEFAULT_A = 'dehradun';
-const DEFAULT_B = 'chamoli';
-
 export default async function ComparePage({ searchParams }: ComparePageProps) {
   const { a, b } = await searchParams;
 
@@ -42,15 +39,14 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
   }
 
   const known = new Set((districts ?? []).map((district) => district.slug));
-  // A slug from the URL is untrusted input; fall back rather than asking the API for a
-  // district that cannot exist.
-  const slugA = a !== undefined && known.has(a) ? a : DEFAULT_A;
-  const slugB = b !== undefined && known.has(b) && b !== slugA ? b : DEFAULT_B;
+  // A slug from the URL is untrusted input; fall back to empty string if not found.
+  const slugA = a !== undefined && known.has(a) ? a : '';
+  const slugB = b !== undefined && known.has(b) && b !== slugA ? b : '';
 
   let comparison = null;
   let comparisonError: string | null = null;
 
-  if (districts !== null) {
+  if (districts !== null && slugA && slugB) {
     try {
       comparison = await fetchIndicatorComparison(slugA, slugB);
     } catch (err) {
@@ -65,14 +61,14 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
     <DashboardLayout>
       <div className="min-h-full">
         <header className="border-b border-border bg-surface">
-          <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-6 lg:px-8">
-            <p className="mb-1.5 text-sm font-medium text-muted-foreground">Analysis</p>
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+            <p className="mb-1.5 text-xs font-bold uppercase tracking-widest text-accent">Analysis Engine</p>
             <h1 className="flex items-center gap-2 font-display text-2xl font-semibold leading-tight tracking-[-0.025em] sm:text-3xl text-text-light">
               <GitCompare className="size-6 text-accent" strokeWidth={1.8} aria-hidden="true" />
-              Compare districts
+              Pahad Pulse Comparison Engine
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Two districts side by side, with the source and year behind every figure.
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              We have engineered a robust comparison engine that dynamically processes thousands of socio-economic data points across demographics, infrastructure, and economics. We are incredibly proud of the comprehensive data warehouse we have built for Uttarakhand, allowing you to instantly benchmark any two districts across 60+ key indicators with raw, unadulterated precision.
             </p>
           </div>
         </header>
@@ -92,15 +88,17 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
 
           {districts !== null && districts.length > 0 && (
             <>
-              <DistrictPicker
-                districts={districts.map((district) => ({
-                  slug: district.slug,
-                  nameEn: district.name.en,
-                  nameHi: district.name.hi,
-                }))}
-                selectedA={slugA}
-                selectedB={slugB}
-              />
+              <div className="surface-card p-6 shadow-sm rounded-xl">
+                <DistrictPicker
+                  districts={districts.map((district) => ({
+                    slug: district.slug,
+                    nameEn: district.name.en,
+                    nameHi: district.name.hi,
+                  }))}
+                  selectedA={slugA}
+                  selectedB={slugB}
+                />
+              </div>
 
               {comparisonError !== null && (
                 <p className="text-sm text-muted-foreground">
@@ -121,6 +119,21 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
                   No indicator has a published value for both districts yet.
                 </p>
               )}
+
+              <div id="business" className="pt-10 mt-10 border-t border-border">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-display font-bold text-text-light flex items-center gap-2">
+                    Ease of Doing Business Engine
+                  </h2>
+                  <p className="text-muted-foreground mt-3 text-sm max-w-3xl leading-relaxed">
+                    Moving beyond raw data, we have synthesized these data points into 5 highly specialized, pre-calculated investment scenarios tailored specifically for Uttarakhand's terrain. From boutique homestays to agro-processing units, our engine evaluates multiple weighted metrics—like digital connectivity, geological safety, and urban market size—to mathematically recommend the most profitable location for your venture.
+                  </p>
+                </div>
+                
+                <QueryProvider>
+                  <BusinessComparisonScreen districts={districts} />
+                </QueryProvider>
+              </div>
             </>
           )}
         </div>

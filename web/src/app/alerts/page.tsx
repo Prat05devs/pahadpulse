@@ -12,15 +12,8 @@ export const metadata: Metadata = {
   description: 'Active weather, disaster, road, and river alerts across Uttarakhand.',
 };
 
-/**
- * Sixty seconds — the shortest window on the site, because this is safety information.
- *
- * The SACHET cron runs every 15 minutes, so a minute of staleness is well inside the rate
- * at which warnings actually change, while still turning nearly every visit into a cache
- * hit. It also makes an API outage far less visible: Next keeps serving the last good page
- * and regenerates behind it, instead of the blank page this site showed for hours today.
- */
-export const revalidate = 60;
+// Fetch at request time so deploy-time failures and expired alerts are not cached as pages.
+export const dynamic = 'force-dynamic';
 
 export default async function AlertsPage() {
   let alerts = null;
@@ -140,10 +133,9 @@ export default async function AlertsPage() {
             </div>
           ) : alerts.length === 0 ? (
             <div className="py-10 text-center sm:py-12">
-              <p className="mb-2 text-2xl" aria-hidden="true">✨</p>
-              <p className="mb-1 font-semibold text-text-light">No active alerts</p>
+              <p className="mb-1 font-semibold text-text-light">No active alerts in the latest stored data</p>
               <p className="text-sm text-text-light/60">
-                No warnings are currently in force across Uttarakhand.
+                The alert feed may be delayed. Check SACHET or your district administration for current warnings.
               </p>
             </div>
           ) : (

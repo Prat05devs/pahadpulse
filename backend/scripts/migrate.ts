@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import { db } from '../src/database/db.js';
 import createLogger from '../src/utils/logger.js';
+import { describeError } from '../src/utils/describe-error.js';
 
 const logger = createLogger('@migrate');
 
@@ -49,6 +50,8 @@ function stripRollbackComments(sql: string): string {
 async function run(): Promise<void> {
   const client = await db.connect();
   try {
+    // Serialize pre-deploy and startup runners on a session connection.
+    await client.query('SELECT pg_advisory_lock(724001)');
     await client.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
         filename   VARCHAR(255) NOT NULL PRIMARY KEY,
@@ -85,12 +88,13 @@ async function run(): Promise<void> {
 
     logger.info('migrations complete', { applied: count, total: files.length });
   } finally {
-    client.release();
+    // Destroy the session to release the advisory lock, including on failure.
+    client.release(true);
     await db.end();
   }
 }
 
 run().catch((error: unknown) => {
-  logger.error('migration failed', { error });
+  logger.error('migration failed', { error: describeError(error) });
   process.exit(1);
 });

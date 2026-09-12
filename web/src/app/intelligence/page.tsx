@@ -24,7 +24,7 @@ export default function IntelligencePage() {
     {
       title: 'Demographics',
       icon: Users,
-      metrics: ['Population', 'Age distribution', 'Migration patterns'],
+      metrics: ['Population', 'Age distribution'],
     },
     {
       title: 'Health',

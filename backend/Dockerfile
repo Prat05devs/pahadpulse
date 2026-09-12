@@ -35,5 +35,6 @@ RUN npm run build
 
 EXPOSE 3000
 
-# The compiled server. Compose overrides this with `npm run dev` for local work.
-CMD ["node", "dist/server.js"]
+# Run migrations even when an existing Render service has no pre-deploy hook.
+# A migration failure prevents the new instance from accepting traffic.
+CMD ["npm", "start"]
