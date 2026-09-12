@@ -38,7 +38,7 @@ export function buildPageMetadata({
   const brandedTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
 
   return {
-    title: brandedTitle,
+    title: { absolute: brandedTitle },
     description,
     keywords: [...CORE_KEYWORDS, ...keywords],
     alternates: { canonical: path },

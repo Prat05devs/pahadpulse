@@ -11,7 +11,7 @@ describe('production SEO', () => {
       path: '/districts',
     });
 
-    expect(metadata.title).toBe('District intelligence | Pahad Pulse');
+    expect(metadata.title).toEqual({ absolute: 'District intelligence | Pahad Pulse' });
     expect(metadata.alternates).toEqual({ canonical: '/districts' });
     expect(metadata.openGraph).toEqual(
       expect.objectContaining({
