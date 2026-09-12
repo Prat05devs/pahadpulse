@@ -1,5 +1,5 @@
 import React from 'react';
-import { BusinessComparisonScreen } from '@/features/business/components/business-comparison-screen';
+import { BusinessComparisonScreen } from '@/features/business';
 import { useDistrictFeatures } from '@/features/map';
 import { Screen } from '@/components/templates';
 
@@ -17,4 +17,3 @@ export default function BusinessScreen() {
     </Screen>
   );
 }
-

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, Modal, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBusinessScenarios, useBusinessComparison } from '../hooks';
-import { Text, Card, HStack, VStack, Icon, Pressable, Spinner, Skeleton, Entrance } from '@/components/atoms';
+import { Text, Card, HStack, VStack, Icon, Pressable, Skeleton, Entrance } from '@/components/atoms';
 import { useTheme } from '@/theme';
 import { AnimatedNumber } from '@/components/atoms/animated-number';
 
@@ -90,7 +90,12 @@ function ScoreBar({ label, score, weight, isWinner }: { label: string; score: nu
   );
 }
 
-export function BusinessComparisonScreen({ districts = [] }: { districts: any[] }) {
+type DistrictOptionSource = {
+  slug: string;
+  name: { en: string };
+};
+
+export function BusinessComparisonScreen({ districts = [] }: { districts: DistrictOptionSource[] }) {
   const [districtA, setDistrictA] = useState('');
   const [districtB, setDistrictB] = useState('');
   const [scenarioId, setScenarioId] = useState('');
@@ -106,11 +111,7 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: any[] 
 
   const theme = useTheme();
 
-  React.useEffect(() => {
-    if (scenarios && scenarios.length > 0 && !scenarioId) {
-      setScenarioId(scenarios[0].id);
-    }
-  }, [scenarios, scenarioId]);
+  const selectedScenarioId = scenarioId || scenarios?.[0]?.id || '';
 
   const scenarioOptions = scenarios?.map(s => ({
     label: `${s.name} (${s.category})`,
@@ -134,13 +135,13 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: any[] 
         <VStack gap="md">
           <NativeSelect 
             label="What business are you planning?" 
-            value={scenarioId} 
+            value={selectedScenarioId}
             options={scenarioOptions} 
             onSelect={handleSelectScenario} 
           />
-          {scenarioId && scenarios ? (
-            <Text variant="small" color="muted">
-              {scenarios.find(s => s.id === scenarioId)?.description}
+          {selectedScenarioId && scenarios ? (
+            <Text variant="caption" color="textMuted">
+              {scenarios.find(s => s.id === selectedScenarioId)?.description}
             </Text>
           ) : null}
 
@@ -148,30 +149,30 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: any[] 
             <View style={{ flex: 1 }}>
               <NativeSelect label="Compare" value={districtA} options={districtOptions} onSelect={handleSelectA} />
             </View>
-            <Text variant="subhead" color="muted" style={{ marginTop: 24, marginHorizontal: 4 }}>VS</Text>
+            <Text variant="bodyStrong" color="textMuted" style={{ marginTop: 24, marginHorizontal: 4 }}>VS</Text>
             <View style={{ flex: 1 }}>
               <NativeSelect label="With" value={districtB} options={districtOptions} onSelect={handleSelectB} />
             </View>
           </HStack>
 
           <Pressable 
-            disabled={!districtA || !districtB || !scenarioId}
-            onPress={() => setActiveCompare({ a: districtA, b: districtB, scenarioId })}
-            style={({ pressed, disabled }) => ({
-              backgroundColor: disabled ? theme.colors.muted : theme.colors.accent,
+            disabled={!districtA || !districtB || !selectedScenarioId}
+            onPress={() => setActiveCompare({ a: districtA, b: districtB, scenarioId: selectedScenarioId })}
+            style={{
+              backgroundColor: !districtA || !districtB || !selectedScenarioId ? theme.colors.surfaceMuted : theme.colors.accent,
               padding: theme.spacing.md,
-              borderRadius: theme.roundness.md,
+              borderRadius: theme.radius.md,
               alignItems: 'center',
               marginTop: theme.spacing.md,
-              opacity: pressed ? 0.9 : 1
-            })}
+            }}
+            pressedStyle={{ opacity: 0.9 }}
           >
             <Text style={{ color: 'white', fontWeight: 'bold' }}>Compare</Text>
           </Pressable>
         </VStack>
       </Card>
 
-      {error && activeCompare && (
+      {error && activeCompare ? (
         <Entrance>
           <Card padding="lg" tone="surface" style={{ borderColor: theme.colors.danger, borderWidth: 1 }}>
             <HStack align="center" gap="sm">

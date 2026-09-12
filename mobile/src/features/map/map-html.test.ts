@@ -97,8 +97,8 @@ describe('the document control surface', () => {
 
   it('starts the optional layers hidden', () => {
     const html = buildMapHtml({ districts: district, alerts: null });
-    // Highways and migration are opt-in; three fills at once is not a readable map.
+    // The three highway layers (casing, state, and national) are opt-in.
     const hidden = html.match(/visibility: 'none'/g) ?? [];
-    expect(hidden.length).toBeGreaterThanOrEqual(4);
+    expect(hidden.length).toBeGreaterThanOrEqual(3);
   });
 });

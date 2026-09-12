@@ -9,7 +9,7 @@ import { ErrorState, LoadingState } from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { useTheme } from '@/theme';
 
-import { useAlertFeatures, useDistrictFeatures, useMigrationSummary } from '../hooks';
+import { useAlertFeatures, useDistrictFeatures } from '../hooks';
 import {
   DEFAULT_LAYERS,
   MAP_ATTRIBUTION,

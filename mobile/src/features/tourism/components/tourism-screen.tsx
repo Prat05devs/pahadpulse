@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,7 +11,6 @@ import { useLanguage } from '@/stores';
 
 export function TourismScreen() {
   const theme = useTheme();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const language = useLanguage();
   

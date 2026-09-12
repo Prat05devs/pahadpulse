@@ -18,7 +18,7 @@ import {
   UTTARAKHAND_BOUNDS,
   UTTARAKHAND_CENTER,
 } from './constants';
-import type { AlertCollection, DistrictCollection, MigrationSummary } from './schemas';
+import type { AlertCollection, DistrictCollection } from './schemas';
 
 /**
  * Serialise a value for embedding inside a `<script>` tag.

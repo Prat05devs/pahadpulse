@@ -40,7 +40,7 @@ const METRIC_LABELS: Record<keyof BusinessWeights, string> = {
 };
 
 // We receive `districts` (the list of all districts) as a prop from the server component
-export function BusinessComparisonScreen({ districts }: { districts: unknown[] }) {
+export function BusinessComparisonScreen({ districts }: { districts: Array<{ slug: string; name: { en: string } }> }) {
   const [districtA, setDistrictA] = useState('');
   const [districtB, setDistrictB] = useState('');
   const [scenarioId, setScenarioId] = useState(''); 
