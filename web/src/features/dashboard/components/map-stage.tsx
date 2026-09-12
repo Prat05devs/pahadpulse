@@ -27,28 +27,40 @@ interface MapStageProps {
 const FLOATING_CARD =
   'surface-card pointer-events-auto bg-white/70 dark:bg-black/60 backdrop-blur-[20px] backdrop-saturate-[180%] shadow-card ring-1 ring-white/20';
 
-function Figure({ value, label, year, isNumeric = false }: { value: string | number | null; label: string; year?: string | null; isNumeric?: boolean }) {
+function Figure({
+  value,
+  label,
+  year,
+  isNumeric = false,
+}: {
+  value: string | number | null;
+  label: string;
+  year?: string | null;
+  isNumeric?: boolean;
+}) {
   const isPop = label === 'Population';
   const isPercent = label === 'Forest cover' || label === 'Literacy';
   const isCompact = label === 'Population';
-  
+
   return (
     <div>
       <p className="font-mono text-base font-semibold tabular-nums sm:text-xl">
         {isNumeric && typeof value === 'number' ? (
-          <NumberFlow 
-            value={value} 
+          <NumberFlow
+            value={value}
             trend={1}
-            format={{ 
-              notation: isCompact ? 'compact' : 'standard', 
-              maximumFractionDigits: isPop ? 1 : (isPercent ? 1 : 0),
-              style: isPercent ? 'percent' : 'decimal'
+            format={{
+              notation: isCompact ? 'compact' : 'standard',
+              maximumFractionDigits: isPop ? 1 : isPercent ? 1 : 0,
+              style: isPercent ? 'percent' : 'decimal',
             }}
             transformTiming={{ duration: 600, easing: 'ease-out' }}
             spinTiming={{ duration: 600, easing: 'ease-out' }}
           />
+        ) : value === null ? (
+          '—'
         ) : (
-          value === null ? '—' : value
+          value
         )}
       </p>
       <p className="text-[0.62rem] leading-tight text-muted-foreground sm:text-[0.7rem]">{label}</p>
@@ -66,8 +78,6 @@ function year(figure: { vintage: string | null }): string | null {
   const value = figure.vintage.slice(0, 4);
   return /^\d{4}$/.test(value) ? value : null;
 }
-
-
 
 /**
  * The home dashboard's map stage.
@@ -116,7 +126,7 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
           {/* The page's only h1: the old page header was removed so the map could have the
               full viewport at every size. */}
           <h1 className="font-display text-base font-semibold leading-tight tracking-[-0.02em] text-text-light sm:mt-1 sm:text-xl lg:text-2xl">
-            Uttarakhand, at a glance
+            Uttarakhand public data, at a glance
           </h1>
           <div className="mt-1.5 grid grid-cols-4 gap-x-2 gap-y-1 sm:mt-3 sm:gap-3">
             <Figure
@@ -125,11 +135,7 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
               year={year(overview.population)}
               isNumeric={true}
             />
-            <Figure
-              value={overview.districts.value}
-              label="Districts"
-              isNumeric={true}
-            />
+            <Figure value={overview.districts.value} label="Districts" isNumeric={true} />
             <Figure value={alertCount} label="Active alerts" isNumeric={true} />
             <Figure
               value={overview.forestCoverage.value ? overview.forestCoverage.value / 100 : null}
@@ -143,16 +149,17 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
 
       {/* Bottom: the three things worth acting on. */}
       <div /**
-         * `pointer-events-auto` below `lg`, and that is the fix for a real bug: this is a
-         * horizontal scroller on a phone, and `pointer-events-none` meant it never received
-         * the touch events needed to swipe it. The cards were tappable (they set
-         * `pointer-events-auto` themselves) but the strip would not move, so only the first
-         * card and a sliver of the second were ever reachable.
-         *
-         * From `lg` it becomes a three-column grid with gaps the map shows through, and
-         * there `pointer-events-none` is right — it keeps the map draggable between cards.
-         */
-        className="pointer-events-auto absolute inset-x-0 bottom-0 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:p-4 lg:pointer-events-none lg:grid lg:max-w-[64rem] lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:p-5">
+       * `pointer-events-auto` below `lg`, and that is the fix for a real bug: this is a
+       * horizontal scroller on a phone, and `pointer-events-none` meant it never received
+       * the touch events needed to swipe it. The cards were tappable (they set
+       * `pointer-events-auto` themselves) but the strip would not move, so only the first
+       * card and a sliver of the second were ever reachable.
+       *
+       * From `lg` it becomes a three-column grid with gaps the map shows through, and
+       * there `pointer-events-none` is right — it keeps the map draggable between cards.
+       */
+        className="pointer-events-auto absolute inset-x-0 bottom-0 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:p-4 lg:pointer-events-none lg:grid lg:max-w-[64rem] lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:p-5"
+      >
         {/* Alerts first, and styled to stand out when there are any. This is an emergency
             -facing product; the warning card is the one that must not blend in. */}
         <article
@@ -202,9 +209,7 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
           <p className="mt-3 text-sm leading-relaxed text-text-light">
             Current conditions and air quality at every district headquarters, updated hourly.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Source named on every figure.
-          </p>
+          <p className="mt-2 text-xs text-muted-foreground">Source named on every figure.</p>
         </article>
 
         <article

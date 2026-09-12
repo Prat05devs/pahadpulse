@@ -1,19 +1,24 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { BarChart3, ClipboardList, LockKeyhole, Siren, Users } from 'lucide-react';
+import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 
-export const metadata: Metadata = {
-  title: 'Governance Dashboard — Pahad Pulse',
-  description: 'Authenticated officer dashboard for crisis management and policy coordination.',
-};
+export const metadata = buildPageMetadata({
+  title: 'Governance Workspace',
+  description:
+    'Planned Pahad Pulse workspace for authorized crisis-management and policy coordination.',
+  path: '/governance',
+  noIndex: true,
+});
 
 export default function GovernancePage() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-bg-light">
         <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
-          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Governance Dashboard</h1>
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">
+            Governance Dashboard
+          </h1>
           <p className="text-text-dark/70 mt-2">
             Authenticated official situation room for state coordination
           </p>

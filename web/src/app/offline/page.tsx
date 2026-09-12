@@ -1,19 +1,23 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { Clock3, Download, HardDrive, Lightbulb, RefreshCw, Trash2 } from 'lucide-react';
+import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 
-export const metadata: Metadata = {
-  title: 'Offline Mode — Pahad Pulse',
-  description: 'Download district data for offline access in low-connectivity areas.',
-};
+export const metadata = buildPageMetadata({
+  title: 'Offline Data Access',
+  description: 'Planned offline access to Pahad Pulse district data for low-connectivity areas.',
+  path: '/offline',
+  noIndex: true,
+});
 
 export default function OfflinePage() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-bg-light">
         <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
-          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Offline Mode</h1>
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">
+            Offline Mode
+          </h1>
           <p className="text-text-dark/70 mt-2">
             Download data for access in low-connectivity areas
           </p>

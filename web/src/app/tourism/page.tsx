@@ -1,15 +1,17 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { ExternalLink, MountainSnow } from 'lucide-react';
+import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { fetchPilgrimArrivals } from '@/features/tourism/services';
 import { PilgrimArrivalsTable } from '@/features/tourism/components/pilgrim-arrivals-table';
 
-export const metadata: Metadata = {
-  title: 'Tourism & Pilgrim Load — Pahad Pulse',
+export const metadata = buildPageMetadata({
+  title: 'Uttarakhand Tourism & Char Dham Pilgrim Data',
   description:
-    'Published pilgrim arrivals at the Char Dham shrines and Hemkund Sahib, by year and district.',
-};
+    'Explore published pilgrim arrivals for Char Dham shrines and Hemkund Sahib by year and district, with transparent Uttarakhand tourism sources.',
+  path: '/tourism',
+  keywords: ['Char Dham visitor data', 'Uttarakhand tourism statistics', 'Hemkund Sahib pilgrims'],
+});
 
 // Fetch at request time so deploy-time failures and expired alerts are not cached as pages.
 export const dynamic = 'force-dynamic';

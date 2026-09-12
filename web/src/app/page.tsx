@@ -1,6 +1,6 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { AlertCircle } from 'lucide-react';
+import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
 import {
@@ -18,10 +18,17 @@ import {
   fetchStateOverview,
 } from '@/features/dashboard/services';
 
-export const metadata: Metadata = {
-  title: 'Home Dashboard — Pahad Pulse',
-  description: 'Live state-level overview of Uttarakhand with interactive map and key metrics.',
-};
+export const metadata = buildPageMetadata({
+  title: 'Uttarakhand Public Data Intelligence Dashboard',
+  description:
+    'Explore Uttarakhand’s trusted public data in one place—live alerts, district conditions, infrastructure, tourism, connectivity, and decision intelligence.',
+  path: '/',
+  keywords: [
+    'Uttarakhand live dashboard',
+    'Uttarakhand public data',
+    'Uttarakhand intelligence platform',
+  ],
+});
 
 /**
  * Two minutes. The home page carries the active-alert count, so it follows the alerts
@@ -135,7 +142,7 @@ export default async function HomePage() {
         <footer className="border-t border-border">
           <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-muted-foreground sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
             <p>Official sources are shown alongside every published figure.</p>
-            <p>Built for residents, travellers and journalists.</p>
+            <p>Proudly making Uttarakhand’s public data useful for everyone.</p>
           </div>
         </footer>
       </div>

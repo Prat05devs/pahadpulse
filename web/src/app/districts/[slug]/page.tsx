@@ -13,6 +13,7 @@ import { WeatherPanel } from '@/features/weather/components';
 import { TerrainMap, fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
 import { formatIndicatorValue } from '@/features/indicators/format';
 import { ConnectivityPanel, DistrictNetworkSchema } from '@/features/connectivity';
+import { buildPageMetadata } from '@/lib/seo';
 
 const DistrictDetailSchema = z.object({
   district: AreaSchema,
@@ -29,14 +30,20 @@ export async function generateMetadata({ params }: DistrictDetailPageProps): Pro
   try {
     const { slug } = await params;
     const district = await apiClient.get(`/areas/districts/${slug}`, DistrictDetailSchema);
-    return {
-      title: `${district.district.name.en} — Pahad Pulse`,
-      description: `Dashboard for ${district.district.name.en} district with weather, alerts, and statistics.`,
-    };
+    const name = district.district.name.en;
+    return buildPageMetadata({
+      title: `${name} District Data, Weather & Alerts`,
+      description: `Explore ${name} district through Pahad Pulse: current weather, public alerts, connectivity, administrative details, and source-backed development indicators.`,
+      path: `/districts/${slug}`,
+      keywords: [`${name} district`, `${name} weather`, `${name} Uttarakhand data`],
+    });
   } catch {
-    return {
-      title: 'District Dashboard — Pahad Pulse',
-    };
+    return buildPageMetadata({
+      title: 'Uttarakhand District Intelligence',
+      description:
+        'Explore a source-backed Uttarakhand district dashboard with weather, alerts, connectivity, and public development indicators.',
+      path: '/districts',
+    });
   }
 }
 

@@ -1,15 +1,18 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { Route } from 'lucide-react';
+import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { fetchDistrictFeatures } from '@/features/map';
 import { fetchRoadNetwork } from '@/features/roads/services';
 import { HighwayExplorer } from '@/features/roads/components/highway-explorer';
 
-export const metadata: Metadata = {
-  title: 'Roads & Highways — Pahad Pulse',
-  description: 'National and State Highways running through Uttarakhand, drawn over terrain.',
-};
+export const metadata = buildPageMetadata({
+  title: 'Uttarakhand Roads & Highways Map',
+  description:
+    'Explore National and State Highways across Uttarakhand on an interactive terrain map, with clear source attribution and coverage limitations.',
+  path: '/roads',
+  keywords: ['Uttarakhand highway map', 'Uttarakhand roads', 'NH SH Uttarakhand'],
+});
 
 /** An hour. The highway network comes from OpenStreetMap on a weekly cron — it changes on
  *  the timescale of government notifications, not minutes. */
@@ -34,8 +37,7 @@ export default async function RoadsPage() {
 
   if (districtResult.status === 'fulfilled') districts = districtResult.value;
 
-  const attribution =
-    network?.national[0]?.provenance ?? network?.state[0]?.provenance ?? null;
+  const attribution = network?.national[0]?.provenance ?? network?.state[0]?.provenance ?? null;
 
   return (
     <DashboardLayout>
@@ -48,8 +50,8 @@ export default async function RoadsPage() {
               Roads &amp; highways
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              The highway network drawn over the terrain it crosses. National highways in
-              blue, state highways in gold.
+              The highway network drawn over the terrain it crosses. National highways in blue,
+              state highways in gold.
             </p>
           </div>
         </header>
@@ -60,11 +62,12 @@ export default async function RoadsPage() {
               it says so before they read anything else. */}
           <div className="rounded-lg border border-warning/40 bg-warning-soft/60 px-4 py-3">
             <p className="text-sm text-text-light">
-              <span className="font-semibold">This map shows which highways exist, not
-              whether they are open.</span>{' '}
-              Closures and landslide blocks are reported manually by district officials and
-              have no live feed yet, so none are shown here. Check current road status with
-              the district administration before travelling.
+              <span className="font-semibold">
+                This map shows which highways exist, not whether they are open.
+              </span>{' '}
+              Closures and landslide blocks are reported manually by district officials and have no
+              live feed yet, so none are shown here. Check current road status with the district
+              administration before travelling.
             </p>
           </div>
 
@@ -85,8 +88,8 @@ export default async function RoadsPage() {
               >
                 {attribution.department.en}
               </a>
-              , read {attribution.vintage}. This is a crowd-sourced map, not an NHAI or PWD
-              register — a highway may be missing or newly renumbered.
+              , read {attribution.vintage}. This is a crowd-sourced map, not an NHAI or PWD register
+              — a highway may be missing or newly renumbered.
             </p>
           )}
         </div>

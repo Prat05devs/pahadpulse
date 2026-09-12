@@ -1,14 +1,16 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { Clock3, ExternalLink, Wifi } from 'lucide-react';
+import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { SpeedTable, fetchStateNetwork } from '@/features/connectivity';
 
-export const metadata: Metadata = {
-  title: 'Internet Connectivity — Pahad Pulse',
+export const metadata = buildPageMetadata({
+  title: 'Internet Connectivity Across Uttarakhand Districts',
   description:
-    'Measured internet speeds by district in Uttarakhand, from Speedtest by Ookla open data.',
-};
+    'Explore measured fixed and mobile internet speeds across Uttarakhand districts using aggregated Speedtest by Ookla open data.',
+  path: '/connectivity',
+  keywords: ['Uttarakhand internet speed', 'district broadband data', 'Ookla Uttarakhand'],
+});
 
 // Fetch at request time so deploy-time failures and expired alerts are not cached as pages.
 export const dynamic = 'force-dynamic';

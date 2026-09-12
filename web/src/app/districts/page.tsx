@@ -1,6 +1,6 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { z } from 'zod';
+import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { apiClient } from '@/lib/api';
 import { DistrictSummarySchema } from '@/features/dashboard/schemas';
@@ -10,11 +10,17 @@ import {
   type CarouselDistrict,
 } from '@/features/districts/components/district-carousel';
 
-export const metadata: Metadata = {
-  title: 'Districts — Pahad Pulse',
+export const metadata = buildPageMetadata({
+  title: 'All 13 Uttarakhand Districts: Data & Live Conditions',
   description:
-    'The thirteen districts of Uttarakhand, with current conditions and administrative figures.',
-};
+    'Explore all 13 Uttarakhand districts with current conditions, bilingual names, administrative figures, and direct access to district intelligence dashboards.',
+  path: '/districts',
+  keywords: [
+    '13 districts of Uttarakhand',
+    'Uttarakhand district data',
+    'Uttarakhand district dashboard',
+  ],
+});
 
 /**
  * Cached for five minutes rather than rendered fresh on every navigation.
@@ -49,7 +55,10 @@ export default async function DistrictsListPage() {
    * than not at all.
    */
   const weatherByslug = new Map(
-    (await fetchAllDistrictWeather().catch(() => [])).map((entry) => [entry.areaSlug, entry.weather]),
+    (await fetchAllDistrictWeather().catch(() => [])).map((entry) => [
+      entry.areaSlug,
+      entry.weather,
+    ])
   );
 
   const cards: CarouselDistrict[] = (districts ?? []).map((district) => {
@@ -86,8 +95,7 @@ export default async function DistrictsListPage() {
             Districts
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Thirteen districts, each shown by the place it is known for. Swipe or use the
-            arrows.
+            Thirteen districts, each shown by the place it is known for. Swipe or use the arrows.
           </p>
         </div>
 

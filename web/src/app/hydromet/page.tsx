@@ -1,6 +1,6 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { CloudSun, Wind } from 'lucide-react';
+import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { apiClient } from '@/lib/api';
 import { WeatherDataSchema } from '@/features/weather/schemas';
@@ -11,11 +11,13 @@ import {
   AirQualitySummary,
 } from '@/features/air-quality/components/air-quality-panel';
 
-export const metadata: Metadata = {
-  title: 'Weather & Air — Pahad Pulse',
+export const metadata = buildPageMetadata({
+  title: 'Uttarakhand Weather & District Air Quality',
   description:
-    'Current weather and air quality for every district of Uttarakhand, with the source behind every figure.',
-};
+    'Track current weather and air quality across every Uttarakhand district, with transparent sources and timestamps behind each available reading.',
+  path: '/hydromet',
+  keywords: ['Uttarakhand weather', 'Uttarakhand air quality', 'district weather Uttarakhand'],
+});
 
 /** Five minutes: the weather and air connectors both run hourly, so this is well inside
  *  their own cadence while turning nearly every navigation into a cache hit. */
@@ -58,8 +60,7 @@ export default async function WeatherPage() {
               Weather &amp; air
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              Current conditions and air quality at every district headquarters, updated
-              hourly.
+              Current conditions and air quality at every district headquarters, updated hourly.
             </p>
           </div>
         </header>
@@ -92,8 +93,8 @@ export default async function WeatherPage() {
 
             {air.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No air quality readings are available yet. They arrive with the hourly
-                ingestion run.
+                No air quality readings are available yet. They arrive with the hourly ingestion
+                run.
               </p>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -105,10 +106,10 @@ export default async function WeatherPage() {
 
             {air[0] !== undefined && (
               <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-                {air[0].source.attribution}. These are modelled estimates covering every
-                district, not readings from a ground monitor. The Central Pollution Control
-                Board operates reference-grade stations in some Uttarakhand towns and its
-                figures are authoritative where they exist.
+                {air[0].source.attribution}. These are modelled estimates covering every district,
+                not readings from a ground monitor. The Central Pollution Control Board operates
+                reference-grade stations in some Uttarakhand towns and its figures are authoritative
+                where they exist.
               </p>
             )}
           </section>
@@ -122,10 +123,10 @@ export default async function WeatherPage() {
             <div className="mt-3 rounded-lg border border-warning/40 bg-warning-soft/60 px-4 py-3">
               <p className="text-sm leading-relaxed text-text-light">
                 <span className="font-semibold">No river level data is published here yet.</span>{' '}
-                River gauge readings come from the Central Water Commission, and access has
-                not been arranged. Until it is, this page shows nothing rather than an
-                estimate — a wrong river level is more dangerous than an absent one. Check
-                CWC or the district administration for current levels.
+                River gauge readings come from the Central Water Commission, and access has not been
+                arranged. Until it is, this page shows nothing rather than an estimate — a wrong
+                river level is more dangerous than an absent one. Check CWC or the district
+                administration for current levels.
               </p>
             </div>
           </section>

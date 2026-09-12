@@ -1,16 +1,23 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
+import { buildPageMetadata } from '@/lib/seo';
 import { AlertCard } from '@/features/alerts/components';
 import { fetchActiveAlerts } from '@/features/alerts/services';
 import { TerrainMap, fetchAlertFeatures } from '@/features/map';
 import { fetchRecentSeismic } from '@/features/seismic/services';
 import { SeismicPanel } from '@/features/seismic/components/seismic-panel';
 
-export const metadata: Metadata = {
-  title: 'Live Alerts — Pahad Pulse',
-  description: 'Active weather, disaster, road, and river alerts across Uttarakhand.',
-};
+export const metadata = buildPageMetadata({
+  title: 'Live Uttarakhand Weather & Disaster Alerts',
+  description:
+    'See active weather, disaster, road, river, and seismic information across Uttarakhand on one source-aware public dashboard.',
+  path: '/alerts',
+  keywords: [
+    'Uttarakhand weather alerts',
+    'Uttarakhand disaster alerts',
+    'Uttarakhand seismic activity',
+  ],
+});
 
 // Fetch at request time so deploy-time failures and expired alerts are not cached as pages.
 export const dynamic = 'force-dynamic';
@@ -96,9 +103,8 @@ export default async function AlertsPage() {
                 {anyDistrictExtent ? (
                   <>
                     Shaded areas are the <strong>districts</strong> each warning names, not the
-                    precise area the authority published — a warning for one valley is drawn
-                    over the whole district. SACHET&rsquo;s polygon service is currently
-                    unavailable.
+                    precise area the authority published — a warning for one valley is drawn over
+                    the whole district. SACHET&rsquo;s polygon service is currently unavailable.
                   </>
                 ) : (
                   <>
@@ -110,8 +116,8 @@ export default async function AlertsPage() {
                   <>
                     {' '}
                     {listedCount - mappedCount} further alert
-                    {listedCount - mappedCount !== 1 ? 's are' : ' is'} active but state their
-                    area only in words, so they appear in the list below and not on the map.
+                    {listedCount - mappedCount !== 1 ? 's are' : ' is'} active but state their area
+                    only in words, so they appear in the list below and not on the map.
                   </>
                 )}
               </p>
@@ -126,16 +132,19 @@ export default async function AlertsPage() {
             <div className="rounded-lg border border-warning/50 bg-warning-soft/60 px-4 py-5">
               <p className="font-semibold text-text-light">Alerts could not be loaded</p>
               <p className="mt-1 text-sm leading-relaxed text-text-light/80">
-                This is a problem with this page, not an all-clear. There may be active
-                warnings that are not shown here. Check SACHET (sachet.ndma.gov.in) or your
-                district administration before making any decision.
+                This is a problem with this page, not an all-clear. There may be active warnings
+                that are not shown here. Check SACHET (sachet.ndma.gov.in) or your district
+                administration before making any decision.
               </p>
             </div>
           ) : alerts.length === 0 ? (
             <div className="py-10 text-center sm:py-12">
-              <p className="mb-1 font-semibold text-text-light">No active alerts in the latest stored data</p>
+              <p className="mb-1 font-semibold text-text-light">
+                No active alerts in the latest stored data
+              </p>
               <p className="text-sm text-text-light/60">
-                The alert feed may be delayed. Check SACHET or your district administration for current warnings.
+                The alert feed may be delayed. Check SACHET or your district administration for
+                current warnings.
               </p>
             </div>
           ) : (
@@ -149,7 +158,6 @@ export default async function AlertsPage() {
                   <AlertCard key={alert.id} alert={alert} index={index} />
                 ))}
               </div>
-
             </div>
           )}
 

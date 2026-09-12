@@ -1,5 +1,4 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import {
   Briefcase,
   Database,
@@ -12,12 +11,19 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
+import { buildPageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Sector Intelligence — Pahad Pulse',
+export const metadata = buildPageMetadata({
+  title: 'Uttarakhand Sector Intelligence',
   description:
-    'Analytics and insights across demographics, health, education, economy, and industry.',
-};
+    'Explore Uttarakhand public-data intelligence across demographics, health, education, economy, industry, and connectivity in one unified platform.',
+  path: '/intelligence',
+  keywords: [
+    'Uttarakhand development indicators',
+    'Uttarakhand sector data',
+    'Uttarakhand analytics',
+  ],
+});
 
 export default function IntelligencePage() {
   const sectors: { title: string; icon: LucideIcon; metrics: string[] }[] = [
@@ -58,7 +64,9 @@ export default function IntelligencePage() {
       <div className="min-h-screen bg-bg-light">
         {/* Header */}
         <div className="bg-bg-dark px-4 py-6 text-text-dark sm:px-6 md:py-8">
-          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Sector Intelligence</h1>
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">
+            Sector Intelligence
+          </h1>
           <p className="text-text-dark/70 mt-2">
             Consolidated analytics across six development sectors
           </p>

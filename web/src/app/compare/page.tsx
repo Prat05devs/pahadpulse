@@ -1,6 +1,6 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { AlertCircle, GitCompare } from 'lucide-react';
+import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { apiClient } from '@/lib/api';
 import { z } from 'zod';
@@ -11,10 +11,17 @@ import { DistrictPicker } from '@/features/indicators/components/district-picker
 import { BusinessComparisonScreen } from '@/features/business/components/business-comparison-screen';
 import { QueryProvider } from '@/components/providers/query-provider';
 
-export const metadata: Metadata = {
-  title: 'Compare Districts — Pahad Pulse',
-  description: 'Side-by-side comparison of two districts across key indicators.',
-};
+export const metadata = buildPageMetadata({
+  title: 'Compare Uttarakhand Districts & Business Potential',
+  description:
+    'Compare Uttarakhand districts across 60+ public indicators and explore scenario-based business potential with Pahad Pulse’s transparent decision engine.',
+  path: '/compare',
+  keywords: [
+    'compare Uttarakhand districts',
+    'Uttarakhand business opportunities',
+    'district comparison India',
+  ],
+});
 
 /** An hour. Every figure here is Census 2011 or a published state statistic; they change
  *  by migration, never between requests. */
@@ -62,20 +69,29 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
       <div className="min-h-full">
         <header className="border-b border-border bg-surface">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 md:py-8 lg:px-8">
-            <p className="mb-1.5 text-xs font-bold uppercase tracking-widest text-accent">Analysis Engine</p>
+            <p className="mb-1.5 text-xs font-bold uppercase tracking-widest text-accent">
+              Analysis Engine
+            </p>
             <h1 className="flex items-center gap-2 font-display text-2xl font-semibold leading-tight tracking-[-0.025em] sm:text-3xl text-text-light">
               <GitCompare className="size-6 text-accent" strokeWidth={1.8} aria-hidden="true" />
               Pahad Pulse Comparison Engine
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              We have engineered a robust comparison engine that dynamically processes thousands of socio-economic data points across demographics, infrastructure, and economics. We are incredibly proud of the comprehensive data warehouse we have built for Uttarakhand, allowing you to instantly benchmark any two districts across 60+ key indicators with raw, unadulterated precision.
+              We have engineered a robust comparison engine that dynamically processes thousands of
+              socio-economic data points across demographics, infrastructure, and economics. We are
+              incredibly proud of the comprehensive data warehouse we have built for Uttarakhand,
+              allowing you to instantly benchmark any two districts across 60+ key indicators with
+              raw, unadulterated precision.
             </p>
           </div>
         </header>
 
         <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
           {error !== null && (
-            <section className="surface-card flex flex-col items-start gap-3 p-4 sm:flex-row sm:gap-4 sm:p-6" role="alert">
+            <section
+              className="surface-card flex flex-col items-start gap-3 p-4 sm:flex-row sm:gap-4 sm:p-6"
+              role="alert"
+            >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-danger-soft text-danger">
                 <AlertCircle className="size-5" aria-hidden="true" />
               </span>
@@ -126,10 +142,15 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
                     Ease of Doing Business Engine
                   </h2>
                   <p className="text-muted-foreground mt-3 text-sm max-w-3xl leading-relaxed">
-                    Moving beyond raw data, we have synthesized these data points into 5 highly specialized, pre-calculated investment scenarios tailored specifically for Uttarakhand&apos;s terrain. From boutique homestays to agro-processing units, our engine evaluates multiple weighted metrics—like digital connectivity, geological safety, and urban market size—to mathematically recommend the most profitable location for your venture.
+                    Moving beyond raw data, we have synthesized these data points into 5 highly
+                    specialized, pre-calculated investment scenarios tailored specifically for
+                    Uttarakhand&apos;s terrain. From boutique homestays to agro-processing units,
+                    our engine evaluates multiple weighted metrics—like digital connectivity,
+                    geological safety, and urban market size—to mathematically recommend the most
+                    profitable location for your venture.
                   </p>
                 </div>
-                
+
                 <QueryProvider>
                   <BusinessComparisonScreen districts={districts} />
                 </QueryProvider>
