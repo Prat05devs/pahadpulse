@@ -30,4 +30,14 @@ describe('DashboardLayout', () => {
     expect(menuButton).toHaveAttribute('aria-label', 'Close navigation');
     expect(menuButton).toHaveAttribute('aria-expanded', 'true');
   });
+
+  it('does not expose the retired migration route in navigation', () => {
+    render(
+      <DashboardLayout>
+        <p>Dashboard content</p>
+      </DashboardLayout>
+    );
+
+    expect(screen.queryByRole('link', { name: 'Migration' })).not.toBeInTheDocument();
+  });
 });

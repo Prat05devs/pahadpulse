@@ -19,7 +19,6 @@ import {
   Mountain,
   RadioTower,
   Route,
-  Users,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -70,7 +69,6 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: 'Planning',
     items: [
-      { label: 'Migration', href: '/migration', icon: Users },
       { label: 'Sector Intelligence', href: '/intelligence', icon: BarChart3 },
       { label: 'Governance', href: '/governance', icon: Building2 },
       { label: 'Offline Mode', href: '/offline', icon: HardDriveDownload },
