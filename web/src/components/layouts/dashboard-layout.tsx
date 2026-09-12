@@ -16,16 +16,11 @@ import {
   GitCompareArrows,
   HardDriveDownload,
   Home,
-  Map,
   Mountain,
   RadioTower,
   Route,
   Users,
-  SignalHigh,
-  Tent,
-  Wifi,
   X,
-  TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -124,6 +119,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 text-text-light backdrop-blur lg:hidden">
         <Link href="/" className="flex min-h-11 items-center gap-3 rounded-md px-1">
           <span className="flex size-9 items-center justify-center overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo.png" alt="Pahad Pulse logo" className="size-full object-contain" />
             </span>
           <span>
@@ -216,6 +212,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             title={showLabels ? undefined : 'Pahad Pulse'}
           >
             <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo.png" alt="Pahad Pulse logo" className="size-full object-contain" />
             </span>
             <span className={clsx(!showLabels && 'lg:hidden')}>

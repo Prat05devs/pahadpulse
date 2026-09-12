@@ -126,7 +126,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
                     Ease of Doing Business Engine
                   </h2>
                   <p className="text-muted-foreground mt-3 text-sm max-w-3xl leading-relaxed">
-                    Moving beyond raw data, we have synthesized these data points into 5 highly specialized, pre-calculated investment scenarios tailored specifically for Uttarakhand's terrain. From boutique homestays to agro-processing units, our engine evaluates multiple weighted metrics—like digital connectivity, geological safety, and urban market size—to mathematically recommend the most profitable location for your venture.
+                    Moving beyond raw data, we have synthesized these data points into 5 highly specialized, pre-calculated investment scenarios tailored specifically for Uttarakhand&apos;s terrain. From boutique homestays to agro-processing units, our engine evaluates multiple weighted metrics—like digital connectivity, geological safety, and urban market size—to mathematically recommend the most profitable location for your venture.
                   </p>
                 </div>
                 
