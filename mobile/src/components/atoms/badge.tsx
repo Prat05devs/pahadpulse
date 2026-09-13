@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 
 import { useTheme } from '@/theme';
+import { withAlpha } from '@/theme/tokens';
 
 import { Text } from './text';
 
@@ -63,7 +64,7 @@ export function Badge({ label, tone = 'neutral', color, variant = 'soft' }: Badg
         paddingHorizontal: theme.spacing.sm,
         paddingVertical: theme.spacing.xxs,
         borderRadius: theme.radius.pill,
-        backgroundColor: solid ? resolved : `${resolved}1F`,
+        backgroundColor: solid ? resolved : withAlpha(resolved, 0.12),
       }}
     >
       <Text

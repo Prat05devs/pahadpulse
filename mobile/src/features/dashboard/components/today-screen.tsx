@@ -13,6 +13,7 @@ import {
 } from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { AlertCard, useActiveAlerts, useAlertSummary } from '@/features/alerts';
+import { isAlertInForce } from '@/features/alerts/schemas';
 import { useDistricts } from '@/features/areas';
 import { useAreaWeather } from '@/features/weather';
 import { formatCompact, formatNumber, localise } from '@/lib/format';
@@ -56,9 +57,11 @@ export function TodayScreen() {
     if (focusSlug) void focusWeather.refetch();
   };
 
-  const activeCount = summary.data?.activeCount ?? 0;
-  const severeCount =
-    (summary.data?.bySeverity.severe ?? 0) + (summary.data?.bySeverity.extreme ?? 0);
+  const currentAlerts = (alerts.data ?? []).filter((alert) => isAlertInForce(alert));
+  const activeCount = summary.isError ? currentAlerts.length : (summary.data?.activeCount ?? 0);
+  const severeCount = summary.isError
+    ? currentAlerts.filter((alert) => alert.severity === 'severe' || alert.severity === 'extreme').length
+    : (summary.data?.bySeverity.severe ?? 0) + (summary.data?.bySeverity.extreme ?? 0);
 
   const totalVillages = (districts.data ?? []).reduce((sum, d) => sum + d.counts.villages, 0);
 
@@ -110,7 +113,7 @@ export function TodayScreen() {
           countTo={summary.isPending ? undefined : activeCount}
           countFormat={(next) => formatCompact(Math.round(next))}
           // The one figure in the app that is genuinely live — alerts expire by the hour.
-          live={!summary.isPending}
+          live={!summary.isPending && !summary.isError}
           icon="warning-outline"
           tone={severeCount > 0 ? 'danger' : 'default'}
           caption={severeCount > 0 ? `${severeCount} severe or worse` : 'Statewide'}
@@ -180,7 +183,7 @@ export function TodayScreen() {
         >
           {(list) => (
             <VStack gap="sm">
-              {list.slice(0, 4).map((alert) => (
+              {list.filter((alert) => isAlertInForce(alert)).slice(0, 4).map((alert) => (
                 <AlertCard
                   key={alert.id}
                   alert={alert}

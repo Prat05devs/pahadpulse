@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import { Stack, router } from 'expo-router';
+import { Alert } from 'react-native';
 
 import { Card, Divider, HStack, Pressable, Text, VStack } from '@/components/atoms';
 import { Chip, ListRow, SectionHeader } from '@/components/molecules';
@@ -48,6 +49,17 @@ export function SettingsScreen() {
   const dismiss = () => {
     if (router.canGoBack()) router.back();
     else router.replace('/');
+  };
+
+  const confirmReset = () => {
+    Alert.alert(
+      'Reset preferences?',
+      'This clears your language, appearance and followed districts on this device.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Reset', style: 'destructive', onPress: reset },
+      ],
+    );
   };
 
   return (
@@ -116,7 +128,7 @@ export function SettingsScreen() {
             title="Reset preferences"
             subtitle="Clears language, theme and followed districts"
             icon="trash-outline"
-            onPress={reset}
+            onPress={confirmReset}
             showChevron={false}
           />
         </Card>

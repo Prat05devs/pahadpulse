@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
 /**
  * How far apart consecutive rows arrive.
@@ -31,12 +31,18 @@ type EntranceProps = {
  * the whole thing is a no-op under Jest, where jest-expo stubs Reanimated's native side.
  */
 export function Entrance({ children, index = 0 }: EntranceProps) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <Animated.View
-      entering={FadeInDown.duration(320)
-        .delay(Math.min(index, MAX_STEPS) * STEP_MS)
-        // Starts slightly low and rises: the direction reads as content settling into place.
-        .withInitialValues({ transform: [{ translateY: 14 }] })}
+      entering={
+        reduceMotion
+          ? undefined
+          : FadeInDown.duration(320)
+              .delay(Math.min(index, MAX_STEPS) * STEP_MS)
+              // Starts slightly low and rises: the direction reads as content settling into place.
+              .withInitialValues({ transform: [{ translateY: 14 }] })
+      }
     >
       {children}
     </Animated.View>

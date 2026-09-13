@@ -25,6 +25,7 @@ const chainable = (): any => {
 export const FadeInDown = chainable();
 export const FadeIn = chainable();
 export const FadeOut = chainable();
+export const ReduceMotion = { System: 'system', Always: 'always', Never: 'never' };
 
 export const withTiming = identity;
 export const withSpring = identity;
@@ -63,6 +64,10 @@ export function useAnimatedStyle(factory: () => any): any {
 
 export function useAnimatedReaction(prepare: () => any, react: (value: any) => void): void {
   react(prepare());
+}
+
+export function useReducedMotion(): boolean {
+  return false;
 }
 
 function createAnimatedComponent(Component: any): any {

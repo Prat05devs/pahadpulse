@@ -33,7 +33,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: NAME[VARIANT],
   slug: 'pahad-pulse',
   version: '0.1.0',
-  orientation: 'portrait',
+  orientation: 'default',
   icon: './assets/images/icon.png',
   scheme: 'pahadpulse',
   userInterfaceStyle: 'automatic',
@@ -46,13 +46,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
-    infoPlist: {
-      // The portal is public and read-only. It never needs background location; asking for
-      // "when in use" only is what keeps the App Store review question simple.
-      NSLocationWhenInUseUsageDescription:
-        'Pahad Pulse uses your location to show the district you are in first.',
-      ITSAppUsesNonExemptEncryption: false,
-    },
+    infoPlist: { ITSAppUsesNonExemptEncryption: false },
   },
   android: {
     package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
@@ -62,7 +56,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/images/android-icon-foreground.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
-    permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
+    blockedPermissions: ['android.permission.ACCESS_COARSE_LOCATION', 'android.permission.ACCESS_FINE_LOCATION'],
   },
   web: {
     output: 'static',

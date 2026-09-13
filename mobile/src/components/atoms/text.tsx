@@ -4,7 +4,21 @@ import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'r
 import { useTheme, type TypographyToken } from '@/theme';
 import { familyFor, platformTextFixes, type FontWeightToken } from '@/theme/fonts';
 
-type ColorToken = 'text' | 'textMuted' | 'textInverse' | 'primary' | 'accent' | 'danger';
+type ColorToken =
+  | 'text'
+  | 'textSecondary'
+  | 'textTertiary'
+  | 'textMuted'
+  | 'textDisabled'
+  | 'textInverse'
+  | 'textLink'
+  | 'primary'
+  | 'accent'
+  | 'danger'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'info';
 
 export type TextProps = RNTextProps & {
   /** Which step of the type ramp. Defaults to body. */

@@ -3,12 +3,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { FlatList, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Entrance, Text, VStack } from '@/components/atoms';
+import { Card, Entrance, HStack, Icon, Text, VStack } from '@/components/atoms';
 import { Chip, EmptyState, ErrorState, LoadingState } from '@/components/molecules';
 import { Screen } from '@/components/templates';
+import { formatRelative } from '@/lib/format';
 import { useTheme } from '@/theme';
 
-import { SEVERITY_RANK, type AlertType } from '../schemas';
+import { isAlertInForce, SEVERITY_RANK, type AlertType } from '../schemas';
 import { useActiveAlerts } from '../hooks';
 import { AlertCard } from './alert-card';
 
@@ -37,10 +38,10 @@ export function AlertsScreen() {
   // One stable handler for every row, so AlertCard's memo actually holds.
   const openAlert = useCallback((id: number) => router.push(`/alerts/${id}`), [router]);
 
-  const { data, isPending, isError, error, refetch, isRefetching } = useActiveAlerts();
+  const { data, dataUpdatedAt, isPending, isError, error, refetch, isRefetching } = useActiveAlerts();
 
   const alerts = useMemo(() => {
-    const list = data ?? [];
+    const list = (data ?? []).filter((alert) => isAlertInForce(alert));
     const filtered = type === 'all' ? list : list.filter((alert) => alert.type === type);
     return [...filtered].sort((a, b) => {
       const rank = SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity];
@@ -63,7 +64,11 @@ export function AlertsScreen() {
         <VStack paddingX="lg">
           <Text variant="title">Alerts</Text>
           <Text variant="footnote" color="textMuted">
-            {isPending ? 'Loading' : `${alerts.length} in force`}
+            {isPending
+              ? 'Loading'
+              : isError
+                ? `${alerts.length} saved active alert${alerts.length === 1 ? '' : 's'}`
+                : `${alerts.length} in force`}
           </Text>
         </VStack>
 
@@ -121,6 +126,28 @@ export function AlertsScreen() {
         }}
         onRefresh={refetch}
         refreshing={isRefetching}
+        ListHeaderComponent={
+          isError && data !== undefined ? (
+            <Card
+              tone="muted"
+              elevation="none"
+              style={{ marginBottom: theme.spacing.sm }}
+              accessibilityRole="alert"
+            >
+              <HStack gap="sm" align="center">
+                <Icon name="cloud-offline-outline" size={20} tone="warning" />
+                <VStack grow gap="xxs">
+                  <Text variant="bodyStrong">Showing saved alerts</Text>
+                  <Text variant="caption" color="textMuted">
+                    {dataUpdatedAt > 0
+                      ? `Could not refresh · last checked ${formatRelative(new Date(dataUpdatedAt))}`
+                      : 'Could not refresh. Pull down to try again.'}
+                  </Text>
+                </VStack>
+              </HStack>
+            </Card>
+          ) : null
+        }
         ListEmptyComponent={
           <EmptyState
             title={type === 'all' ? 'No active alerts' : `No ${type} alerts`}

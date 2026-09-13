@@ -37,6 +37,13 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="districts/[slug]" options={{ title: '' }} />
         <Stack.Screen name="alerts/[id]" options={{ title: 'Alert' }} />
+        <Stack.Screen name="roads" options={{ headerShown: false }} />
+        <Stack.Screen name="tourism" options={{ headerShown: false }} />
+        <Stack.Screen name="connectivity" options={{ headerShown: false }} />
+        <Stack.Screen name="seismic" options={{ headerShown: false }} />
+        <Stack.Screen name="air-quality" options={{ headerShown: false }} />
+        <Stack.Screen name="compare" options={{ title: 'Compare districts' }} />
+        <Stack.Screen name="credits" options={{ title: 'Data credits' }} />
         <Stack.Screen
           name="settings"
           options={{

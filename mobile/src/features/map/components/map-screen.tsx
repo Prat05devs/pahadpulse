@@ -4,7 +4,7 @@ import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
-import { Icon, Pressable, Text, type IconName } from '@/components/atoms';
+import { HStack, Icon, Pressable, Text, type IconName } from '@/components/atoms';
 import { ErrorState, LoadingState } from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { useTheme } from '@/theme';
@@ -180,6 +180,9 @@ export function MapScreen() {
         overScrollMode="never"
         javaScriptEnabled
         domStorageEnabled
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={`Interactive map of Uttarakhand with ${districts.data?.features.length ?? 0} districts. Use the Districts tab for an accessible list of every district.`}
       />
 
       {!ready ? (
@@ -284,14 +287,15 @@ export function MapScreen() {
         transparent
         onRequestClose={() => setCreditsOpen(false)}
       >
-        <Pressable
-          onPress={() => setCreditsOpen(false)}
-          style={{
-            flex: 1,
-            justifyContent: 'flex-end',
-            backgroundColor: 'rgba(0,0,0,0.35)',
-          }}
+        <View
+          style={{ flex: 1, justifyContent: 'flex-end' }}
+          accessibilityViewIsModal
         >
+          <Pressable
+            onPress={() => setCreditsOpen(false)}
+            accessibilityLabel="Close map sources"
+            style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.scrim }]}
+          />
           <View
             style={{
               backgroundColor: theme.colors.surface,
@@ -302,7 +306,12 @@ export function MapScreen() {
               gap: theme.spacing.sm,
             }}
           >
-            <Text variant="title">Map sources</Text>
+            <HStack justify="space-between" align="center">
+              <Text variant="title">Map sources</Text>
+              <Pressable onPress={() => setCreditsOpen(false)} accessibilityLabel="Close map sources">
+                <Icon name="close" size={24} tone="text" />
+              </Pressable>
+            </HStack>
             <Text variant="body" color="textMuted">
               {MAP_ATTRIBUTION}
             </Text>
@@ -312,7 +321,7 @@ export function MapScreen() {
               key.
             </Text>
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </View>
   );

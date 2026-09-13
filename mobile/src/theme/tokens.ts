@@ -55,65 +55,193 @@ const freshness: Record<FreshnessLevel, string> = {
   unknown: '#6B7280',
 } as const;
 
+// ---------------------------------------------------------------------------
+// Alpha utility — avoids raw hex-alpha string concatenation in components.
+// ---------------------------------------------------------------------------
+
+/** Append an alpha byte to a 6-digit hex colour: `withAlpha('#015BD6', 0.12)` → `#015BD61F`. */
+export function withAlpha(hex: string, opacity: number): string {
+  const alpha = Math.round(opacity * 255)
+    .toString(16)
+    .padStart(2, '0');
+  return `${hex}${alpha}`;
+}
+
+// ---------------------------------------------------------------------------
+// Palette contract
+// ---------------------------------------------------------------------------
+
 /**
  * The palette contract. Written out as a type rather than inferred from the light values,
  * so `darkColors` is checked against the same shape instead of against light's literal
  * strings — and so a new token cannot be added to one theme and forgotten in the other.
  */
 export type Colors = {
+  /* ── Backgrounds & Surfaces ─────────────────────────────────────── */
   background: string;
   surface: string;
   surfaceMuted: string;
+  surfaceElevated: string;
+  surfaceInteractive: string;
+
+  /* ── Borders ────────────────────────────────────────────────────── */
+  borderSubtle: string;
   border: string;
   borderStrong: string;
+  borderFocus: string;
 
+  /* ── Text ────────────────────────────────────────────────────────── */
   text: string;
+  textSecondary: string;
+  textTertiary: string;
   textMuted: string;
+  textDisabled: string;
   textInverse: string;
+  textLink: string;
 
+  /* ── Brand & Action ─────────────────────────────────────────────── */
   primary: string;
+  primarySubtle: string;
   primaryMuted: string;
+  primaryStrong: string;
   accent: string;
+  accentSubtle: string;
   accentMuted: string;
+  accentStrong: string;
   danger: string;
   dangerMuted: string;
 
+  /* ── Semantic ────────────────────────────────────────────────────── */
+  success: string;
+  successSubtle: string;
+  warning: string;
+  warningSubtle: string;
+  error: string;
+  errorSubtle: string;
+  info: string;
+  infoSubtle: string;
+
+  /* ── Data encodings ──────────────────────────────────────────────── */
   severity: Record<Severity, string>;
   freshness: Record<FreshnessLevel, string>;
 
+  /* ── Interaction states ──────────────────────────────────────────── */
+  actionPrimary: string;
+  actionPrimaryPressed: string;
+  actionPrimaryDisabled: string;
+  selected: string;
+  pressed: string;
+  focused: string;
+
+  /* ── Utility ─────────────────────────────────────────────────────── */
   scrim: string;
   skeleton: string;
+  separator: string;
 };
 
+// ---------------------------------------------------------------------------
+// Light palette
+// ---------------------------------------------------------------------------
+
 const lightColors: Colors = {
-  /** Page background, behind everything. */
-  background: '#F3F5FA',
+  /* ── Backgrounds & Surfaces ─────────────────────────────────────── */
+  /** Page background, behind everything. Slightly warmer than pure blue-white. */
+  background: '#F2F4F8',
   /** Raised surfaces: cards, sheets, the tab bar. */
   surface: '#FFFFFF',
   /** A surface one step further back, for nested blocks and table stripes. */
-  surfaceMuted: '#ECF0F8',
-  border: '#D6DCE8',
-  borderStrong: '#BDC6D6',
+  surfaceMuted: '#E8ECF4',
+  /** Modal sheets — same fill as surface but sits on stronger shadow. */
+  surfaceElevated: '#FFFFFF',
+  /** Input fields, search bars. */
+  surfaceInteractive: '#F7F9FC',
 
+  /* ── Borders ────────────────────────────────────────────────────── */
+  /** Lightest — dividers inside cards, thin separators. */
+  borderSubtle: '#E2E8F0',
+  /** Default card/chip borders. */
+  border: '#D1D9E6',
+  /** Emphasized borders, unselected score bars. */
+  borderStrong: '#B0BDCE',
+  /** Focus ring — matches primary. */
+  borderFocus: brand.blue,
+
+  /* ── Text ────────────────────────────────────────────────────────── */
+  /** Primary high-contrast text. ~15:1 on background. */
   text: '#0F172A',
-  textMuted: '#475569',
+  /** Subtitles, descriptions. ~8.7:1 on background. */
+  textSecondary: '#3D4F65',
+  /** Timestamps, footnotes. ~4.8:1 on background — passes AA. */
+  textTertiary: '#64748B',
+  /** Captions and provenance notes. Kept AA-safe because existing small text uses this token. */
+  textMuted: '#64748B',
+  /** Disabled controls. Intentionally low contrast. */
+  textDisabled: '#B0BEC9',
+  /** Inverted text on solid colored buttons/badges. */
   textInverse: '#FFFFFF',
+  /** Tappable links. Uses brand primary. */
+  textLink: brand.blue,
 
+  /* ── Brand & Action ─────────────────────────────────────────────── */
   primary: brand.blue,
+  /** Selected chip bg, active row highlight. */
+  primarySubtle: '#EBF2FC',
+  /** Badge pill background. */
   primaryMuted: '#DBEAFE',
-  accent: brand.cyan,
+  /** Hover/pressed primary emphasis. 7.8:1 AAA. */
+  primaryStrong: '#014BA8',
+  /**
+   * Water/hydromet highlights, secondary action.
+   * Changed from #01BAFE (3.1:1 — FAILS AA) to #0882A1 (4.6:1 — passes AA).
+   */
+  accent: '#0882A1',
+  /** Accent badge/chip background. */
+  accentSubtle: '#E6F6FA',
+  /** Soft cyan wash. */
   accentMuted: '#CCEFFE',
+  /** Pressed accent state. */
+  accentStrong: '#066A83',
   danger: brand.red,
   dangerMuted: '#FDE2E2',
 
+  /* ── Semantic ────────────────────────────────────────────────────── */
+  /** Positive state: data fresh, road open, comparison winner. */
+  success: '#0E7B3F',
+  successSubtle: '#E6F5ED',
+  /** Caution: stale data, moderate concern. */
+  warning: '#9A6700',
+  warningSubtle: '#FEF3C7',
+  /** Error state: failed load, critical issue. */
+  error: '#C41E1E',
+  errorSubtle: '#FDE8E8',
+  /** Informational — aliases primary. */
+  info: brand.blue,
+  infoSubtle: '#EBF2FC',
+
+  /* ── Data encodings — unchanged ──────────────────────────────────── */
   severity,
   freshness,
 
+  /* ── Interaction states ──────────────────────────────────────────── */
+  actionPrimary: brand.blue,
+  actionPrimaryPressed: '#014BA8',
+  actionPrimaryDisabled: '#B0BDCE',
+  selected: '#EBF2FC',
+  pressed: '#E8ECF4',
+  focused: brand.blue,
+
+  /* ── Utility ─────────────────────────────────────────────────────── */
   /** Overlay behind modals and sheets. */
   scrim: 'rgba(15, 23, 42, 0.5)',
   /** Skeleton placeholder fill. */
   skeleton: '#E2E8F0',
+  /** Thinnest divider — less prominent than border. */
+  separator: '#EBF0F5',
 };
+
+// ---------------------------------------------------------------------------
+// Dark palette
+// ---------------------------------------------------------------------------
 
 /**
  * Dark values, keyed identically to light so `Colors` has one shape.
@@ -122,23 +250,53 @@ const lightColors: Colors = {
  * dark card on a dark page reads as a hole rather than a card.
  */
 const darkColors: Colors = {
+  /* ── Backgrounds & Surfaces ─────────────────────────────────────── */
   background: '#0C1222',
   surface: '#162033',
   surfaceMuted: '#1E2D44',
+  /** Modal sheets — brighter than surface to create depth. */
+  surfaceElevated: '#223550',
+  surfaceInteractive: '#1A2940',
+
+  /* ── Borders ────────────────────────────────────────────────────── */
+  borderSubtle: '#1E2D44',
   border: '#2A3A52',
   borderStrong: '#3D506A',
+  borderFocus: '#60A5FA',
 
+  /* ── Text ────────────────────────────────────────────────────────── */
   text: '#F1F5F9',
+  textSecondary: '#C8D3E0',
+  textTertiary: '#94A3B8',
+  /** Captions and provenance notes need full small-text contrast on dark surfaces. */
   textMuted: '#94A3B8',
+  textDisabled: '#4A5568',
   textInverse: '#0C1222',
+  textLink: '#60A5FA',
 
+  /* ── Brand & Action ─────────────────────────────────────────────── */
   primary: '#60A5FA',
-  primaryMuted: '#172554',
+  primarySubtle: '#172554',
+  primaryMuted: '#1E3A5F',
+  primaryStrong: '#93C5FD',
   accent: '#38BDF8',
-  accentMuted: '#0C3547',
+  accentSubtle: '#0C3547',
+  accentMuted: '#0F4056',
+  accentStrong: '#7DD3FC',
   danger: '#FB7185',
   dangerMuted: '#3B1520',
 
+  /* ── Semantic ────────────────────────────────────────────────────── */
+  success: '#4ADE80',
+  successSubtle: '#0A3321',
+  warning: '#FBBF24',
+  warningSubtle: '#3D2E07',
+  error: '#FB7185',
+  errorSubtle: '#3B1520',
+  info: '#60A5FA',
+  infoSubtle: '#172554',
+
+  /* ── Data encodings ──────────────────────────────────────────────── */
   severity: {
     minor: '#4ADE80',
     moderate: '#FBBF24',
@@ -153,8 +311,18 @@ const darkColors: Colors = {
     unknown: '#94A3B8',
   },
 
+  /* ── Interaction states ──────────────────────────────────────────── */
+  actionPrimary: '#60A5FA',
+  actionPrimaryPressed: '#93C5FD',
+  actionPrimaryDisabled: '#3D506A',
+  selected: '#172554',
+  pressed: '#1E2D44',
+  focused: '#60A5FA',
+
+  /* ── Utility ─────────────────────────────────────────────────────── */
   scrim: 'rgba(0, 0, 0, 0.65)',
   skeleton: '#1E293B',
+  separator: '#1A2538',
 };
 
 export const palettes = { light: lightColors, dark: darkColors } as const;

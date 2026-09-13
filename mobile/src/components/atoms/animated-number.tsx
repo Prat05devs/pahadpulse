@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Easing,
   runOnJS,
   useAnimatedReaction,
+  useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
@@ -34,10 +35,22 @@ export function AnimatedNumber({
   durationMs = 650,
   ...textProps
 }: AnimatedNumberProps) {
+  const reduceMotion = useReducedMotion();
   const progress = useSharedValue(0);
   const [display, setDisplay] = useState(() => format(value));
+  const formatRef = useRef(format);
 
   useEffect(() => {
+    formatRef.current = format;
+  }, [format]);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      progress.set(value);
+      setDisplay(formatRef.current(value));
+      return;
+    }
+
     progress.set(0);
     progress.set(
       withTiming(value, {
@@ -46,10 +59,10 @@ export function AnimatedNumber({
         easing: Easing.out(Easing.cubic),
       }),
     );
-  }, [value, durationMs, progress]);
+  }, [value, durationMs, progress, reduceMotion]);
 
   const updateDisplay = (current: number) => {
-    setDisplay(format(current));
+    setDisplay(formatRef.current(current));
   };
 
   useAnimatedReaction(

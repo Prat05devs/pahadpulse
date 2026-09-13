@@ -50,6 +50,23 @@ export const AlertSchema = z.object({
 
 export type Alert = z.infer<typeof AlertSchema>;
 
+/** Re-check expiry before presenting a warning saved in the offline cache as current. */
+export function isAlertInForce(
+  alert: Pick<Alert, 'status' | 'expiresAt'>,
+  now = Date.now(),
+): boolean {
+  if (alert.status !== 'active') return false;
+  if (!alert.expiresAt) return true;
+
+  const normalised = alert.expiresAt.includes('T')
+    ? alert.expiresAt
+    : `${alert.expiresAt.replace(' ', 'T')}Z`;
+  const expiresAt = new Date(normalised).getTime();
+
+  // Preserve warnings with malformed source timestamps instead of silently discarding them.
+  return Number.isNaN(expiresAt) || expiresAt > now;
+}
+
 /**
  * `/alerts/active` returns the array under `data` and puts `pagination` beside it in the
  * envelope. The client unwraps `data`, so what arrives here is the array itself.

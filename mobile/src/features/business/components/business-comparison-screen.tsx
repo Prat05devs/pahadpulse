@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Modal, TouchableOpacity, Platform } from 'react-native';
+import { View, ScrollView, Modal, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBusinessScenarios, useBusinessComparison } from '../hooks';
 import { Text, Card, HStack, VStack, Icon, Pressable, Skeleton, Entrance } from '@/components/atoms';
@@ -16,7 +16,7 @@ const METRIC_LABELS: Record<string, string> = {
 };
 
 // Generic Select component for Native
-function NativeSelect({ label, value, options, onSelect }: { label: string, value: string, options: { label: string, value: string, description?: string }[], onSelect: (v: string) => void }) {
+function NativeSelect({ label, value, options, onSelect, disabledValues = [] }: { label: string, value: string, options: { label: string, value: string, description?: string }[], onSelect: (v: string) => void, disabledValues?: string[] }) {
   const [modalVisible, setModalVisible] = useState(false);
   const theme = useTheme();
   
@@ -26,7 +26,13 @@ function NativeSelect({ label, value, options, onSelect }: { label: string, valu
     <>
       <VStack gap="xs">
         <Text variant="footnote" color="textMuted">{label}</Text>
-        <Pressable onPress={() => setModalVisible(true)} style={{ borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.md, borderRadius: theme.radius.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.colors.surface }}>
+        <Pressable
+          onPress={() => setModalVisible(true)}
+          accessibilityLabel={`${label}: ${selectedOption?.label ?? 'not selected'}`}
+          accessibilityHint="Opens a list of choices"
+          accessibilityState={{ expanded: modalVisible }}
+          style={{ borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.md, borderRadius: theme.radius.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.colors.surface }}
+        >
           <Text variant="bodyStrong">{selectedOption ? selectedOption.label : 'Select...'}</Text>
           <Icon name="chevron-down" size={16} tone="textMuted" />
         </Pressable>
@@ -36,18 +42,23 @@ function NativeSelect({ label, value, options, onSelect }: { label: string, valu
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
           <View style={{ padding: theme.spacing.md, paddingHorizontal: theme.spacing.xl, borderBottomWidth: 1, borderBottomColor: theme.colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text variant="heading">{label}</Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Pressable onPress={() => setModalVisible(false)} accessibilityLabel={`Close ${label} choices`}>
               <Icon name="close" size={24} tone="text" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
           <ScrollView contentContainerStyle={{ padding: theme.spacing.lg }}>
             <VStack gap="sm">
               {options.map(opt => {
                 const isSelected = opt.value === value;
+                const isDisabled = disabledValues.includes(opt.value);
                 return (
-                  <TouchableOpacity 
+                  <Pressable
                     key={opt.value} 
                     onPress={() => { onSelect(opt.value); setModalVisible(false); }}
+                    disabled={isDisabled}
+                    accessibilityRole="radio"
+                    accessibilityLabel={opt.label}
+                    accessibilityState={{ selected: isSelected, disabled: isDisabled }}
                     style={{ 
                       padding: theme.spacing.lg, 
                       backgroundColor: isSelected ? theme.colors.primaryMuted : theme.colors.surface, 
@@ -56,7 +67,8 @@ function NativeSelect({ label, value, options, onSelect }: { label: string, valu
                       borderColor: isSelected ? theme.colors.primary : theme.colors.border,
                       flexDirection: 'row',
                       justifyContent: 'space-between',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      opacity: isDisabled ? 0.45 : 1,
                     }}
                   >
                     <VStack gap="xs" style={{ flex: 1 }}>
@@ -64,7 +76,7 @@ function NativeSelect({ label, value, options, onSelect }: { label: string, valu
                       {opt.description && <Text variant="caption" color="textMuted">{opt.description}</Text>}
                     </VStack>
                     {isSelected && <Icon name="checkmark-circle" size={24} tone="primary" />}
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </VStack>
@@ -102,7 +114,7 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
 
   const [activeCompare, setActiveCompare] = useState<{a: string, b: string, scenarioId: string} | null>(null);
 
-  const { data: scenarios, isLoading: scenariosLoading } = useBusinessScenarios();
+  const { data: scenarios, isLoading: scenariosLoading, error: scenariosError, refetch: refetchScenarios } = useBusinessScenarios();
   const { data: report, isLoading: reportLoading, error } = useBusinessComparison(
     activeCompare?.a || '',
     activeCompare?.b || '',
@@ -110,6 +122,8 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
   );
 
   const theme = useTheme();
+  const { width } = useWindowDimensions();
+  const stackDistrictSelectors = width < 390;
 
   const selectedScenarioId = scenarioId || scenarios?.[0]?.id || '';
 
@@ -127,9 +141,10 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
   const handleSelectScenario = (v: string) => { setScenarioId(v); setActiveCompare(null); };
   const handleSelectA = (v: string) => { setDistrictA(v); setActiveCompare(null); };
   const handleSelectB = (v: string) => { setDistrictB(v); setActiveCompare(null); };
+  const cannotCompare = !districtA || !districtB || districtA === districtB || !selectedScenarioId;
 
   return (
-    <ScrollView contentContainerStyle={{ padding: theme.spacing.md, gap: theme.spacing.xl, paddingBottom: 60 }}>
+    <VStack gap="xl">
       {/* Configurator */}
       <Card>
         <VStack gap="md">
@@ -145,21 +160,27 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
             </Text>
           ) : null}
 
-          <HStack gap="md" style={{ marginTop: theme.spacing.md, alignItems: 'center' }}>
+          <HStack gap="md" wrap={stackDistrictSelectors} style={{ marginTop: theme.spacing.md, alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
-              <NativeSelect label="Compare" value={districtA} options={districtOptions} onSelect={handleSelectA} />
+              <NativeSelect label="Compare" value={districtA} options={districtOptions} onSelect={handleSelectA} disabledValues={districtB ? [districtB] : []} />
             </View>
-            <Text variant="bodyStrong" color="textMuted" style={{ marginTop: 24, marginHorizontal: 4 }}>VS</Text>
+            {!stackDistrictSelectors ? <Text variant="bodyStrong" color="textMuted" style={{ marginTop: 24, marginHorizontal: 4 }}>VS</Text> : null}
             <View style={{ flex: 1 }}>
-              <NativeSelect label="With" value={districtB} options={districtOptions} onSelect={handleSelectB} />
+              <NativeSelect label="With" value={districtB} options={districtOptions} onSelect={handleSelectB} disabledValues={districtA ? [districtA] : []} />
             </View>
           </HStack>
 
+          {districtA && districtA === districtB ? (
+            <Text variant="caption" color="danger">Choose two different districts.</Text>
+          ) : null}
+
           <Pressable 
-            disabled={!districtA || !districtB || !selectedScenarioId}
+            disabled={cannotCompare}
+            accessibilityState={{ disabled: cannotCompare }}
+            accessibilityHint="Builds a side-by-side district recommendation"
             onPress={() => setActiveCompare({ a: districtA, b: districtB, scenarioId: selectedScenarioId })}
             style={{
-              backgroundColor: !districtA || !districtB || !selectedScenarioId ? theme.colors.surfaceMuted : theme.colors.accent,
+              backgroundColor: cannotCompare ? theme.colors.surfaceMuted : theme.colors.accent,
               padding: theme.spacing.md,
               borderRadius: theme.radius.md,
               alignItems: 'center',
@@ -167,10 +188,24 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
             }}
             pressedStyle={{ opacity: 0.9 }}
           >
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Compare</Text>
+            <Text variant="bodyStrong" color="textInverse">Compare</Text>
           </Pressable>
         </VStack>
       </Card>
+
+      {scenariosError ? (
+        <Card padding="lg" tone="surface" style={{ borderColor: theme.colors.danger, borderWidth: 1 }} accessibilityRole="alert">
+          <VStack gap="sm">
+            <HStack align="center" gap="sm">
+              <Icon name="warning" size={24} tone="danger" />
+              <Text variant="bodyStrong" color="danger">Business types could not be loaded.</Text>
+            </HStack>
+            <Pressable onPress={() => void refetchScenarios()} accessibilityLabel="Retry loading business types">
+              <Text variant="bodyStrong" color="primary">Try again</Text>
+            </Pressable>
+          </VStack>
+        </Card>
+      ) : null}
 
       {error && activeCompare ? (
         <Entrance>
@@ -249,6 +284,6 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
           </VStack>
         </Entrance>
       ) : null}
-    </ScrollView>
+    </VStack>
   );
 }

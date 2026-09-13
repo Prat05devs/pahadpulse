@@ -82,12 +82,12 @@ export function buildMapHtml({ districts, alerts }: BuildMapHtmlOptions): string
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <link href="${MAPLIBRE_CSS}" rel="stylesheet" />
 <style>
-  html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: #EEF1F5; }
+  html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: #F2F4F8; }
   /* The RN screen draws its own attribution, where it can be styled with the app's type. */
   .maplibregl-ctrl-attrib, .maplibregl-ctrl-bottom-right { display: none; }
   #err {
     position: absolute; inset: 0; display: none; padding: 24px;
-    font: 15px -apple-system, system-ui, sans-serif; color: #33415C; background: #EEF1F5;
+    font: 15px -apple-system, system-ui, sans-serif; color: #33415C; background: #F2F4F8;
   }
 </style>
 </head>

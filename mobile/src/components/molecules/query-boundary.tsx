@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
 
+import { Card, HStack, Icon, Text, VStack } from '@/components/atoms';
+import { formatRelative } from '@/lib/format';
+
 import { EmptyState, ErrorState, LoadingState } from './states';
 
 type QueryLike<T> = {
@@ -8,6 +11,7 @@ type QueryLike<T> = {
   isError: boolean;
   error: unknown;
   refetch: () => void;
+  dataUpdatedAt?: number;
 };
 
 type QueryBoundaryProps<T> = {
@@ -56,5 +60,24 @@ export function QueryBoundary<T>({
     return <EmptyState title={emptyTitle} message={emptyMessage} />;
   }
 
-  return <>{children(query.data)}</>;
+  return (
+    <>
+      {query.isError ? (
+        <Card tone="muted" elevation="none" accessibilityRole="alert">
+          <HStack gap="sm" align="center">
+            <Icon name="cloud-offline-outline" size={20} tone="warning" />
+            <VStack grow gap="xxs">
+              <Text variant="bodyStrong">Showing saved data</Text>
+              <Text variant="caption" color="textMuted">
+                {query.dataUpdatedAt
+                  ? `Could not refresh · last checked ${formatRelative(new Date(query.dataUpdatedAt))}`
+                  : 'Could not refresh. Try again when you have a connection.'}
+              </Text>
+            </VStack>
+          </HStack>
+        </Card>
+      ) : null}
+      {children(query.data)}
+    </>
+  );
 }

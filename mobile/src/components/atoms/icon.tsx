@@ -9,7 +9,7 @@ type IconProps = {
   name: IconName;
   size?: number;
   /** A token name. Pass `color` only for data encodings that own their own scale. */
-  tone?: 'text' | 'textMuted' | 'primary' | 'accent' | 'danger' | 'textInverse';
+  tone?: 'text' | 'textMuted' | 'primary' | 'accent' | 'warning' | 'danger' | 'textInverse';
   color?: string;
 };
 

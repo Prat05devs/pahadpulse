@@ -8,6 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import Animated, {
+  ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -26,7 +27,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(RNPressable);
  * navigation it triggered begins. A springy control that is still moving after the screen has
  * changed reads as lag, not polish.
  */
-const PRESS_SPRING = { damping: 18, stiffness: 320, mass: 0.5 } as const;
+const PRESS_SPRING = { damping: 18, stiffness: 320, mass: 0.5, reduceMotion: ReduceMotion.System } as const;
 
 /** Barely visible on its own, unmistakable in aggregate. 3% is the whole effect. */
 const PRESS_SCALE = 0.97;
@@ -82,13 +83,13 @@ export function Pressable({
         scale.set(withSpring(PRESS_SCALE, PRESS_SPRING));
         // Only dim when the caller has not supplied its own pressed treatment, so the two
         // do not stack into something much darker than either intended.
-        if (pressedStyle === undefined) dim.set(withTiming(0.72, { duration: 90 }));
+        if (pressedStyle === undefined) dim.set(withTiming(0.72, { duration: 90, reduceMotion: ReduceMotion.System }));
         rest.onPressIn?.(event);
       }}
       onPressOut={(event) => {
         setIsPressed(false);
         scale.set(withSpring(1, PRESS_SPRING));
-        dim.set(withTiming(1, { duration: 140 }));
+        dim.set(withTiming(1, { duration: 140, reduceMotion: ReduceMotion.System }));
         rest.onPressOut?.(event);
       }}
       onPress={(event) => {
