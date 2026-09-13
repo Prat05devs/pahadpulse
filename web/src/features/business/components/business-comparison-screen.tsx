@@ -5,6 +5,9 @@ import { useBusinessScenarios, useBusinessComparison } from '../hooks';
 import {
   AlertCircle,
   Briefcase,
+  CheckCircle2,
+  CircleDashed,
+  Database,
   MapPin,
   Wifi,
   Compass,
@@ -51,11 +54,26 @@ const ICON_MAP: Record<keyof BusinessWeights, React.ElementType> = {
 
 const METRIC_LABELS: Record<keyof BusinessWeights, string> = {
   connectivity: 'Digital Connectivity',
-  tourism: 'Tourism Footfall',
-  roads: 'Road Infrastructure',
-  urbanPopulation: 'Urban Market Size',
-  agriculture: 'Agro/Dairy Output',
-  safety: 'Geological Safety',
+  tourism: 'Tourism Demand & Capacity',
+  roads: 'District Road Access',
+  urbanPopulation: 'Market & Workforce',
+  agriculture: 'Dairy Supply Ecosystem',
+  safety: 'Long-term Hazard Resilience',
+};
+
+const formatFactValue = (value: number, unit: string) => {
+  if (unit === 'percent') return `${value.toLocaleString('en-IN')}%`;
+  if (unit === 'inr') {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
+  const formatted = value.toLocaleString('en-IN', {
+    maximumFractionDigits: unit === 'Mbps' ? 1 : 0,
+  });
+  return `${formatted} ${unit.replace(/_/g, ' ')}`;
 };
 
 // We receive `districts` (the list of all districts) as a prop from the server component
@@ -244,11 +262,53 @@ export function BusinessComparisonScreen({
         </div>
       ) : activeCompare && report ? (
         <div className="space-y-6">
+          {report.evidence ? (
+            <Card className="border-sky-200 bg-sky-50/60">
+              <CardContent className="p-5">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="flex min-w-0 gap-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+                      <Database aria-hidden="true" size={20} />
+                    </span>
+                    <div>
+                      <h3 className="font-semibold text-slate-900">Evidence coverage</h3>
+                      <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">
+                        {report.evidence.note}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="min-w-48 rounded-lg border border-sky-200 bg-white p-3">
+                    <div className="flex items-center justify-between gap-4 text-sm">
+                      <span className="font-medium capitalize text-slate-700">
+                        {report.evidence.confidence} confidence
+                      </span>
+                      <span className="font-bold tabular-nums text-sky-800">
+                        {report.evidence.coveragePct}%
+                      </span>
+                    </div>
+                    <progress
+                      className="mt-2 h-2 w-full accent-sky-700"
+                      value={report.evidence.coveragePct}
+                      max={100}
+                      aria-label={`${report.evidence.coveragePct}% of requested scenario weight has comparable evidence`}
+                    />
+                  </div>
+                </div>
+                {report.evidence.missingMetrics.length > 0 ? (
+                  <p className="mt-3 text-sm text-slate-600">
+                    <span className="font-semibold text-slate-800">Not scored:</span>{' '}
+                    {report.evidence.missingMetrics.map((key) => METRIC_LABELS[key]).join(', ')}.
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
+
           {/* Winner Banner */}
           <div
             className={clsx(
               'p-6 rounded-xl border-2 flex items-start gap-4',
-              report.winner === 'tie'
+              report.winner === 'tie' || report.winner === 'insufficient'
                 ? 'bg-slate-50 border-slate-200'
                 : 'bg-indigo-50 border-indigo-200'
             )}
@@ -258,9 +318,11 @@ export function BusinessComparisonScreen({
             </div>
             <div>
               <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                {report.winner === 'tie'
-                  ? 'It’s a tie!'
-                  : `Winner: ${report.winner === report.districtA.slug ? report.districtA.name : report.districtB.name}`}
+                {report.winner === 'insufficient'
+                  ? 'Not enough evidence to recommend a district'
+                  : report.winner === 'tie'
+                    ? 'Closely matched on available evidence'
+                    : `Better-supported fit: ${report.winner === report.districtA.slug ? report.districtA.name : report.districtB.name}`}
               </h2>
               <p className="text-slate-700 leading-relaxed text-lg">{report.verdict}</p>
             </div>
@@ -280,7 +342,7 @@ export function BusinessComparisonScreen({
                       </CardTitle>
                       <div className="text-right">
                         <span className="text-3xl font-bold text-slate-900">{dist.score}</span>
-                        <span className="text-sm text-slate-500 ml-1">/ 100</span>
+                        <span className="text-sm text-slate-500 ml-1">/ 100 index</span>
                       </div>
                     </div>
                   </CardHeader>
@@ -291,26 +353,86 @@ export function BusinessComparisonScreen({
                           const weight = report.scenario.weights[key];
                           if (weight === 0) return null; // hide irrelevant metrics
                           const Icon = ICON_MAP[key];
+                          const detail = dist.metricDetails?.[key];
+                          const isUnavailable = detail?.available === false;
                           return (
-                            <li
-                              key={key as string}
-                              className="p-4 flex items-center justify-between"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-slate-100 rounded-md">
-                                  <Icon size={18} className="text-slate-600" />
+                            <li key={key as string} className="p-4">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex min-w-0 items-start gap-3">
+                                  <div className="rounded-md bg-slate-100 p-2">
+                                    <Icon size={18} className="text-slate-600" aria-hidden="true" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-slate-900">
+                                      {METRIC_LABELS[key]}
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-slate-500">
+                                      Scenario weight: {weight}/10
+                                    </p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="font-medium text-slate-900">{METRIC_LABELS[key]}</p>
-                                  <p className="text-xs text-slate-500">Weight: {weight}/10</p>
+                                <div className="shrink-0 text-right">
+                                  {isUnavailable ? (
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                                      <CircleDashed size={14} aria-hidden="true" />
+                                      Not scored
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 text-lg font-semibold tabular-nums text-slate-900">
+                                      {detail?.available ? (
+                                        <CheckCircle2
+                                          size={15}
+                                          className="text-emerald-600"
+                                          aria-hidden="true"
+                                        />
+                                      ) : null}
+                                      {Math.round(detail?.score ?? dist.metrics[key])}
+                                      <span className="text-xs font-normal text-slate-400">
+                                        idx
+                                      </span>
+                                    </span>
+                                  )}
                                 </div>
                               </div>
-                              <div className="w-24 text-right">
-                                <span className="text-lg font-semibold">
-                                  {Math.round(dist.metrics[key])}
-                                </span>
-                                <span className="text-xs text-slate-400 ml-1">idx</span>
-                              </div>
+                              {detail ? (
+                                <div className="ml-11 mt-3">
+                                  <p className="text-xs leading-relaxed text-slate-500">
+                                    {detail.summary}
+                                  </p>
+                                  {detail.facts.length > 0 ? (
+                                    <details className="mt-2 text-xs text-slate-600">
+                                      <summary className="min-h-6 cursor-pointer font-semibold text-sky-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700">
+                                        View source figures
+                                      </summary>
+                                      <ul className="mt-2 space-y-2 border-l-2 border-sky-100 pl-3">
+                                        {detail.facts.map((entry) => (
+                                          <li key={`${entry.label}-${entry.vintage}`}>
+                                            <span className="font-medium text-slate-800">
+                                              {entry.label}:{' '}
+                                              {formatFactValue(entry.value, entry.unit)}
+                                            </span>
+                                            <span className="block text-slate-500">
+                                              {entry.sourceUrl ? (
+                                                <a
+                                                  href={entry.sourceUrl}
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  className="underline decoration-slate-300 underline-offset-2 hover:text-sky-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+                                                >
+                                                  {entry.source}
+                                                </a>
+                                              ) : (
+                                                entry.source
+                                              )}{' '}
+                                              · {entry.vintage}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </details>
+                                  ) : null}
+                                </div>
+                              ) : null}
                             </li>
                           );
                         }
