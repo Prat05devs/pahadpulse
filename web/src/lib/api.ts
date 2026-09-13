@@ -80,9 +80,7 @@ function isAbort(error: unknown): boolean {
   if (typeof DOMException !== 'undefined' && error instanceof DOMException) {
     return error.name === 'AbortError' || error.name === 'TimeoutError';
   }
-  return (
-    error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')
-  );
+  return error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError');
 }
 
 async function readJsonBody(response: Response, url: string): Promise<unknown> {
@@ -139,10 +137,10 @@ export const apiClient = {
         method: 'GET',
         // The caller's own signal wins if it passed one; otherwise the deadline applies.
         signal: options?.signal ?? timeoutSignal(REQUEST_TIMEOUT_MS),
-        headers: {
-          'Content-Type': 'application/json',
-          ...options?.headers,
-        },
+        // A GET has no body, so it has no content type. Sending application/json here causes
+        // browsers to preflight every cross-origin read, adding latency and another failure
+        // point for public, read-only data such as the venture catalogue.
+        headers: options?.headers,
       });
 
       const json = await readJsonBody(response, url);
@@ -171,11 +169,7 @@ export const apiClient = {
         throw error;
       }
       if (error instanceof z.ZodError) {
-        throw new ApiError(
-          10000,
-          `Invalid response format: ${error.message}`,
-          500
-        );
+        throw new ApiError(10000, `Invalid response format: ${error.message}`, 500);
       }
       // Converted to an ApiError rather than rethrown raw: every caller already handles
       // ApiError, so an unreachable backend now degrades the same way a 500 does.
@@ -243,11 +237,7 @@ export const apiClient = {
         throw error;
       }
       if (error instanceof z.ZodError) {
-        throw new ApiError(
-          10000,
-          `Invalid response format: ${error.message}`,
-          500
-        );
+        throw new ApiError(10000, `Invalid response format: ${error.message}`, 500);
       }
       // Converted to an ApiError rather than rethrown raw: every caller already handles
       // ApiError, so an unreachable backend now degrades the same way a 500 does.

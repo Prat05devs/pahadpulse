@@ -19,10 +19,19 @@ export function createApp(): Application {
   const app = express();
   app.set('trust proxy', 1);
 
+  // Keep the public web clients reachable even when a hosting environment still has the
+  // development-only CORS value. Both domains are real entry points: the apex redirects to
+  // www, but browser requests may begin before or after that redirect has settled.
+  const allowedOrigins = [
+    ...env.CORS_ORIGIN,
+    'https://pahadpulse.live',
+    'https://www.pahadpulse.live',
+  ];
+
   app.use(requestId);
   app.use(helmet());
   app.use(limiter);
-  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+  app.use(cors({ origin: allowedOrigins, credentials: true }));
   app.use(express.json({ limit: BODY_LIMIT }));
   app.use(express.urlencoded({ extended: true, limit: BODY_LIMIT }));
   app.use(cookieParser());

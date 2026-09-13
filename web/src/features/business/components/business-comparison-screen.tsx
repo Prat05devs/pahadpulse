@@ -2,24 +2,43 @@
 
 import React, { useState } from 'react';
 import { useBusinessScenarios, useBusinessComparison } from '../hooks';
-import { AlertCircle, Briefcase, MapPin, Wifi, Compass, TrendingUp, Users, Shield, Trees } from 'lucide-react';
+import {
+  AlertCircle,
+  Briefcase,
+  MapPin,
+  Wifi,
+  Compass,
+  TrendingUp,
+  Users,
+  Shield,
+  Trees,
+} from 'lucide-react';
 import clsx from 'clsx';
 import { type BusinessWeights } from '../schemas';
 
 const Card = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={clsx("bg-white shadow-sm border border-slate-200 rounded-xl overflow-hidden", className)}>
+  <div
+    className={clsx(
+      'bg-white shadow-sm border border-slate-200 rounded-xl overflow-hidden',
+      className
+    )}
+  >
     {children}
   </div>
 );
 const CardHeader = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={clsx("p-4 border-b border-slate-200", className)}>{children}</div>
+  <div className={clsx('p-4 border-b border-slate-200', className)}>{children}</div>
 );
 const CardTitle = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <h3 className={clsx("font-semibold text-slate-900", className)}>{children}</h3>
+  <h3 className={clsx('font-semibold text-slate-900', className)}>{children}</h3>
 );
-const CardContent = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={clsx("p-4", className)}>{children}</div>
-);
+const CardContent = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => <div className={clsx('p-4', className)}>{children}</div>;
 
 const ICON_MAP: Record<keyof BusinessWeights, React.ElementType> = {
   connectivity: Wifi,
@@ -40,15 +59,29 @@ const METRIC_LABELS: Record<keyof BusinessWeights, string> = {
 };
 
 // We receive `districts` (the list of all districts) as a prop from the server component
-export function BusinessComparisonScreen({ districts }: { districts: Array<{ slug: string; name: { en: string } }> }) {
+export function BusinessComparisonScreen({
+  districts,
+}: {
+  districts: Array<{ slug: string; name: { en: string } }>;
+}) {
   const [districtA, setDistrictA] = useState('');
   const [districtB, setDistrictB] = useState('');
-  const [scenarioId, setScenarioId] = useState(''); 
+  const [scenarioId, setScenarioId] = useState('');
 
-  const [activeCompare, setActiveCompare] = useState<{a: string, b: string, scenarioId: string} | null>(null);
+  const [activeCompare, setActiveCompare] = useState<{
+    a: string;
+    b: string;
+    scenarioId: string;
+  } | null>(null);
 
-  const { data: scenarios, isLoading: scenariosLoading } = useBusinessScenarios();
-  
+  const {
+    data: scenarios,
+    isLoading: scenariosLoading,
+    isFetching: scenariosFetching,
+    isError: scenariosFailed,
+    refetch: refetchScenarios,
+  } = useBusinessScenarios();
+
   // Set default scenario when scenarios load, but do not trigger compare
   React.useEffect(() => {
     if (scenarios && scenarios.length > 0 && !scenarioId) {
@@ -56,9 +89,13 @@ export function BusinessComparisonScreen({ districts }: { districts: Array<{ slu
     }
   }, [scenarios, scenarioId]);
 
-  const { data: report, isLoading: reportLoading, error } = useBusinessComparison(
-    activeCompare?.a || '', 
-    activeCompare?.b || '', 
+  const {
+    data: report,
+    isLoading: reportLoading,
+    error: comparisonError,
+  } = useBusinessComparison(
+    activeCompare?.a || '',
+    activeCompare?.b || '',
     activeCompare?.scenarioId || ''
   );
 
@@ -69,23 +106,62 @@ export function BusinessComparisonScreen({ districts }: { districts: Array<{ slu
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="col-span-1 md:col-span-3">
-              <label className="block text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              <label
+                htmlFor="business-scenario"
+                className="block text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2"
+              >
                 1. Select an Investment Scenario
               </label>
               <select
+                id="business-scenario"
                 className="w-full rounded-md border-border shadow-sm focus:border-accent focus:ring-accent text-lg p-3 border bg-surface"
                 value={scenarioId}
-                onChange={(e) => { setScenarioId(e.target.value); setActiveCompare(null); }}
-                disabled={scenariosLoading}
+                onChange={(e) => {
+                  setScenarioId(e.target.value);
+                  setActiveCompare(null);
+                }}
+                disabled={scenariosLoading || scenariosFailed || !scenarios?.length}
+                aria-busy={scenariosLoading || scenariosFetching}
+                aria-describedby={scenariosFailed ? 'business-scenario-error' : undefined}
               >
-                <option value="" disabled>Browse our pre-calculated venture models...</option>
+                <option value="" disabled>
+                  {scenariosLoading
+                    ? 'Loading venture models...'
+                    : scenariosFailed
+                      ? 'Venture models unavailable'
+                      : scenarios?.length
+                        ? 'Browse our pre-calculated venture models...'
+                        : 'No venture models available'}
+                </option>
                 {scenarios?.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.category})</option>
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.category})
+                  </option>
                 ))}
               </select>
+              {scenariosFailed ? (
+                <div
+                  id="business-scenario-error"
+                  role="alert"
+                  className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <AlertCircle aria-hidden="true" size={18} className="shrink-0" />
+                    Venture models could not be loaded. Check your connection and try again.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void refetchScenarios()}
+                    disabled={scenariosFetching}
+                    className="min-h-11 rounded-md border border-red-300 bg-white px-4 font-semibold text-red-800 shadow-sm hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {scenariosFetching ? 'Retrying...' : 'Retry'}
+                  </button>
+                </div>
+              ) : null}
               {scenarios && scenarioId && (
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {scenarios.find(s => s.id === scenarioId)?.description}
+                  {scenarios.find((s) => s.id === scenarioId)?.description}
                 </p>
               )}
             </div>
@@ -97,16 +173,25 @@ export function BusinessComparisonScreen({ districts }: { districts: Array<{ slu
               <select
                 className="w-full rounded-md border-border shadow-sm focus:border-accent focus:ring-accent p-2.5 border bg-surface"
                 value={districtA}
-                onChange={(e) => { setDistrictA(e.target.value); setActiveCompare(null); }}
+                onChange={(e) => {
+                  setDistrictA(e.target.value);
+                  setActiveCompare(null);
+                }}
               >
-                <option value="" disabled>Select district...</option>
+                <option value="" disabled>
+                  Select district...
+                </option>
                 {districts?.map((d) => (
-                  <option key={d.slug} value={d.slug} disabled={d.slug === districtB}>{d.name.en}</option>
+                  <option key={d.slug} value={d.slug} disabled={d.slug === districtB}>
+                    {d.name.en}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="flex items-center justify-center">
-              <span className="text-muted-foreground font-bold uppercase tracking-widest mt-6">vs</span>
+              <span className="text-muted-foreground font-bold uppercase tracking-widest mt-6">
+                vs
+              </span>
             </div>
             <div>
               <label className="block text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
@@ -115,15 +200,22 @@ export function BusinessComparisonScreen({ districts }: { districts: Array<{ slu
               <select
                 className="w-full rounded-md border-border shadow-sm focus:border-accent focus:ring-accent p-2.5 border bg-surface"
                 value={districtB}
-                onChange={(e) => { setDistrictB(e.target.value); setActiveCompare(null); }}
+                onChange={(e) => {
+                  setDistrictB(e.target.value);
+                  setActiveCompare(null);
+                }}
               >
-                <option value="" disabled>Select district...</option>
+                <option value="" disabled>
+                  Select district...
+                </option>
                 {districts?.map((d) => (
-                  <option key={d.slug} value={d.slug} disabled={d.slug === districtA}>{d.name.en}</option>
+                  <option key={d.slug} value={d.slug} disabled={d.slug === districtA}>
+                    {d.name.en}
+                  </option>
                 ))}
               </select>
             </div>
-            
+
             <div className="col-span-1 md:col-span-3 mt-4">
               <button
                 type="button"
@@ -138,10 +230,10 @@ export function BusinessComparisonScreen({ districts }: { districts: Array<{ slu
         </CardContent>
       </Card>
 
-      {error && activeCompare ? (
+      {comparisonError && activeCompare ? (
         <div className="bg-red-50 text-red-600 p-4 rounded-md flex items-center gap-2">
           <AlertCircle size={20} />
-          <p>Failed to load comparison data. {error.message}</p>
+          <p>Failed to load comparison data. {comparisonError.message}</p>
         </div>
       ) : null}
 
@@ -153,17 +245,21 @@ export function BusinessComparisonScreen({ districts }: { districts: Array<{ slu
       ) : activeCompare && report ? (
         <div className="space-y-6">
           {/* Winner Banner */}
-          <div className={clsx(
-            "p-6 rounded-xl border-2 flex items-start gap-4",
-            report.winner === 'tie' ? "bg-slate-50 border-slate-200" : "bg-indigo-50 border-indigo-200"
-          )}>
+          <div
+            className={clsx(
+              'p-6 rounded-xl border-2 flex items-start gap-4',
+              report.winner === 'tie'
+                ? 'bg-slate-50 border-slate-200'
+                : 'bg-indigo-50 border-indigo-200'
+            )}
+          >
             <div className="bg-white p-3 rounded-full shadow-sm">
               <Briefcase className="w-8 h-8 text-indigo-600" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                {report.winner === 'tie' 
-                  ? 'It’s a tie!' 
+                {report.winner === 'tie'
+                  ? 'It’s a tie!'
                   : `Winner: ${report.winner === report.districtA.slug ? report.districtA.name : report.districtB.name}`}
               </h2>
               <p className="text-slate-700 leading-relaxed text-lg">{report.verdict}</p>
@@ -175,7 +271,7 @@ export function BusinessComparisonScreen({ districts }: { districts: Array<{ slu
             {[report.districtA, report.districtB].map((dist) => {
               const isWinner = report.winner === dist.slug;
               return (
-                <Card key={dist.slug} className={clsx(isWinner && "ring-2 ring-indigo-500")}>
+                <Card key={dist.slug} className={clsx(isWinner && 'ring-2 ring-indigo-500')}>
                   <CardHeader className="bg-slate-50 border-b">
                     <div className="flex justify-between items-center">
                       <CardTitle className="text-xl flex items-center gap-2">
@@ -190,28 +286,35 @@ export function BusinessComparisonScreen({ districts }: { districts: Array<{ slu
                   </CardHeader>
                   <CardContent className="p-0">
                     <ul className="divide-y divide-slate-100">
-                      {(Object.keys(report.scenario.weights) as Array<keyof BusinessWeights>).map((key) => {
-                        const weight = report.scenario.weights[key];
-                        if (weight === 0) return null; // hide irrelevant metrics
-                        const Icon = ICON_MAP[key];
-                        return (
-                          <li key={key as string} className="p-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-slate-100 rounded-md">
-                                <Icon size={18} className="text-slate-600" />
+                      {(Object.keys(report.scenario.weights) as Array<keyof BusinessWeights>).map(
+                        (key) => {
+                          const weight = report.scenario.weights[key];
+                          if (weight === 0) return null; // hide irrelevant metrics
+                          const Icon = ICON_MAP[key];
+                          return (
+                            <li
+                              key={key as string}
+                              className="p-4 flex items-center justify-between"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-slate-100 rounded-md">
+                                  <Icon size={18} className="text-slate-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-slate-900">{METRIC_LABELS[key]}</p>
+                                  <p className="text-xs text-slate-500">Weight: {weight}/10</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-medium text-slate-900">{METRIC_LABELS[key]}</p>
-                                <p className="text-xs text-slate-500">Weight: {weight}/10</p>
+                              <div className="w-24 text-right">
+                                <span className="text-lg font-semibold">
+                                  {Math.round(dist.metrics[key])}
+                                </span>
+                                <span className="text-xs text-slate-400 ml-1">idx</span>
                               </div>
-                            </div>
-                            <div className="w-24 text-right">
-                              <span className="text-lg font-semibold">{Math.round(dist.metrics[key])}</span>
-                              <span className="text-xs text-slate-400 ml-1">idx</span>
-                            </div>
-                          </li>
-                        );
-                      })}
+                            </li>
+                          );
+                        }
+                      )}
                     </ul>
                   </CardContent>
                 </Card>

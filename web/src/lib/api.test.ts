@@ -121,7 +121,7 @@ describe('apiClient caching', () => {
         new Response(JSON.stringify({ success: true, data: { ok: true }, message: '' }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
-        }),
+        })
       );
     });
     return captured;
@@ -157,5 +157,41 @@ describe('apiClient caching', () => {
     } as RequestInit);
     const next = (captured.init as { next?: { revalidate?: number } } | undefined)?.next;
     expect(next?.revalidate).toBe(10);
+  });
+});
+
+describe('apiClient GET request headers', () => {
+  it('does not send a content type for a request without a body', async () => {
+    let seenHeaders: HeadersInit | undefined;
+    vi.stubGlobal('fetch', (_url: string, init?: RequestInit) => {
+      seenHeaders = init?.headers;
+      return Promise.resolve(
+        new Response(JSON.stringify({ success: true, data: { ok: true }, message: '' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
+    });
+
+    await apiClient.get('/anything', Schema);
+
+    expect(new Headers(seenHeaders).has('content-type')).toBe(false);
+  });
+
+  it('preserves headers supplied by a caller', async () => {
+    let seenHeaders: HeadersInit | undefined;
+    vi.stubGlobal('fetch', (_url: string, init?: RequestInit) => {
+      seenHeaders = init?.headers;
+      return Promise.resolve(
+        new Response(JSON.stringify({ success: true, data: { ok: true }, message: '' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
+    });
+
+    await apiClient.get('/anything', Schema, { headers: { 'x-client': 'web' } });
+
+    expect(new Headers(seenHeaders).get('x-client')).toBe('web');
   });
 });
