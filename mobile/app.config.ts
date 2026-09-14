@@ -25,8 +25,29 @@ const BUNDLE_SUFFIX: Record<Variant, string> = {
 
 const BASE_BUNDLE_ID = 'in.pahadpulse.app';
 
-/** Taken from the logo. Keep in step with `src/theme/tokens.ts`. */
-const BRAND_BLUE = '#015BD6';
+/** Accessible interface blue derived from the logo. Keep in step with `src/theme/tokens.ts`. */
+const BRAND_BLUE = '#075E9C';
+
+/**
+ * A production binary must never silently inherit the localhost development defaults from
+ * `src/config/env.ts`. EAS evaluates this file before bundling, so failing here prevents a
+ * store build whose every request would be sent to the reader's own phone.
+ */
+function assertProductionUrl(name: string, value: string | undefined): void {
+  if (VARIANT !== 'production') return;
+
+  if (!value) {
+    throw new Error(`${name} must be set in the EAS production environment.`);
+  }
+
+  const url = new URL(value);
+  if (url.protocol !== 'https:' || ['localhost', '127.0.0.1', '::1'].includes(url.hostname)) {
+    throw new Error(`${name} must be a public HTTPS URL for production builds.`);
+  }
+}
+
+assertProductionUrl('EXPO_PUBLIC_API_URL', process.env.EXPO_PUBLIC_API_URL);
+assertProductionUrl('EXPO_PUBLIC_WEB_URL', process.env.EXPO_PUBLIC_WEB_URL);
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -52,11 +73,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
     predictiveBackGestureEnabled: false,
     adaptiveIcon: {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: '#F2F7F7',
       foregroundImage: './assets/images/android-icon-foreground.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
-    blockedPermissions: ['android.permission.ACCESS_COARSE_LOCATION', 'android.permission.ACCESS_FINE_LOCATION'],
+    blockedPermissions: [
+      'android.permission.ACCESS_COARSE_LOCATION',
+      'android.permission.ACCESS_FINE_LOCATION',
+    ],
   },
   web: {
     output: 'static',
@@ -69,8 +93,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#FFFFFF',
-        dark: { backgroundColor: '#0B1220' },
+        backgroundColor: '#F2F7F7',
+        dark: { backgroundColor: '#071719' },
         image: './assets/images/splash-icon.png',
         imageWidth: 180,
       },
@@ -94,8 +118,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
      *
      * `eas init` writes the real value; once it exists this passes it through.
      */
-    ...(process.env.EAS_PROJECT_ID
-      ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
-      : null),
+    ...(process.env.EAS_PROJECT_ID ? { eas: { projectId: process.env.EAS_PROJECT_ID } } : null),
   },
 });

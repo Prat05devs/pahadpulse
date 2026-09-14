@@ -34,14 +34,6 @@ export type FreshnessLevel = 'fresh' | 'stale' | 'expired' | 'unknown';
  * These are data encodings, not decoration: an "extreme" alert must look the same on every
  * screen, so the mapping lives here rather than inside whichever component draws it first.
  */
-const severity: Record<Severity, string> = {
-  minor: '#0F8A4C',
-  moderate: '#B7791F',
-  severe: '#D9480F',
-  extreme: '#C1121F',
-  unknown: '#6B7280',
-};
-
 /**
  * Freshness colours, matching the API's `freshness` enum.
  *
@@ -79,10 +71,16 @@ export function withAlpha(hex: string, opacity: number): string {
 export type Colors = {
   /* ── Backgrounds & Surfaces ─────────────────────────────────────── */
   background: string;
+  backgroundSecondary: string;
+  backgroundTertiary: string;
   surface: string;
   surfaceMuted: string;
+  surfaceTertiary: string;
   surfaceElevated: string;
   surfaceInteractive: string;
+  surfaceGlass: string;
+  surfaceGlassStrong: string;
+  surfaceHighlight: string;
 
   /* ── Borders ────────────────────────────────────────────────────── */
   borderSubtle: string;
@@ -104,6 +102,12 @@ export type Colors = {
   primarySubtle: string;
   primaryMuted: string;
   primaryStrong: string;
+  /** A consistent light canvas that preserves every colour in the official logo. */
+  brandCanvas: string;
+  secondary: string;
+  secondarySubtle: string;
+  secondaryMuted: string;
+  secondaryStrong: string;
   accent: string;
   accentSubtle: string;
   accentMuted: string;
@@ -123,6 +127,7 @@ export type Colors = {
 
   /* ── Data encodings ──────────────────────────────────────────────── */
   severity: Record<Severity, string>;
+  severitySubtle: Record<Severity, string>;
   freshness: Record<FreshnessLevel, string>;
 
   /* ── Interaction states ──────────────────────────────────────────── */
@@ -135,6 +140,7 @@ export type Colors = {
 
   /* ── Utility ─────────────────────────────────────────────────────── */
   scrim: string;
+  shadow: string;
   skeleton: string;
   separator: string;
 };
@@ -146,97 +152,122 @@ export type Colors = {
 const lightColors: Colors = {
   /* ── Backgrounds & Surfaces ─────────────────────────────────────── */
   /** Page background, behind everything. Slightly warmer than pure blue-white. */
-  background: '#F2F4F8',
+  background: '#F2F7F7',
+  backgroundSecondary: '#E8F2F1',
+  backgroundTertiary: '#DCEDEB',
   /** Raised surfaces: cards, sheets, the tab bar. */
-  surface: '#FFFFFF',
+  surface: '#FBFDFD',
   /** A surface one step further back, for nested blocks and table stripes. */
-  surfaceMuted: '#E8ECF4',
+  surfaceMuted: '#E8F1F0',
+  surfaceTertiary: '#DDEBE9',
   /** Modal sheets — same fill as surface but sits on stronger shadow. */
   surfaceElevated: '#FFFFFF',
   /** Input fields, search bars. */
-  surfaceInteractive: '#F7F9FC',
+  surfaceInteractive: '#F0F6F6',
+  surfaceGlass: 'rgba(251, 253, 253, 0.78)',
+  surfaceGlassStrong: 'rgba(251, 253, 253, 0.92)',
+  surfaceHighlight: 'rgba(255, 255, 255, 0.76)',
 
   /* ── Borders ────────────────────────────────────────────────────── */
   /** Lightest — dividers inside cards, thin separators. */
-  borderSubtle: '#E2E8F0',
+  borderSubtle: '#DCE8E6',
   /** Default card/chip borders. */
-  border: '#D1D9E6',
+  border: '#C8DAD7',
   /** Emphasized borders, unselected score bars. */
-  borderStrong: '#B0BDCE',
+  borderStrong: '#9DB9B4',
   /** Focus ring — matches primary. */
-  borderFocus: brand.blue,
+  borderFocus: '#075E9C',
 
   /* ── Text ────────────────────────────────────────────────────────── */
   /** Primary high-contrast text. ~15:1 on background. */
-  text: '#0F172A',
+  text: '#102A2B',
   /** Subtitles, descriptions. ~8.7:1 on background. */
-  textSecondary: '#3D4F65',
+  textSecondary: '#314B4C',
   /** Timestamps, footnotes. ~4.8:1 on background — passes AA. */
-  textTertiary: '#64748B',
+  textTertiary: '#587071',
   /** Captions and provenance notes. Kept AA-safe because existing small text uses this token. */
-  textMuted: '#64748B',
+  textMuted: '#587071',
   /** Disabled controls. Intentionally low contrast. */
-  textDisabled: '#B0BEC9',
+  textDisabled: '#91A5A3',
   /** Inverted text on solid colored buttons/badges. */
   textInverse: '#FFFFFF',
   /** Tappable links. Uses brand primary. */
-  textLink: brand.blue,
+  textLink: '#075E9C',
 
   /* ── Brand & Action ─────────────────────────────────────────────── */
-  primary: brand.blue,
+  primary: '#075E9C',
   /** Selected chip bg, active row highlight. */
-  primarySubtle: '#EBF2FC',
+  primarySubtle: '#EDF7FF',
   /** Badge pill background. */
-  primaryMuted: '#DBEAFE',
+  primaryMuted: '#D8EDFC',
   /** Hover/pressed primary emphasis. 7.8:1 AAA. */
-  primaryStrong: '#014BA8',
+  primaryStrong: '#064C80',
+  brandCanvas: '#FFFFFF',
+  secondary: '#147D71',
+  secondarySubtle: '#ECFBF7',
+  secondaryMuted: '#D1F5EB',
+  secondaryStrong: '#106359',
   /**
    * Water/hydromet highlights, secondary action.
    * Changed from #01BAFE (3.1:1 — FAILS AA) to #0882A1 (4.6:1 — passes AA).
    */
-  accent: '#0882A1',
+  accent: '#A95600',
   /** Accent badge/chip background. */
-  accentSubtle: '#E6F6FA',
+  accentSubtle: '#FFF8E8',
   /** Soft cyan wash. */
-  accentMuted: '#CCEFFE',
+  accentMuted: '#FDEDC4',
   /** Pressed accent state. */
-  accentStrong: '#066A83',
-  danger: brand.red,
-  dangerMuted: '#FDE2E2',
+  accentStrong: '#884104',
+  danger: '#A71930',
+  dangerMuted: '#FCE8EC',
 
   /* ── Semantic ────────────────────────────────────────────────────── */
   /** Positive state: data fresh, road open, comparison winner. */
-  success: '#0E7B3F',
-  successSubtle: '#E6F5ED',
+  success: '#2E7D5B',
+  successSubtle: '#E2F4EA',
   /** Caution: stale data, moderate concern. */
-  warning: '#9A6700',
-  warningSubtle: '#FEF3C7',
+  warning: '#895900',
+  warningSubtle: '#FFF1D6',
   /** Error state: failed load, critical issue. */
-  error: '#C41E1E',
-  errorSubtle: '#FDE8E8',
+  error: '#A71930',
+  errorSubtle: '#FCE8EC',
   /** Informational — aliases primary. */
-  info: brand.blue,
-  infoSubtle: '#EBF2FC',
+  info: '#075E9C',
+  infoSubtle: '#D8EDFC',
 
   /* ── Data encodings — unchanged ──────────────────────────────────── */
-  severity,
+  severity: {
+    minor: '#2E7D5B',
+    moderate: '#895900',
+    severe: '#C4420C',
+    extreme: '#A71930',
+    unknown: '#5F6F72',
+  },
+  severitySubtle: {
+    minor: '#E2F4EA',
+    moderate: '#FFF1D6',
+    severe: '#FCE9DF',
+    extreme: '#FCE8EC',
+    unknown: '#E7ECEB',
+  },
   freshness,
 
   /* ── Interaction states ──────────────────────────────────────────── */
-  actionPrimary: brand.blue,
-  actionPrimaryPressed: '#014BA8',
-  actionPrimaryDisabled: '#B0BDCE',
-  selected: '#EBF2FC',
-  pressed: '#E8ECF4',
-  focused: brand.blue,
+  actionPrimary: '#075E9C',
+  actionPrimaryPressed: '#064C80',
+  actionPrimaryDisabled: '#9DB9B4',
+  selected: '#D8EDFC',
+  pressed: '#DDEBE9',
+  focused: '#075E9C',
 
   /* ── Utility ─────────────────────────────────────────────────────── */
   /** Overlay behind modals and sheets. */
-  scrim: 'rgba(15, 23, 42, 0.5)',
+  scrim: 'rgba(7, 34, 57, 0.52)',
+  shadow: '#102A2B',
   /** Skeleton placeholder fill. */
-  skeleton: '#E2E8F0',
+  skeleton: '#DCE8E6',
   /** Thinnest divider — less prominent than border. */
-  separator: '#EBF0F5',
+  separator: '#E3ECEB',
 };
 
 // ---------------------------------------------------------------------------
@@ -251,78 +282,97 @@ const lightColors: Colors = {
  */
 const darkColors: Colors = {
   /* ── Backgrounds & Surfaces ─────────────────────────────────────── */
-  background: '#0C1222',
-  surface: '#162033',
-  surfaceMuted: '#1E2D44',
+  background: '#071719',
+  backgroundSecondary: '#0B2022',
+  backgroundTertiary: '#103033',
+  surface: '#10282A',
+  surfaceMuted: '#163336',
+  surfaceTertiary: '#1A3B3E',
   /** Modal sheets — brighter than surface to create depth. */
-  surfaceElevated: '#223550',
-  surfaceInteractive: '#1A2940',
+  surfaceElevated: '#1E4245',
+  surfaceInteractive: '#143033',
+  surfaceGlass: 'rgba(16, 40, 42, 0.72)',
+  surfaceGlassStrong: 'rgba(16, 40, 42, 0.92)',
+  surfaceHighlight: 'rgba(255, 255, 255, 0.12)',
 
   /* ── Borders ────────────────────────────────────────────────────── */
-  borderSubtle: '#1E2D44',
-  border: '#2A3A52',
-  borderStrong: '#3D506A',
-  borderFocus: '#60A5FA',
+  borderSubtle: '#1A3B3E',
+  border: '#285052',
+  borderStrong: '#3C6869',
+  borderFocus: '#65BFFC',
 
   /* ── Text ────────────────────────────────────────────────────────── */
-  text: '#F1F5F9',
-  textSecondary: '#C8D3E0',
-  textTertiary: '#94A3B8',
+  text: '#F2F8F7',
+  textSecondary: '#C4D8D5',
+  textTertiary: '#9CB6B2',
   /** Captions and provenance notes need full small-text contrast on dark surfaces. */
-  textMuted: '#94A3B8',
-  textDisabled: '#4A5568',
-  textInverse: '#0C1222',
-  textLink: '#60A5FA',
+  textMuted: '#9CB6B2',
+  textDisabled: '#607B77',
+  textInverse: '#071719',
+  textLink: '#65BFFC',
 
   /* ── Brand & Action ─────────────────────────────────────────────── */
-  primary: '#60A5FA',
-  primarySubtle: '#172554',
-  primaryMuted: '#1E3A5F',
-  primaryStrong: '#93C5FD',
-  accent: '#38BDF8',
-  accentSubtle: '#0C3547',
-  accentMuted: '#0F4056',
-  accentStrong: '#7DD3FC',
-  danger: '#FB7185',
-  dangerMuted: '#3B1520',
+  primary: '#65BFFC',
+  primarySubtle: '#123A4D',
+  primaryMuted: '#174D64',
+  primaryStrong: '#98D5FC',
+  brandCanvas: '#FFFFFF',
+  secondary: '#5FD1BD',
+  secondarySubtle: '#10392F',
+  secondaryMuted: '#174D42',
+  secondaryStrong: '#93E6D7',
+  accent: '#FFB454',
+  accentSubtle: '#392A0B',
+  accentMuted: '#503A0B',
+  accentStrong: '#FFD08A',
+  danger: '#FF7188',
+  dangerMuted: '#40141D',
 
   /* ── Semantic ────────────────────────────────────────────────────── */
-  success: '#4ADE80',
-  successSubtle: '#0A3321',
-  warning: '#FBBF24',
-  warningSubtle: '#3D2E07',
-  error: '#FB7185',
-  errorSubtle: '#3B1520',
-  info: '#60A5FA',
-  infoSubtle: '#172554',
+  success: '#6DD6A6',
+  successSubtle: '#10392B',
+  warning: '#F4BE58',
+  warningSubtle: '#392A0B',
+  error: '#FF7188',
+  errorSubtle: '#40141D',
+  info: '#65BFFC',
+  infoSubtle: '#123A4D',
 
   /* ── Data encodings ──────────────────────────────────────────────── */
   severity: {
-    minor: '#4ADE80',
-    moderate: '#FBBF24',
-    severe: '#FB923C',
-    extreme: '#FB7185',
-    unknown: '#94A3B8',
+    minor: '#6DD6A6',
+    moderate: '#F4BE58',
+    severe: '#FF925B',
+    extreme: '#FF7188',
+    unknown: '#A7B8B6',
+  },
+  severitySubtle: {
+    minor: '#10392B',
+    moderate: '#392A0B',
+    severe: '#442014',
+    extreme: '#40141D',
+    unknown: '#263A3B',
   },
   freshness: {
-    fresh: '#4ADE80',
-    stale: '#FBBF24',
-    expired: '#FB7185',
-    unknown: '#94A3B8',
+    fresh: '#6DD6A6',
+    stale: '#F4BE58',
+    expired: '#FF7188',
+    unknown: '#A7B8B6',
   },
 
   /* ── Interaction states ──────────────────────────────────────────── */
-  actionPrimary: '#60A5FA',
-  actionPrimaryPressed: '#93C5FD',
-  actionPrimaryDisabled: '#3D506A',
-  selected: '#172554',
-  pressed: '#1E2D44',
-  focused: '#60A5FA',
+  actionPrimary: '#65BFFC',
+  actionPrimaryPressed: '#98D5FC',
+  actionPrimaryDisabled: '#3C6869',
+  selected: '#123A4D',
+  pressed: '#1A3B3E',
+  focused: '#65BFFC',
 
   /* ── Utility ─────────────────────────────────────────────────────── */
-  scrim: 'rgba(0, 0, 0, 0.65)',
-  skeleton: '#1E293B',
-  separator: '#1A2538',
+  scrim: 'rgba(0, 0, 0, 0.70)',
+  shadow: '#000000',
+  skeleton: '#1A3B3E',
+  separator: '#173437',
 };
 
 export const palettes = { light: lightColors, dark: darkColors } as const;
@@ -377,7 +427,10 @@ export const typography = {
   footnote: { fontSize: 11, lineHeight: 16, weight: 'medium' },
   /** Figures. Tabular so digits do not jitter as values refresh. */
   metric: { fontSize: 26, lineHeight: 32, weight: 'bold' },
-} as const satisfies Record<string, { fontSize: number; lineHeight: number; weight: FontWeightToken }>;
+} as const satisfies Record<
+  string,
+  { fontSize: number; lineHeight: number; weight: FontWeightToken }
+>;
 
 export type TypographyToken = keyof typeof typography;
 
@@ -405,5 +458,11 @@ export const elevation = {
 
 export type ElevationToken = keyof typeof elevation;
 
-/** Minimum touch target. Below this, a control fails accessibility review on both platforms. */
-export const HIT_SLOP_MIN_SIZE = 44;
+/**
+ * Minimum visual touch target shared by both platforms.
+ *
+ * Android requires 48dp while iOS requires 44pt, so the cross-platform primitive uses the
+ * stricter value. This avoids a control silently passing on iOS and becoming undersized in
+ * the Android build.
+ */
+export const HIT_SLOP_MIN_SIZE = 48;

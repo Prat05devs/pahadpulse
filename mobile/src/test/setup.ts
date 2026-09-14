@@ -33,6 +33,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
  */
 jest.mock('react-native-reanimated', () => require('./reanimated-mock'));
 
-// The env module throws on invalid configuration by design, so tests get a valid one.
-process.env.EXPO_PUBLIC_API_URL = 'http://localhost:3000/api';
-process.env.EXPO_PUBLIC_WEB_URL = 'https://pahadpulse.in';
+// The env module throws on invalid configuration by design, so tests get valid defaults.
+// Preserve explicit values so the opt-in live API contract suite can target production.
+process.env.EXPO_PUBLIC_API_URL ??= 'http://localhost:3000/api';
+process.env.EXPO_PUBLIC_WEB_URL ??= 'https://www.pahadpulse.live';

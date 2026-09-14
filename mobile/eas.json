@@ -5,17 +5,28 @@
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
+      "environment": "development",
       "env": { "APP_VARIANT": "development" }
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
-      "env": { "APP_VARIANT": "preview" }
+      "environment": "preview",
+      "env": {
+        "APP_VARIANT": "preview",
+        "EXPO_PUBLIC_API_URL": "https://pahadpulse.onrender.com/api",
+        "EXPO_PUBLIC_WEB_URL": "https://www.pahadpulse.live"
+      }
     },
     "production": {
       "autoIncrement": true,
       "channel": "production",
-      "env": { "APP_VARIANT": "production" }
+      "environment": "production",
+      "env": {
+        "APP_VARIANT": "production",
+        "EXPO_PUBLIC_API_URL": "https://pahadpulse.onrender.com/api",
+        "EXPO_PUBLIC_WEB_URL": "https://www.pahadpulse.live"
+      }
     }
   },
   "submit": { "production": {} }

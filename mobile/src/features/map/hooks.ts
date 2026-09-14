@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { STALE_TIME } from '@/lib/query-client';
 
 import { mapKeys } from './queries';
-import { fetchAlertFeatures, fetchDistrictFeatures, fetchMigrationSummary } from './services';
+import { fetchAlertFeatures, fetchDistrictFeatures } from './services';
 
 /**
  * District boundaries.
@@ -26,19 +26,5 @@ export function useAlertFeatures() {
     queryKey: mapKeys.alerts(),
     queryFn: ({ signal }) => fetchAlertFeatures(signal),
     staleTime: STALE_TIME.live,
-  });
-}
-
-/**
- * Migration figures, for the out-migration choropleth.
- *
- * Reference data: these come from two commission surveys, published years apart. Nothing
- * about them changes between app launches.
- */
-export function useMigrationSummary() {
-  return useQuery({
-    queryKey: mapKeys.migration(),
-    queryFn: ({ signal }) => fetchMigrationSummary(signal),
-    staleTime: STALE_TIME.reference,
   });
 }

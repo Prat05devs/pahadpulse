@@ -1,10 +1,13 @@
 import { memo } from 'react';
+import { GlassView, isGlassEffectAPIAvailable } from 'expo-glass-effect';
+import { Platform, View } from 'react-native';
 
-import { Card, HStack, Icon, Pressable, Text, VStack, type IconName } from '@/components/atoms';
+import { HStack, Icon, Pressable, Text, VStack, type IconName } from '@/components/atoms';
 import { SeverityBadge, SourceNote } from '@/components/molecules';
 import { formatRelative, localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
+import { withAlpha } from '@/theme/tokens';
 
 import type { Alert } from '../schemas';
 
@@ -19,9 +22,9 @@ const TYPE_ICONS: Record<Alert['type'], IconName> = {
 /**
  * One alert, as it appears in a list.
  *
- * The severity stripe down the left edge carries the same information as the badge on
- * purpose: severity has to survive being scanned at arm's length in a list of twenty, and
- * colour alone fails for a colour-blind reader — hence both a stripe and a worded badge.
+ * The entire material carries severity while the worded badge and alert-type icon preserve
+ * meaning without colour. Native Liquid Glass is used where supported; every other target
+ * receives the same hierarchy through a high-opacity semantic surface.
  */
 export const AlertCard = memo(function AlertCard({
   alert,
@@ -33,6 +36,8 @@ export const AlertCard = memo(function AlertCard({
 }) {
   const theme = useTheme();
   const language = useLanguage();
+  const severityColor = theme.colors.severity[alert.severity];
+  const supportsNativeGlass = Platform.OS === 'ios' && isGlassEffectAPIAvailable();
 
   const areas = alert.areas.map((area) => localise(area.name, language)).filter(Boolean);
   const areaLabel =
@@ -44,48 +49,93 @@ export const AlertCard = memo(function AlertCard({
 
   const label = `${alert.severity} ${alert.type} alert. ${alert.headline}. Affects ${areaLabel}.`;
 
-  const card = (
-    <Card
-      // The severity stripe has to reach the card's edges, so padding moves inside.
-      style={{ overflow: 'hidden', padding: 0 }}
-      accessible={!onPress}
-      accessibilityLabel={onPress ? undefined : label}
-    >
-      <HStack>
-        <VStack
-          style={{ width: 4, backgroundColor: theme.colors.severity[alert.severity] }}
-        />
-
-        <VStack grow gap="sm" padding="lg">
-          <HStack align="center" gap="sm" wrap>
-            <Icon name={TYPE_ICONS[alert.type]} size={16} tone="textMuted" />
-            <SeverityBadge severity={alert.severity} />
-            <Text variant="footnote" color="textMuted">
-              {formatRelative(alert.issuedAt)}
-            </Text>
-          </HStack>
-
-          <Text variant="bodyStrong" numberOfLines={3}>
-            {alert.headline}
-          </Text>
-
-          <HStack align="center" gap="xs">
-            <Icon name="location-outline" size={13} tone="textMuted" />
-            <Text variant="caption" color="textMuted" numberOfLines={1} style={{ flex: 1 }}>
-              {areaLabel}
-            </Text>
-          </HStack>
-
-          <SourceNote provenance={alert.provenance} compact />
-        </VStack>
+  const cardContent = (
+    <VStack grow gap="sm" padding="lg">
+      <HStack align="center" justify="space-between" gap="sm">
+        <HStack align="center" gap="sm" wrap style={{ flex: 1 }}>
+          <View
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: theme.radius.md,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: withAlpha(severityColor, theme.scheme === 'dark' ? 0.2 : 0.12),
+            }}
+          >
+            <Icon name={TYPE_ICONS[alert.type]} size={17} color={severityColor} />
+          </View>
+          <SeverityBadge severity={alert.severity} />
+        </HStack>
+        <Text variant="footnote" color="textMuted">
+          {formatRelative(alert.issuedAt)}
+        </Text>
       </HStack>
-    </Card>
+
+      <Text variant="bodyStrong" numberOfLines={3}>
+        {alert.headline}
+      </Text>
+
+      <HStack align="center" gap="xs">
+        <Icon name="location-outline" size={13} color={severityColor} />
+        <Text variant="caption" color="textSecondary" numberOfLines={1} style={{ flex: 1 }}>
+          {areaLabel}
+        </Text>
+      </HStack>
+
+      <SourceNote provenance={alert.provenance} compact />
+    </VStack>
+  );
+
+  const frameStyle = {
+    borderRadius: theme.radius.xl,
+    ...theme.elevation.medium,
+    shadowColor: withAlpha(severityColor, 0.42),
+  };
+
+  const clippedSurfaceStyle = {
+    overflow: 'hidden' as const,
+    borderRadius: theme.radius.xl,
+    borderWidth: 1,
+    borderColor: withAlpha(severityColor, theme.scheme === 'dark' ? 0.46 : 0.32),
+  };
+
+  const card = (
+    <View style={frameStyle}>
+      {supportsNativeGlass ? (
+        <GlassView
+          glassEffectStyle="regular"
+          tintColor={withAlpha(severityColor, theme.scheme === 'dark' ? 0.16 : 0.1)}
+          colorScheme={theme.scheme}
+          style={clippedSurfaceStyle}
+          accessible={!onPress}
+          accessibilityLabel={onPress ? undefined : label}
+        >
+          {cardContent}
+        </GlassView>
+      ) : (
+        <View
+          style={[
+            clippedSurfaceStyle,
+            { backgroundColor: theme.colors.severitySubtle[alert.severity] },
+          ]}
+          accessible={!onPress}
+          accessibilityLabel={onPress ? undefined : label}
+        >
+          {cardContent}
+        </View>
+      )}
+    </View>
   );
 
   if (!onPress) return card;
 
   return (
-    <Pressable onPress={() => onPress(alert.id)} accessibilityLabel={label} style={{ minHeight: 0 }}>
+    <Pressable
+      onPress={() => onPress(alert.id)}
+      accessibilityLabel={label}
+      style={{ minHeight: 0 }}
+    >
       {card}
     </Pressable>
   );

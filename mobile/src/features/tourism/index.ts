@@ -1,4 +1,3 @@
-export * from './schemas';
 export * from './pilgrim-schemas';
 export * from './services';
 export * from './queries';

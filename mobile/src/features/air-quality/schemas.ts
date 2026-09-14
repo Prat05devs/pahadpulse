@@ -50,7 +50,7 @@ export const AirQualitySchema = z.object({
           metric: z.string(),
           subIndex: z.number(),
           averagingHours: z.number(),
-        }),
+        })
       ),
     })
     /*
@@ -81,3 +81,11 @@ export const AirQualitySchema = z.object({
 });
 
 export type AirQuality = z.infer<typeof AirQualitySchema>;
+
+export const DistrictAirEntrySchema = z.object({
+  areaSlug: z.string(),
+  areaName: z.object({ en: z.string(), hi: z.string().nullable() }),
+  air: AirQualitySchema.nullable(),
+});
+
+export type DistrictAirEntry = z.infer<typeof DistrictAirEntrySchema>;

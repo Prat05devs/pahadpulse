@@ -90,32 +90,6 @@ export type AlertFeature = z.infer<typeof AlertFeatureSchema>;
 export type AlertCollection = z.infer<typeof AlertCollectionSchema>;
 
 /**
- * The migration figures the choropleth is coloured from.
- *
- * Only the fields the map uses are modelled. The migration screen validates the same
- * endpoint against its own fuller schema — a map that only colours districts has no business
- * failing because a survey's evidence URL changed shape.
- */
-export const MigrationDistrictSchema = z.object({
-  slug: z.string(),
-  coverage: z.string(),
-  figures: z.array(
-    z.object({
-      surveyKey: z.string(),
-      temporaryPersons: z.number().nullable(),
-      permanentPersons: z.number().nullable(),
-    }),
-  ),
-});
-
-export const MigrationSummarySchema = z.object({
-  districts: z.array(MigrationDistrictSchema),
-});
-
-export type MigrationDistrict = z.infer<typeof MigrationDistrictSchema>;
-export type MigrationSummary = z.infer<typeof MigrationSummarySchema>;
-
-/**
  * Messages the WebView document posts back.
  *
  * Validated rather than trusted for the same reason a network payload is (N5): the string

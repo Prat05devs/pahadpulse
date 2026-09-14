@@ -1,22 +1,20 @@
 import { useCallback } from 'react';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Card, HStack, Icon, Pressable, Text, VStack } from '@/components/atoms';
-import {
-  LoadingState,
-  QueryBoundary,
-  SectionHeader,
-  StatTile,
-} from '@/components/molecules';
+import { LoadingState, QueryBoundary, SectionHeader, StatTile } from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { AlertCard, useActiveAlerts, useAlertSummary } from '@/features/alerts';
 import { isAlertInForce } from '@/features/alerts/schemas';
 import { useDistricts } from '@/features/areas';
+import { useAreaIndicators } from '@/features/indicators';
+import { usePilgrimArrivals } from '@/features/tourism/hooks';
 import { useAreaWeather } from '@/features/weather';
-import { formatCompact, formatNumber, localise } from '@/lib/format';
+import { formatCompact, formatDate, formatNumber, localise } from '@/lib/format';
+import { shouldStackCardGrid } from '@/lib/layout';
 import { useLanguage, useSavedDistricts } from '@/stores';
 import { useTheme } from '@/theme';
 
@@ -35,12 +33,15 @@ export function TodayScreen() {
   // Stable across renders so AlertCard's memo holds.
   const openAlert = useCallback((id: number) => router.push(`/alerts/${id}`), [router]);
   const insets = useSafeAreaInsets();
+  const { width, fontScale } = useWindowDimensions();
   const language = useLanguage();
   const savedSlugs = useSavedDistricts();
 
   const summary = useAlertSummary();
   const alerts = useActiveAlerts();
   const districts = useDistricts();
+  const stateIndicators = useAreaIndicators('uttarakhand');
+  const arrivals = usePilgrimArrivals();
 
   /**
    * The state-level weather row. `useAreaWeather` is called with the first followed district
@@ -54,48 +55,91 @@ export function TodayScreen() {
     void summary.refetch();
     void alerts.refetch();
     void districts.refetch();
+    void stateIndicators.refetch();
+    void arrivals.refetch();
     if (focusSlug) void focusWeather.refetch();
   };
 
   const currentAlerts = (alerts.data ?? []).filter((alert) => isAlertInForce(alert));
   const activeCount = summary.isError ? currentAlerts.length : (summary.data?.activeCount ?? 0);
   const severeCount = summary.isError
-    ? currentAlerts.filter((alert) => alert.severity === 'severe' || alert.severity === 'extreme').length
+    ? currentAlerts.filter(
+        (alert) => alert.severity === 'severe' || alert.severity === 'extreme'
+      ).length
     : (summary.data?.bySeverity.severe ?? 0) + (summary.data?.bySeverity.extreme ?? 0);
 
   const totalVillages = (districts.data ?? []).reduce((sum, d) => sum + d.counts.villages, 0);
+  const stackProfileCards = shouldStackCardGrid(width, fontScale);
 
   const header = (
     <View
       style={{
         paddingTop: insets.top + theme.spacing.sm,
         paddingHorizontal: theme.spacing.lg,
-        paddingBottom: theme.spacing.md,
-        backgroundColor: theme.colors.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.border,
+        paddingBottom: theme.spacing.sm,
+        backgroundColor: theme.colors.background,
       }}
     >
-      <HStack align="center" gap="sm">
-        <Image
-          source={require('@/assets/images/logo.png')}
-          style={{ width: 30, height: 30 }}
-          contentFit="contain"
-          accessibilityIgnoresInvertColors
-          alt="Pahad Pulse"
-        />
-        <VStack grow>
-          <Text variant="heading">Pahad Pulse</Text>
-          <Text variant="footnote" color="textMuted">
-            Uttarakhand, from the departments that publish it
+      <HStack align="center" gap="md">
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={{
+            width: 48,
+            height: 48,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: theme.radius.lg,
+            backgroundColor: theme.colors.brandCanvas,
+            borderWidth: 1,
+            borderColor: theme.colors.borderSubtle,
+            ...theme.elevation.low,
+            shadowColor: theme.colors.shadow,
+          }}
+        >
+          <Image
+            source={require('@/assets/images/logo.png')}
+            style={{ width: 36, height: 36 }}
+            contentFit="contain"
+            accessibilityIgnoresInvertColors
+          />
+        </View>
+
+        <VStack
+          grow
+          gap="xxs"
+          accessible
+          accessibilityRole="header"
+          accessibilityLabel="Pahad Pulse. Today in Uttarakhand"
+        >
+          <Text
+            variant="footnote"
+            color="primary"
+            weight="semibold"
+            style={{ letterSpacing: 0.8 }}
+          >
+            PAHAD PULSE
           </Text>
+          <Text variant="title">Today in Uttarakhand</Text>
         </VStack>
+
         <Pressable
           onPress={() => router.push('/settings')}
-          accessibilityLabel="Settings"
-          style={{ minWidth: 44, alignItems: 'flex-end', justifyContent: 'center' }}
+          accessibilityLabel="Open settings"
+          accessibilityHint="Opens language, appearance and app preferences"
+          style={{
+            width: 48,
+            height: 48,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: theme.radius.pill,
+            backgroundColor: theme.colors.surfaceInteractive,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+          }}
+          pressedStyle={{ backgroundColor: theme.colors.pressed }}
         >
-          <Icon name="settings-outline" size={20} tone="textMuted" />
+          <Icon name="settings-outline" size={21} tone="text" />
         </Pressable>
       </HStack>
     </View>
@@ -132,6 +176,65 @@ export function TodayScreen() {
           caption={totalVillages > 0 ? `${formatNumber(totalVillages)} villages` : undefined}
         />
       </HStack>
+
+      <VStack gap="sm">
+        <SectionHeader
+          title="Uttarakhand at a glance"
+          subtitle="Published state profile figures"
+        />
+        <QueryBoundary
+          query={stateIndicators}
+          loading={<LoadingState label="Loading state profile" />}
+          isEmpty={(data) => data.values.length === 0}
+          emptyTitle="No state profile figures"
+        >
+          {(data) => (
+            <HStack gap="sm" wrap>
+              {data.values
+                .filter((entry) =>
+                  [
+                    'state_population',
+                    'state_area_sq_km',
+                    'state_literacy_rate',
+                    'state_forest_cover_pct',
+                    'state_villages',
+                  ].includes(entry.indicator.key)
+                )
+                .map((entry) => (
+                  <Card
+                    key={entry.indicator.key}
+                    padding="md"
+                    style={
+                      stackProfileCards
+                        ? { width: '100%' }
+                        : { flex: 1, minWidth: 145 }
+                    }
+                  >
+                    <VStack gap="xs">
+                      <Text variant="footnote" color="textMuted">
+                        {localise(entry.indicator.label, language).toUpperCase()}
+                      </Text>
+                      <Text variant="heading" tabular>
+                        {formatNumber(entry.value, entry.indicator.decimals)}
+                        {entry.indicator.unit === 'percent' || entry.indicator.unit === 'pct'
+                          ? '%'
+                          : entry.indicator.unit === 'sq_km'
+                            ? ' km²'
+                            : ''}
+                      </Text>
+                      <Text variant="footnote" color="textMuted">
+                        {formatDate(entry.vintage)} ·{' '}
+                        {entry.provenance?.department
+                          ? localise(entry.provenance.department, language)
+                          : 'Source not recorded'}
+                      </Text>
+                    </VStack>
+                  </Card>
+                ))}
+            </HStack>
+          )}
+        </QueryBoundary>
+      </VStack>
 
       {/* Districts the reader follows */}
       {savedSlugs.length > 0 ? (
@@ -183,13 +286,12 @@ export function TodayScreen() {
         >
           {(list) => (
             <VStack gap="sm">
-              {list.filter((alert) => isAlertInForce(alert)).slice(0, 4).map((alert) => (
-                <AlertCard
-                  key={alert.id}
-                  alert={alert}
-                  onPress={openAlert}
-                />
-              ))}
+              {list
+                .filter((alert) => isAlertInForce(alert))
+                .slice(0, 4)
+                .map((alert) => (
+                  <AlertCard key={alert.id} alert={alert} onPress={openAlert} />
+                ))}
             </VStack>
           )}
         </QueryBoundary>
@@ -240,7 +342,17 @@ export function TodayScreen() {
         <HStack gap="sm">
           <StatTile
             label="Tourism"
-            value="Char Dham"
+            value={
+              arrivals.isPending
+                ? '—'
+                : arrivals.data?.totals?.length
+                  ? formatCompact(
+                      arrivals.data.totals.find((total) => total.year === 2025)?.visitors ??
+                        arrivals.data.totals.at(-1)?.visitors ??
+                        0
+                    )
+                  : 'Statewide'
+            }
             icon="compass-outline"
             onPress={() => router.push('/tourism')}
           />
@@ -260,7 +372,7 @@ export function TodayScreen() {
           />
           <StatTile
             label="Roads"
-            value="Traffic"
+            value="Highways"
             icon="car-outline"
             onPress={() => router.push('/roads')}
           />

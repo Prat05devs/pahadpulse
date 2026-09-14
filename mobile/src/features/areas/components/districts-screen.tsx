@@ -56,7 +56,7 @@ export function DistrictsScreen() {
         clearButtonMode="while-editing"
         accessibilityLabel="Search districts"
         style={{
-          height: 44,
+          height: 48,
           paddingHorizontal: theme.spacing.md,
           borderRadius: theme.radius.md,
           borderWidth: 1,

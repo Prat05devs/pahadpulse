@@ -69,7 +69,7 @@ export function Screen({
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background, overflow: 'hidden' }}>
       {header}
       {body}
     </View>

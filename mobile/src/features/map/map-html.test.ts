@@ -101,4 +101,23 @@ describe('the document control surface', () => {
     const hidden = html.match(/visibility: 'none'/g) ?? [];
     expect(hidden.length).toBeGreaterThanOrEqual(3);
   });
+
+  it('keeps district and alert fills translucent enough to preserve the basemap', () => {
+    const html = buildMapHtml({ districts: district, alerts: null });
+    expect(html).toContain("'fill-opacity': 0.14");
+    expect(html).toContain("'published', 0.24");
+    expect(html).toContain("'district', 0.12");
+    expect(html).toContain("id: 'alert-outline'");
+  });
+
+  it('renders high-contrast district labels and follows the selected language', () => {
+    const english = buildMapHtml({ districts: district, alerts: null, language: 'en' });
+    const hindi = buildMapHtml({ districts: district, alerts: null, language: 'hi' });
+
+    expect(english).toContain('pp-district-label');
+    expect(english).toContain('"en" === \'hi\'');
+    expect(hindi).toContain('"hi" === \'hi\'');
+    expect(english).toContain("feature.properties.slug === 'dehradun' ? [55, 32]");
+    expect(english).toContain("item.element.style.display = state.districts ? '' : 'none'");
+  });
 });

@@ -1,8 +1,10 @@
 import {
+  ALERT_FILL_OPACITY,
   ATTRIBUTION,
   BASEMAP_STYLE,
   DEFAULT_VIEW,
   DISTRICT_BORDER_CASING,
+  DISTRICT_FILL_OPACITY,
   DIVISION_COLORS,
   HILLSHADE,
   ROAD_CASING,
@@ -38,6 +40,7 @@ function toScriptJson(value: unknown): string {
 export interface BuildMapHtmlOptions {
   districts: DistrictCollection | null;
   alerts: AlertCollection | null;
+  language?: 'en' | 'hi';
 }
 
 /**
@@ -69,10 +72,8 @@ export const DEFAULT_LAYERS: MapLayerState = {
  * own validated, cached data is what gets drawn — the WebView never talks to our API, and
  * there is exactly one place (the Zod schemas) where a payload is trusted.
  */
-export function buildMapHtml({ districts, alerts }: BuildMapHtmlOptions): string {
-  const districtJson = toScriptJson(
-    districts ?? { type: 'FeatureCollection', features: [] },
-  );
+export function buildMapHtml({ districts, alerts, language = 'en' }: BuildMapHtmlOptions): string {
+  const districtJson = toScriptJson(districts ?? { type: 'FeatureCollection', features: [] });
   const alertJson = toScriptJson(alerts ?? { type: 'FeatureCollection', features: [] });
 
   return `<!doctype html>
@@ -82,12 +83,24 @@ export function buildMapHtml({ districts, alerts }: BuildMapHtmlOptions): string
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <link href="${MAPLIBRE_CSS}" rel="stylesheet" />
 <style>
-  html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: #F2F4F8; }
+  html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: #F2F7F7; }
   /* The RN screen draws its own attribution, where it can be styled with the app's type. */
   .maplibregl-ctrl-attrib, .maplibregl-ctrl-bottom-right { display: none; }
+  .pp-district-label {
+    pointer-events: none;
+    white-space: nowrap;
+    padding: 3px 7px;
+    border: 1px solid rgba(16, 42, 43, 0.24);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 4px rgba(7, 23, 25, 0.22);
+    color: #102A2B;
+    font: 600 11px/15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    letter-spacing: 0.1px;
+  }
   #err {
     position: absolute; inset: 0; display: none; padding: 24px;
-    font: 15px -apple-system, system-ui, sans-serif; color: #33415C; background: #F2F4F8;
+    font: 15px -apple-system, system-ui, sans-serif; color: #314B4C; background: #F2F7F7;
   }
 </style>
 </head>
@@ -229,7 +242,7 @@ export function buildMapHtml({ districts, alerts }: BuildMapHtmlOptions): string
           'kumaon', ${toScriptJson(DIVISION_COLORS.kumaon)},
           '#3A4A63'
         ],
-        'fill-opacity': 0.35
+        'fill-opacity': ${DISTRICT_FILL_OPACITY}
       }
     });
 
@@ -247,22 +260,47 @@ export function buildMapHtml({ districts, alerts }: BuildMapHtmlOptions): string
       paint: { 'line-color': '#FFFFFF', 'line-width': 1.1 }
     });
 
+    var alertColor = [
+      'match', ['get', 'severity'],
+      'extreme', ${toScriptJson(SEVERITY_COLORS.extreme)},
+      'severe', ${toScriptJson(SEVERITY_COLORS.severe)},
+      'moderate', ${toScriptJson(SEVERITY_COLORS.moderate)},
+      'minor', ${toScriptJson(SEVERITY_COLORS.minor)},
+      ${toScriptJson(SEVERITY_COLORS.unknown)}
+    ];
+
     map.addLayer({
       id: 'alert-fill',
       type: 'fill',
       source: 'alerts',
       filter: ['!=', ['geometry-type'], 'Point'],
       paint: {
-        'fill-color': [
-          'match', ['get', 'severity'],
-          'extreme', ${toScriptJson(SEVERITY_COLORS.extreme)},
-          'severe', ${toScriptJson(SEVERITY_COLORS.severe)},
-          'moderate', ${toScriptJson(SEVERITY_COLORS.moderate)},
-          'minor', ${toScriptJson(SEVERITY_COLORS.minor)},
-          ${toScriptJson(SEVERITY_COLORS.unknown)}
-        ],
-        'fill-opacity': 0.5
+        'fill-color': alertColor,
+        'fill-opacity': [
+          'match', ['coalesce', ['get', 'extent'], 'district'],
+          'published', ${ALERT_FILL_OPACITY.published},
+          'district', ${ALERT_FILL_OPACITY.district},
+          ${ALERT_FILL_OPACITY.fallback}
+        ]
       }
+    });
+
+    map.addLayer({
+      id: 'alert-casing',
+      type: 'line',
+      source: 'alerts',
+      filter: ['!=', ['geometry-type'], 'Point'],
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#FFFFFF', 'line-width': 4.5, 'line-opacity': 0.9 }
+    });
+
+    map.addLayer({
+      id: 'alert-outline',
+      type: 'line',
+      source: 'alerts',
+      filter: ['!=', ['geometry-type'], 'Point'],
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': alertColor, 'line-width': 2.4, 'line-opacity': 0.96 }
     });
 
     map.addLayer({
@@ -285,6 +323,34 @@ export function buildMapHtml({ districts, alerts }: BuildMapHtmlOptions): string
       }
     });
 
+    /*
+     * District names are DOM markers so terrain and data fills can never bury them. With
+     * only thirteen labels this has negligible cost and is more reliable than a symbol
+     * layer, whose collision system can discard the names on a narrow phone viewport.
+     */
+    var districtMarkers = districts.features
+      .filter(function (feature) { return feature.properties && feature.properties.centroid; })
+      .map(function (feature) {
+        var centroid = feature.properties.centroid;
+        // Dehradun's centroid is almost on the state's western edge. A small label-only
+        // offset keeps the full name inside a phone viewport without moving the geometry.
+        var labelOffset = feature.properties.slug === 'dehradun' ? [55, 32] : [0, 0];
+        var element = document.createElement('span');
+        element.className = 'pp-district-label';
+        element.setAttribute('aria-hidden', 'true');
+        element.textContent = ${toScriptJson(language)} === 'hi'
+          ? (feature.properties.nameHi || feature.properties.nameEn)
+          : feature.properties.nameEn;
+        var marker = new maplibregl.Marker({
+          element: element,
+          anchor: 'center',
+          offset: labelOffset
+        })
+          .setLngLat([centroid.lng, centroid.lat])
+          .addTo(map);
+        return { marker: marker, element: element };
+      });
+
     var STATE_BOUNDS = [
       [${UTTARAKHAND_BOUNDS[0]}, ${UTTARAKHAND_BOUNDS[1]}],
       [${UTTARAKHAND_BOUNDS[2]}, ${UTTARAKHAND_BOUNDS[3]}]
@@ -304,7 +370,9 @@ export function buildMapHtml({ districts, alerts }: BuildMapHtmlOptions): string
     var frameState = function () {
       map.resize();
       map.fitBounds(STATE_BOUNDS, {
-        padding: { top: 48, bottom: 132, left: 20, right: 20 },
+        // Side room is for the district-name pills, not decorative whitespace. Without it,
+        // Dehradun and Pithoragarh can be technically on-map while their labels are clipped.
+        padding: { top: 48, bottom: 132, left: 48, right: 48 },
         duration: 0
       });
       if (!terrainOn) { map.setBearing(0); map.setPitch(0); }
@@ -339,6 +407,8 @@ export function buildMapHtml({ districts, alerts }: BuildMapHtmlOptions): string
 
     window.ppSetLayers = function (state) {
       setVisible('alert-fill', !!state.alerts);
+      setVisible('alert-casing', !!state.alerts);
+      setVisible('alert-outline', !!state.alerts);
       setVisible('alert-point', !!state.alerts);
 
       setVisible('road-casing', !!state.highways);
@@ -348,6 +418,9 @@ export function buildMapHtml({ districts, alerts }: BuildMapHtmlOptions): string
       setVisible('district-fill', !!state.districts);
       setVisible('district-casing', !!state.districts);
       setVisible('district-border', !!state.districts);
+      districtMarkers.forEach(function (item) {
+        item.element.style.display = state.districts ? '' : 'none';
+      });
     };
 
     window.ppSetTerrain = function (on) {

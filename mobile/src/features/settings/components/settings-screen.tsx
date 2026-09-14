@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { Stack, router } from 'expo-router';
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 
 import { Card, Divider, HStack, Pressable, Text, VStack } from '@/components/atoms';
 import { Chip, ListRow, SectionHeader } from '@/components/molecules';
@@ -70,7 +70,7 @@ export function SettingsScreen() {
             <Pressable
               onPress={dismiss}
               accessibilityLabel="Close settings"
-              style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}
+              style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 4 }}
             >
               <Text variant="bodyStrong" color="primary">
                 Done
@@ -142,6 +142,20 @@ export function SettingsScreen() {
           <ListRow title="API" value={env.apiUrl.replace(/^https?:\/\//, '')} showChevron={false} />
           <Divider />
           <ListRow title="Web portal" value={env.webUrl.replace(/^https?:\/\//, '')} showChevron={false} />
+          <Divider />
+          <ListRow
+            title="Support"
+            subtitle="Help, corrections and accessibility feedback"
+            icon="help-circle-outline"
+            onPress={() => void Linking.openURL(`${env.webUrl}/support`)}
+          />
+          <Divider />
+          <ListRow
+            title="Privacy policy"
+            subtitle="How Pahad Pulse handles information"
+            icon="shield-checkmark-outline"
+            onPress={() => void Linking.openURL(`${env.webUrl}/privacy`)}
+          />
         </Card>
 
         <Card tone="muted" elevation="none">

@@ -9,7 +9,10 @@ import {
   VStack,
   type IconName,
 } from '@/components/atoms';
+import { useWindowDimensions } from 'react-native';
+import { shouldStackCardGrid } from '@/lib/layout';
 import { useTheme } from '@/theme';
+import { withAlpha } from '@/theme/tokens';
 
 type StatTileProps = {
   label: string;
@@ -61,6 +64,10 @@ export function StatTile({
   live = false,
 }: StatTileProps) {
   const theme = useTheme();
+  const { width, fontScale } = useWindowDimensions();
+  const stackInGrid = shouldStackCardGrid(width, fontScale);
+  const emphasisColor =
+    tone === 'default' ? theme.colors.secondary : theme.colors[TONE_COLORS[tone]];
 
   const a11yLabel = `${label}: ${value}${unit ?? ''}${caption ? `, ${caption}` : ''}`;
 
@@ -69,20 +76,38 @@ export function StatTile({
       padding="md"
       elevation="none"
       bordered
-      style={{ flex: 1, minWidth: 140 }}
+      style={{
+        flex: 1,
+        ...(stackInGrid ? { flexBasis: '100%' } : null),
+        minWidth: 140,
+        borderColor: withAlpha(emphasisColor, theme.scheme === 'dark' ? 0.32 : 0.2),
+      }}
       accessible={!onPress}
       accessibilityLabel={onPress ? undefined : a11yLabel}
     >
       <VStack gap="xs">
         <HStack align="center" gap="sm">
-          {icon ? <Icon name={icon} size={13} tone="textMuted" /> : null}
-          <Text variant="footnote" color="textMuted" numberOfLines={1} style={{ flex: 1 }}>
+          {icon ? (
+            <VStack
+              align="center"
+              justify="center"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: theme.radius.sm,
+                backgroundColor: withAlpha(emphasisColor, theme.scheme === 'dark' ? 0.18 : 0.1),
+              }}
+            >
+              <Icon name={icon} size={14} color={emphasisColor} />
+            </VStack>
+          ) : null}
+          <Text variant="footnote" color="textMuted" style={{ flex: 1, flexShrink: 1 }}>
             {label.toUpperCase()}
           </Text>
           {live ? <LiveDot tone={tone === 'danger' ? 'danger' : 'fresh'} size={7} /> : null}
         </HStack>
 
-        <HStack align="baseline" gap="xxs">
+        <HStack align="baseline" gap="xxs" wrap>
           {countTo === undefined ? (
             <Text variant="metric" style={{ color: theme.colors[TONE_COLORS[tone]] }}>
               {value}
@@ -103,7 +128,7 @@ export function StatTile({
         </HStack>
 
         {caption ? (
-          <Text variant="footnote" color="textMuted" numberOfLines={1}>
+          <Text variant="footnote" color="textMuted">
             {caption}
           </Text>
         ) : null}
@@ -117,7 +142,7 @@ export function StatTile({
     <Pressable
       onPress={onPress}
       accessibilityLabel={a11yLabel}
-      style={{ flex: 1, minHeight: 0 }}
+      style={{ flex: 1, minHeight: 0, ...(stackInGrid ? { flexBasis: '100%' } : null) }}
     >
       {tile}
     </Pressable>

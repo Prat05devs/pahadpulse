@@ -31,17 +31,18 @@ function RootNavigator() {
           headerStyle: { backgroundColor: theme.colors.surface },
           headerTintColor: theme.colors.text,
           headerShadowVisible: false,
+          headerBackTitle: 'Back',
           contentStyle: { backgroundColor: theme.colors.background },
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Home' }} />
         <Stack.Screen name="districts/[slug]" options={{ title: '' }} />
         <Stack.Screen name="alerts/[id]" options={{ title: 'Alert' }} />
-        <Stack.Screen name="roads" options={{ headerShown: false }} />
-        <Stack.Screen name="tourism" options={{ headerShown: false }} />
-        <Stack.Screen name="connectivity" options={{ headerShown: false }} />
-        <Stack.Screen name="seismic" options={{ headerShown: false }} />
-        <Stack.Screen name="air-quality" options={{ headerShown: false }} />
+        <Stack.Screen name="roads" options={{ title: 'Roads & highways' }} />
+        <Stack.Screen name="tourism" options={{ title: 'Tourism & pilgrimage' }} />
+        <Stack.Screen name="connectivity" options={{ title: 'Internet connectivity' }} />
+        <Stack.Screen name="seismic" options={{ title: 'Seismic activity' }} />
+        <Stack.Screen name="air-quality" options={{ title: 'Air quality' }} />
         <Stack.Screen name="compare" options={{ title: 'Compare districts' }} />
         <Stack.Screen name="credits" options={{ title: 'Data credits' }} />
         <Stack.Screen

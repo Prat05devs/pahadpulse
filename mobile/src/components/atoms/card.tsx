@@ -8,7 +8,7 @@ export type CardProps = ViewProps & {
   radius?: RadiusToken;
   elevation?: ElevationToken;
   /** A muted card recedes; used for nested blocks inside another card. */
-  tone?: 'surface' | 'muted';
+  tone?: 'surface' | 'muted' | 'tertiary' | 'glass' | 'warning';
   /** Draw a 1px border. Off by default when elevated, since both together reads as heavy. */
   bordered?: boolean;
   children?: ReactNode;
@@ -27,17 +27,27 @@ export function Card({
 }: CardProps) {
   const theme = useTheme();
   const showBorder = bordered ?? elevation === 'none';
+  const backgroundColor =
+    tone === 'muted'
+      ? theme.colors.surfaceMuted
+      : tone === 'tertiary'
+        ? theme.colors.surfaceTertiary
+        : tone === 'glass'
+          ? theme.colors.surfaceGlassStrong
+          : tone === 'warning'
+            ? theme.colors.warningSubtle
+            : theme.colors.surface;
 
   return (
     <View
       style={[
         {
-          backgroundColor: tone === 'muted' ? theme.colors.surfaceMuted : theme.colors.surface,
+          backgroundColor,
           borderRadius: theme.radius[radius],
           padding: theme.spacing[padding],
           ...(showBorder
             ? { borderWidth: 1, borderColor: theme.colors.border }
-            : theme.elevation[elevation]),
+            : { ...theme.elevation[elevation], shadowColor: theme.colors.shadow }),
         },
         style,
       ]}

@@ -8,5 +8,4 @@ export const mapKeys = {
   all: ['map'] as const,
   districts: () => [...mapKeys.all, 'districts'] as const,
   alerts: () => [...mapKeys.all, 'alerts'] as const,
-  migration: () => [...mapKeys.all, 'migration'] as const,
 };

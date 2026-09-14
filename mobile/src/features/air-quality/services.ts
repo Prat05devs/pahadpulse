@@ -1,8 +1,14 @@
 import { apiClient } from '@/lib/api';
-import { AirQualitySchema, type AirQuality } from './schemas';
+import { z } from 'zod';
+import { AirQualitySchema, DistrictAirEntrySchema, type AirQuality } from './schemas';
 
 export async function fetchAirQuality(slug: string): Promise<AirQuality> {
   return apiClient.get(`/areas/${slug}/air-quality`, AirQualitySchema);
+}
+
+/** All districts in one request; avoids thirteen serial round trips on the state screen. */
+export async function fetchAllDistrictAirQuality() {
+  return apiClient.get('/air-quality/districts', z.array(DistrictAirEntrySchema));
 }
 
 /**
@@ -13,7 +19,7 @@ export async function fetchAirQuality(slug: string): Promise<AirQuality> {
  * the caller renders them as absent.
  */
 export async function fetchAirQualityForDistricts(
-  slugs: readonly string[],
+  slugs: readonly string[]
 ): Promise<(AirQuality | null)[]> {
   const results = await Promise.allSettled(slugs.map((slug) => fetchAirQuality(slug)));
   return results.map((result) => (result.status === 'fulfilled' ? result.value : null));

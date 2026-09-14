@@ -1,9 +1,28 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { GlassView, isGlassEffectAPIAvailable } from 'expo-glass-effect';
 import { Tabs } from 'expo-router';
+import { Platform, View } from 'react-native';
 
 import { useAlertSummary } from '@/features/alerts';
 import { fontFamily } from '@/theme/fonts';
 import { useTheme } from '@/theme';
+
+function TabBarBackground() {
+  const theme = useTheme();
+
+  if (Platform.OS === 'ios' && isGlassEffectAPIAvailable()) {
+    return (
+      <GlassView
+        glassEffectStyle="regular"
+        colorScheme={theme.scheme}
+        tintColor={theme.colors.surfaceGlass}
+        style={{ flex: 1 }}
+      />
+    );
+  }
+
+  return <View style={{ flex: 1, backgroundColor: theme.colors.surfaceGlassStrong }} />;
+}
 
 /**
  * The tab bar. Four destinations, matching the sections of the web portal that a reader on a
@@ -23,9 +42,10 @@ export default function TabsLayout() {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.border,
+          backgroundColor: 'transparent',
+          borderTopColor: theme.colors.borderSubtle,
         },
+        tabBarBackground: () => <TabBarBackground />,
         tabBarLabelStyle: { fontFamily: fontFamily.medium, fontSize: 11 },
       }}
     >

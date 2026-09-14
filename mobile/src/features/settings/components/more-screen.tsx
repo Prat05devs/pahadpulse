@@ -58,7 +58,7 @@ export function MoreScreen() {
           <Divider />
           <ListRow
             title="Tourism"
-            subtitle="Char Dham visitor tracking and loads"
+            subtitle="Published Char Dham arrivals by shrine and year"
             icon="compass-outline"
             onPress={() => router.push('/tourism')}
           />
@@ -71,8 +71,8 @@ export function MoreScreen() {
           />
           <Divider />
           <ListRow
-            title="Roads & Traffic"
-            subtitle="Highway network closures and traffic"
+            title="Roads & Highways"
+            subtitle="Recorded National and State Highway network"
             icon="car-outline"
             onPress={() => router.push('/roads')}
           />
@@ -83,7 +83,14 @@ export function MoreScreen() {
             icon="wifi-outline"
             onPress={() => router.push('/connectivity')}
           />
-
+          <Divider />
+          <ListRow
+            title="Air quality"
+            subtitle="National AQI and pollutants by district"
+            icon="cloud-outline"
+            onPress={() => router.push('/air-quality')}
+          />
+          <Divider />
           <ListRow
             title="Seismic"
             subtitle="Recent earthquake events"

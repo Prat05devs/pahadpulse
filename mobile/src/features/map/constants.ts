@@ -72,6 +72,20 @@ export const DIVISION_COLORS: Record<string, string> = {
   kumaon: '#26456C',
 };
 
+/** Keep terrain, roads and basemap labels readable through the administrative tint. */
+export const DISTRICT_FILL_OPACITY = 0.14;
+
+/**
+ * Published alert polygons may be precise; district-derived polygons are only an affected
+ * administrative area and therefore receive a quieter wash. Both keep the map readable and
+ * rely on the alert outline—not opacity alone—to remain visible.
+ */
+export const ALERT_FILL_OPACITY = {
+  published: 0.24,
+  district: 0.12,
+  fallback: 0.14,
+} as const;
+
 /** Drawn under the white district borders so they hold an edge over snow-bright terrain. */
 export const DISTRICT_BORDER_CASING = '#0B2A26';
 
@@ -104,13 +118,3 @@ export const HILLSHADE = {
 
 /** Tilt applied when the reader turns 3D on. */
 export const TERRAIN_VIEW = { pitch: 50, bearing: -10 } as const;
-
-/**
- * The out-migration choropleth ramp.
- *
- * Sequential, single-hue and dark-at-the-top: the quantity has one direction — more people
- * left — so a diverging palette would invent a midpoint the data does not have. Kept off the
- * alert reds and the highway blue/yellow so three layers can be on at once and still be told
- * apart.
- */
-export const MIGRATION_COLORS = ['#F2E6DA', '#DFC3A0', '#C79A6B', '#A97142', '#7A4A1E'];

@@ -22,7 +22,7 @@ export type Env = z.infer<typeof EnvSchema>;
 
 const parsed = EnvSchema.safeParse({
   apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api',
-  webUrl: process.env.EXPO_PUBLIC_WEB_URL ?? 'https://pahadpulse.in',
+  webUrl: process.env.EXPO_PUBLIC_WEB_URL ?? 'https://www.pahadpulse.live',
 });
 
 if (!parsed.success) {

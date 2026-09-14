@@ -7,6 +7,7 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { HStack, Icon, Pressable, Text, type IconName } from '@/components/atoms';
 import { ErrorState, LoadingState } from '@/components/molecules';
 import { Screen } from '@/components/templates';
+import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
 
 import { useAlertFeatures, useDistrictFeatures } from '../hooks';
@@ -39,6 +40,7 @@ export function MapScreen() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const language = useLanguage();
   const [ready, setReady] = useState(false);
   const [documentError, setDocumentError] = useState<string | null>(null);
   const [layers, setLayers] = useState<MapLayerState>(DEFAULT_LAYERS);
@@ -59,8 +61,9 @@ export function MapScreen() {
       buildMapHtml({
         districts: districts.data ?? null,
         alerts: alerts.data ?? null,
+        language,
       }),
-    [districts.data, alerts.data],
+    [districts.data, alerts.data, language],
   );
 
   /*
@@ -384,7 +387,7 @@ function MapButton({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}
       pressedStyle={{ backgroundColor: theme.colors.surfaceMuted }}
     >
       <Icon name={icon} size={20} tone="text" />

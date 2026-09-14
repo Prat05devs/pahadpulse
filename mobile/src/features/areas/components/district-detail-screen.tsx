@@ -1,7 +1,16 @@
 import { useCallback } from 'react';
 import { Stack, useRouter } from 'expo-router';
 
-import { Badge, Card, Divider, HStack, Icon, Pressable, Text, VStack } from '@/components/atoms';
+import {
+  Badge,
+  Card,
+  Divider,
+  HStack,
+  Icon,
+  Pressable,
+  Text,
+  VStack,
+} from '@/components/atoms';
 import {
   EmptyState,
   ListRow,
@@ -14,6 +23,7 @@ import { Screen } from '@/components/templates';
 import { AlertCard, useAreaAlerts } from '@/features/alerts';
 import { useGroupedAreaIndicators } from '@/features/indicators';
 import { WeatherPanel, useAreaWeather } from '@/features/weather';
+import { useAreaNetwork } from '@/features/connectivity';
 import { formatNumber, humanise, localise } from '@/lib/format';
 import { useIsDistrictSaved, useLanguage, usePreferencesStore } from '@/stores';
 import { useTheme } from '@/theme';
@@ -39,6 +49,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
   const weather = useAreaWeather(slug);
   const alerts = useAreaAlerts(slug);
   const indicators = useGroupedAreaIndicators(slug);
+  const connectivity = useAreaNetwork(slug);
 
   const isSaved = useIsDistrictSaved(slug);
   const toggleSaved = usePreferencesStore((s) => s.toggleSavedDistrict);
@@ -51,6 +62,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
     void weather.refetch();
     void alerts.refetch();
     void indicators.refetch();
+    void connectivity.refetch();
   };
 
   return (
@@ -67,7 +79,12 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
               haptic
               accessibilityLabel={isSaved ? `Unfollow ${name}` : `Follow ${name}`}
               accessibilityState={{ selected: isSaved }}
-              style={{ minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' }}
+              style={{
+                minHeight: 48,
+                minWidth: 48,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
               <Icon
                 name={isSaved ? 'bookmark' : 'bookmark-outline'}
@@ -148,11 +165,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
           {(list) => (
             <VStack gap="sm">
               {list.slice(0, 3).map((alert) => (
-                <AlertCard
-                  key={alert.id}
-                  alert={alert}
-                  onPress={openAlert}
-                />
+                <AlertCard key={alert.id} alert={alert} onPress={openAlert} />
               ))}
             </VStack>
           )}
@@ -214,6 +227,69 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
         </QueryBoundary>
       </VStack>
 
+      {/* Measured connectivity, matching the district view on the web portal. */}
+      {connectivity.data || connectivity.isPending ? (
+        <VStack gap="sm">
+          <SectionHeader title="Connectivity" subtitle="Measured Speedtest performance" />
+          <QueryBoundary
+            query={connectivity}
+            loading={<LoadingState label="Loading connectivity" />}
+            isEmpty={(data) => data.connections.length === 0}
+            emptyTitle="No network measurements"
+            emptyMessage="No Speedtest measurements were recorded for this district in the latest quarter."
+          >
+            {(data) => (
+              <VStack gap="sm">
+                {data.connections.map((connection) => (
+                  <Card key={connection.kind} padding="md">
+                    <VStack gap="sm">
+                      <Text variant="bodyStrong">
+                        {connection.kind === 'fixed' ? 'Fixed broadband' : 'Mobile'}
+                      </Text>
+                      <HStack gap="lg" wrap>
+                        <VStack gap="xxs">
+                          <Text variant="footnote" color="textMuted">
+                            DOWNLOAD
+                          </Text>
+                          <Text variant="heading" color="primary">
+                            {connection.downloadMbps.toFixed(1)} Mbps
+                          </Text>
+                        </VStack>
+                        <VStack gap="xxs">
+                          <Text variant="footnote" color="textMuted">
+                            UPLOAD
+                          </Text>
+                          <Text variant="bodyStrong">
+                            {connection.uploadMbps.toFixed(1)} Mbps
+                          </Text>
+                        </VStack>
+                        <VStack gap="xxs">
+                          <Text variant="footnote" color="textMuted">
+                            LATENCY
+                          </Text>
+                          <Text variant="bodyStrong">{connection.latencyMs.toFixed(0)} ms</Text>
+                        </VStack>
+                      </HStack>
+                      <Text variant="caption" color="textMuted">
+                        {formatNumber(connection.sample.tests)} tests from{' '}
+                        {formatNumber(connection.sample.devices)} devices
+                        {connection.sample.strength === 'thin'
+                          ? ' · thin sample, read cautiously'
+                          : ''}
+                      </Text>
+                      <SourceNote provenance={connection.provenance} />
+                    </VStack>
+                  </Card>
+                ))}
+                <Text variant="caption" color="textMuted">
+                  Measured results are not a coverage map or advertised speed.
+                </Text>
+              </VStack>
+            )}
+          </QueryBoundary>
+        </VStack>
+      ) : null}
+
       {/* Tehsils */}
       <QueryBoundary query={detail} loading={<></>}>
         {(data) =>
@@ -221,7 +297,10 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
             <EmptyState title="No tehsils recorded" />
           ) : (
             <VStack gap="sm">
-              <SectionHeader title="Tehsils" subtitle={`${data.tehsils.length} in this district`} />
+              <SectionHeader
+                title="Tehsils"
+                subtitle={`${data.tehsils.length} in this district`}
+              />
               <Card padding="md">
                 {data.tehsils.map((tehsil, index) => (
                   <VStack key={tehsil.slug}>

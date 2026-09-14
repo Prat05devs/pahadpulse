@@ -74,7 +74,7 @@ export const DistrictCard = memo(function DistrictCard({
             accessibilityRole="button"
             accessibilityState={{ selected: isSaved }}
             accessibilityLabel={isSaved ? `Unfollow ${name}` : `Follow ${name}`}
-            style={{ minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' }}
+            style={{ minHeight: 48, minWidth: 48, alignItems: 'center', justifyContent: 'center' }}
           >
             <Icon
               name={isSaved ? 'bookmark' : 'bookmark-outline'}
