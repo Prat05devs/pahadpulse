@@ -16,6 +16,16 @@ const SUPPORT_EMAIL = 'admin@wtsolutions.cc';
 
 const sections = [
   {
+    title: 'Who operates Pahad Pulse',
+    body: (
+      <>
+        Pahad Pulse is developed and operated by WT IT Solutions, based in Dehradun,
+        Uttarakhand, India. Questions about this policy can be sent to the contact address
+        below.
+      </>
+    ),
+  },
+  {
     title: 'Information you choose to send',
     body: (
       <>
@@ -174,6 +184,9 @@ export default function PrivacyPage() {
                 .
               </p>
             </div>
+            <p className="px-1 text-xs leading-5 text-muted-foreground">
+              © 2026 WT IT Solutions. Dehradun, Uttarakhand, India.
+            </p>
           </aside>
         </div>
       </div>

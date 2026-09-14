@@ -129,10 +129,15 @@ export default function SupportPage() {
           </section>
 
           <div className="flex flex-col gap-3 border-t border-border pt-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <p className="flex items-center gap-2">
-              <ShieldCheck className="size-4 text-accent" aria-hidden="true" />
-              Read how information is handled.
-            </p>
+            <div>
+              <p className="flex items-center gap-2">
+                <ShieldCheck className="size-4 text-accent" aria-hidden="true" />
+                Read how information is handled.
+              </p>
+              <p className="mt-2 text-xs">
+                Developed by WT IT Solutions · Dehradun, Uttarakhand, India · © 2026
+              </p>
+            </div>
             <Link href="/privacy" className="font-medium text-accent underline underline-offset-4">
               Privacy Policy
             </Link>
