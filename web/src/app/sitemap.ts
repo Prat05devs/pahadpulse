@@ -31,6 +31,8 @@ const ROUTES: Array<{
   { path: '/tourism', changeFrequency: 'daily', priority: 0.8 },
   { path: '/connectivity', changeFrequency: 'weekly', priority: 0.8 },
   { path: '/intelligence', changeFrequency: 'weekly', priority: 0.75 },
+  { path: '/support', changeFrequency: 'monthly', priority: 0.5 },
+  { path: '/privacy', changeFrequency: 'monthly', priority: 0.5 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

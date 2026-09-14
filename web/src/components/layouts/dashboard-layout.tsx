@@ -16,9 +16,11 @@ import {
   GitCompareArrows,
   HardDriveDownload,
   Home,
+  LifeBuoy,
   Mountain,
   RadioTower,
   Route,
+  ShieldCheck,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -72,6 +74,13 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { label: 'Sector Intelligence', href: '/intelligence', icon: BarChart3 },
       { label: 'Governance', href: '/governance', icon: Building2 },
       { label: 'Offline Mode', href: '/offline', icon: HardDriveDownload },
+    ],
+  },
+  {
+    label: 'Help & legal',
+    items: [
+      { label: 'Support', href: '/support', icon: LifeBuoy },
+      { label: 'Privacy', href: '/privacy', icon: ShieldCheck },
     ],
   },
 ];

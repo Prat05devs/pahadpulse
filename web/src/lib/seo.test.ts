@@ -51,10 +51,12 @@ describe('production SEO', () => {
 
     expect(urls).toContain(`${SITE_URL}/`);
     expect(urls).toContain(`${SITE_URL}/compare`);
+    expect(urls).toContain(`${SITE_URL}/privacy`);
+    expect(urls).toContain(`${SITE_URL}/support`);
     expect(urls).toContain(`${SITE_URL}/districts/almora`);
     expect(urls).toContain(`${SITE_URL}/districts/pauri-garhwal`);
     expect(urls).toContain(`${SITE_URL}/districts/tehri-garhwal`);
-    expect(urls).toHaveLength(22);
+    expect(urls).toHaveLength(24);
     expect(urls.some((url) => url.endsWith('/migration'))).toBe(false);
     expect(urls.some((url) => url.endsWith('/governance'))).toBe(false);
     expect(urls.some((url) => url.endsWith('/offline'))).toBe(false);

@@ -40,4 +40,15 @@ describe('DashboardLayout', () => {
 
     expect(screen.queryByRole('link', { name: 'Migration' })).not.toBeInTheDocument();
   });
+
+  it('links to public support and privacy pages', () => {
+    render(
+      <DashboardLayout>
+        <p>Dashboard content</p>
+      </DashboardLayout>
+    );
+
+    expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute('href', '/support');
+    expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
+  });
 });

@@ -26,7 +26,7 @@ export function PilgrimArrivalsTable({ data }: { data: PilgrimArrivals }) {
         <thead>
           <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
             <th scope="col" className="px-4 py-3 font-medium">
-              Shrine
+              Destination
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
               District
@@ -69,7 +69,7 @@ export function PilgrimArrivalsTable({ data }: { data: PilgrimArrivals }) {
         <tfoot>
           <tr className="border-t border-border bg-muted/30 font-semibold">
             <th scope="row" className="px-4 py-3 text-left" colSpan={2}>
-              All shrines
+              Listed destinations total
             </th>
             {data.years.map((year) => (
               <td key={year} className="px-4 py-3 text-right tabular-nums">

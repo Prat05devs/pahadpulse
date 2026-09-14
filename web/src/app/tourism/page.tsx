@@ -29,7 +29,7 @@ export default async function TourismPage() {
   }
 
   const latest = arrivals?.totals[arrivals.totals.length - 1];
-  const first = arrivals?.totals[0];
+  const recordYear = arrivals?.totals.find((t) => t.year === 2025);
   const source = arrivals?.destinations[0]?.years[0]?.provenance ?? null;
 
   return (
@@ -43,9 +43,9 @@ export default async function TourismPage() {
               Tourism &amp; pilgrim load
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              How many pilgrims reached each shrine, as counted by the state tourism department.
-              These are yearly totals — this page does not say how busy a shrine is today, and no
-              carrying capacity has been published to measure a load against.
+              How many tourists and pilgrims reached each destination, as counted by the state tourism department.
+              These are yearly totals — this page does not say how busy a destination is today, and no
+              carrying capacity has been published for most locations to measure a load against.
             </p>
           </div>
         </header>
@@ -58,42 +58,47 @@ export default async function TourismPage() {
             </div>
           )}
 
-          {arrivals !== null && first !== undefined && latest !== undefined && (
+          {arrivals !== null && latest !== undefined && (
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
-                  <p className="text-sm text-muted-foreground">Pilgrims in {latest.year}</p>
+                  <p className="text-sm text-muted-foreground">Tourists in {latest.year}</p>
                   <p className="mt-1 font-display text-3xl font-semibold tabular-nums text-text-light">
                     {n(latest.visitors)}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    across all five shrines counted together
+                    across listed destinations (Ongoing)
                   </p>
                 </div>
-                <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
-                  <p className="text-sm text-muted-foreground">Pilgrims in {first.year}</p>
-                  <p className="mt-1 font-display text-3xl font-semibold tabular-nums text-text-light">
-                    {n(first.visitors)}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    the last full season before the yatra was suspended
-                  </p>
-                </div>
+                {recordYear !== undefined && (
+                  <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
+                    <p className="text-sm text-muted-foreground">Tourists in {recordYear.year}</p>
+                    <p className="mt-1 font-display text-3xl font-semibold tabular-nums text-text-light">
+                      {n(recordYear.visitors)}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      (All-time record)
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <section aria-labelledby="by-shrine">
+              <section aria-labelledby="by-destination">
                 <h2
-                  id="by-shrine"
+                  id="by-destination"
                   className="mb-3 text-lg font-semibold tracking-tight text-text-light sm:text-xl"
                 >
-                  Arrivals by shrine
+                  Arrivals by destination
                 </h2>
+                <div className="mb-4 rounded border border-yellow-200 bg-yellow-50 px-4 py-3 text-yellow-800">
+                  <p className="font-semibold text-sm">Tentative 2026 Data</p>
+                  <p className="mt-1 text-xs">
+                    The 2026 Yatra is currently ongoing. These figures represent the latest available estimates and are not final.
+                  </p>
+                </div>
                 <PilgrimArrivalsTable data={arrivals} />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {first.year} is the last full season before the pandemic;{' '}
-                  {arrivals.years.slice(1).join(' and ')} were suspended and then capped. The
-                  figures are shown as published rather than smoothed — the fall is what happened,
-                  not a gap in the data.
+                  The 2020-2021 seasons were suspended and then capped due to the pandemic. The figures are shown as published rather than smoothed.
                 </p>
               </section>
 

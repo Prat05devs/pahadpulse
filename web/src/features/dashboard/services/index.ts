@@ -23,11 +23,27 @@ export async function fetchImdCapLiveStatus(): Promise<ImdCapLiveStatus> {
   return apiClient.get('/sources/imd-cap-alerts/live', ImdCapLiveStatusSchema);
 }
 
+const PilgrimArrivalsResponseSchema = z.object({
+  totals: z.array(z.object({
+    year: z.number(),
+    visitors: z.number(),
+  }))
+});
+
 export async function fetchLiveCounters(): Promise<LiveCounters> {
-  const alerts = await apiClient.get('/alerts/summary', AlertSummarySchema);
+  const [alerts, tourismData] = await Promise.all([
+    apiClient.get('/alerts/summary', AlertSummarySchema),
+    apiClient.get('/tourism/pilgrim-arrivals', PilgrimArrivalsResponseSchema).catch(() => null)
+  ]);
 
   const closedRoads = 0; // TODO: fetch from roads API when available
-  const touristsInState = 0; // TODO: fetch from tourism API when available
+
+  let touristsInState = 0;
+  if (tourismData && tourismData.totals.length > 0) {
+    const recordYear = tourismData.totals.find(t => t.year === 2025);
+    touristsInState = recordYear?.visitors ?? tourismData.totals[tourismData.totals.length - 1].visitors;
+  }
+
   const connectivityPercentage = 0; // TODO: fetch from connectivity API when available
 
   return {
