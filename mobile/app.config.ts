@@ -53,7 +53,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: NAME[VARIANT],
   slug: 'pahad-pulse',
-  version: '0.1.0',
+  version: '1.0.0',
   orientation: 'default',
   icon: './assets/images/icon.png',
   scheme: 'pahadpulse',
@@ -65,12 +65,19 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
    */
   runtimeVersion: { policy: 'appVersion' },
   ios: {
-    supportsTablet: true,
+    // iPhone only for v1: iPad would need its own QA pass and screenshot set before review.
+    supportsTablet: false,
     bundleIdentifier: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+    /**
+     * Store builds are produced locally (Xcode archive, Gradle bundle), so EAS's remote
+     * build numbers do not apply. Increment both on every upload; the stores reject a repeat.
+     */
+    buildNumber: '1',
     infoPlist: { ITSAppUsesNonExemptEncryption: false },
   },
   android: {
     package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+    versionCode: 1,
     predictiveBackGestureEnabled: false,
     adaptiveIcon: {
       backgroundColor: '#F2F7F7',

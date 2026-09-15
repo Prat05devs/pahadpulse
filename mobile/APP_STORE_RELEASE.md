@@ -17,10 +17,11 @@ localhost and non-HTTPS production URLs.
 - [ ] Create the App Store Connect app for bundle ID `in.pahadpulse.app`; record its numeric
       Apple ID as `ascAppId` in `eas.json` only after it exists.
 - [ ] Run `eas init` and set `EAS_PROJECT_ID` if this project has not been linked to EAS.
-- [ ] Decide whether iPad is in v1. `ios.supportsTablet` is currently `true`, so iPad QA and
-      iPad product-page screenshots are part of the release scope.
-- [ ] Confirm the public marketing version. The current value is `0.1.0`; build numbers are
-      managed remotely and auto-incremented by EAS.
+- [x] iPad is not in v1 (decided 2026-09-15). `ios.supportsTablet` is `false`, so no iPad QA
+      or iPad screenshots are needed; iPad can come in a later update.
+- [x] Marketing version is `1.0.0`. The first store builds are produced locally (Xcode archive,
+      Gradle bundle), so `ios.buildNumber` and `android.versionCode` in `app.config.ts` are set
+      by hand — increment both before every upload.
 
 ## EAS environment setup
 
