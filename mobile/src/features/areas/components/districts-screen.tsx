@@ -3,12 +3,12 @@ import { useCallback, useState } from 'react';
 import { FlatList, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Entrance, Text, VStack } from '@/components/atoms';
+import { Entrance, Icon, Pressable, Text, VStack } from '@/components/atoms';
 import { EmptyState, ErrorState, LoadingState } from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { DISTRICT_COUNT } from '@/config/constants';
-import { useTheme } from '@/theme';
-import { familyFor } from '@/theme/fonts';
+import { HIT_SLOP_MIN_SIZE, useTheme } from '@/theme';
+import { familyFor, platformTextFixes } from '@/theme/fonts';
 
 import { useDistrictList } from '../hooks';
 import { DistrictCard } from './district-card';
@@ -28,7 +28,7 @@ export function DistrictsScreen() {
   // One stable handler for every row, so DistrictCard's memo actually holds.
   const openDistrict = useCallback(
     (slug: string) => router.push(`/districts/${slug}`),
-    [router],
+    [router]
   );
 
   const { districts, isPending, isError, error, refetch, isRefetching } =
@@ -47,28 +47,61 @@ export function DistrictsScreen() {
         borderBottomColor: theme.colors.border,
       }}
     >
-      <TextInput
-        value={search}
-        onChangeText={setSearch}
-        placeholder={`Search ${DISTRICT_COUNT} districts`}
-        placeholderTextColor={theme.colors.textMuted}
-        autoCorrect={false}
-        clearButtonMode="while-editing"
-        accessibilityLabel="Search districts"
-        style={{
-          height: 48,
-          paddingHorizontal: theme.spacing.md,
-          borderRadius: theme.radius.md,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-          backgroundColor: theme.colors.surface,
-          color: theme.colors.text,
-          // The search field is a raw TextInput, so it has to name its font explicitly —
-          // it is the one place the Text atom cannot do it for us.
-          fontFamily: familyFor(search, 'regular'),
-          fontSize: theme.typography.body.fontSize,
-        }}
-      />
+      <View style={{ justifyContent: 'center' }}>
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder={`Search ${DISTRICT_COUNT} districts`}
+          placeholderTextColor={theme.colors.textMuted}
+          autoCorrect={false}
+          returnKeyType="search"
+          accessibilityLabel="Search districts"
+          // Android otherwise paints the cursor and selection handles in the system accent
+          // (often green or teal) rather than the brand colour iOS already uses.
+          cursorColor={theme.colors.primary}
+          selectionColor={theme.colors.primary}
+          style={{
+            height: 48,
+            paddingLeft: theme.spacing.md,
+            // Room for the clear button, so a long query never runs underneath it.
+            paddingRight: search ? HIT_SLOP_MIN_SIZE : theme.spacing.md,
+            // Android's EditText adds its own vertical padding and top-aligns text, which
+            // pushes the text off-centre in a fixed-height field.
+            paddingVertical: 0,
+            textAlignVertical: 'center',
+            borderRadius: theme.radius.md,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface,
+            color: theme.colors.text,
+            // The search field is a raw TextInput, so it has to name its font explicitly —
+            // it is the one place the Text atom cannot do it for us.
+            fontFamily: familyFor(search, 'regular'),
+            fontSize: theme.typography.body.fontSize,
+            ...platformTextFixes(search),
+          }}
+        />
+        {/*
+         * Drawn by the app, not by `clearButtonMode`: that prop is iOS-only, so Android readers
+         * had no way to clear a query except deleting it character by character.
+         */}
+        {search ? (
+          <Pressable
+            onPress={() => setSearch('')}
+            accessibilityLabel="Clear search"
+            style={{
+              position: 'absolute',
+              right: 0,
+              width: HIT_SLOP_MIN_SIZE,
+              height: HIT_SLOP_MIN_SIZE,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon name="close-circle" size={18} tone="textMuted" />
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 

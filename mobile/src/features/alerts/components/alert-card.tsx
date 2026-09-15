@@ -87,17 +87,39 @@ export const AlertCard = memo(function AlertCard({
     </VStack>
   );
 
-  const frameStyle = {
-    borderRadius: theme.radius.xl,
-    ...theme.elevation.medium,
-    shadowColor: withAlpha(severityColor, 0.42),
-  };
+  /*
+   * Depth is platform-specific, as it was for the AgniVision advisory cards.
+   *
+   * iOS keeps a soft glow in the severity colour. Android gets no elevation at all: its
+   * outline shadow turns a coloured `shadowColor` into a wide halo around the card rather
+   * than a glow, and this frame has no background of its own to cast a clean outline from.
+   * There the severity is carried entirely by the opaque `severitySubtle` surface and the
+   * tinted border, which is what reads as a severity card on both platforms.
+   */
+  const frameStyle =
+    Platform.OS === 'android'
+      ? { borderRadius: theme.radius.xl }
+      : {
+          borderRadius: theme.radius.xl,
+          ...theme.elevation.medium,
+          shadowColor: withAlpha(severityColor, 0.42),
+        };
 
   const clippedSurfaceStyle = {
     overflow: 'hidden' as const,
     borderRadius: theme.radius.xl,
     borderWidth: 1,
-    borderColor: withAlpha(severityColor, theme.scheme === 'dark' ? 0.46 : 0.32),
+    borderColor: withAlpha(
+      severityColor,
+      // A touch stronger on Android, where the border is the only edge the card has.
+      Platform.OS === 'android'
+        ? theme.scheme === 'dark'
+          ? 0.56
+          : 0.42
+        : theme.scheme === 'dark'
+          ? 0.46
+          : 0.32
+    ),
   };
 
   const card = (

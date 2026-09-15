@@ -47,6 +47,12 @@ export default function TabsLayout() {
         },
         tabBarBackground: () => <TabBarBackground />,
         tabBarLabelStyle: { fontFamily: fontFamily.medium, fontSize: 11 },
+        // Fixed-size labels, as UIKit's tab bar has on iOS. Scaled with the Android system font
+        // they overflow the 64dp bar and clip at the bottom edge.
+        tabBarAllowFontScaling: false,
+        // Android resizes the window for the keyboard, which lifts the tab bar on top of it
+        // while the district search is focused. iOS overlays the keyboard instead.
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tabs.Screen
@@ -79,7 +85,13 @@ export default function TabsLayout() {
           // The badge is the reason the summary is fetched here rather than on the alerts
           // screen: a reader needs to see there is a warning without opening the tab.
           tabBarBadge: activeAlerts > 0 ? activeAlerts : undefined,
-          tabBarBadgeStyle: { backgroundColor: theme.colors.danger, fontSize: 10 },
+          tabBarBadgeStyle: {
+            backgroundColor: theme.colors.danger,
+            // Named explicitly: the badge is not a Text atom, so it would otherwise render in
+            // Roboto on Android and San Francisco on iOS.
+            fontFamily: fontFamily.semibold,
+            fontSize: 10,
+          },
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="warning" size={size} color={color} />
           ),

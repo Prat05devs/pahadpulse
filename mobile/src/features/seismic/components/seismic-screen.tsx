@@ -1,5 +1,3 @@
-import * as WebBrowser from 'expo-web-browser';
-
 import {
   Badge,
   Card,
@@ -12,6 +10,7 @@ import {
 } from '@/components/atoms';
 import { EmptyState, LoadingState, QueryBoundary, SectionHeader } from '@/components/molecules';
 import { Screen } from '@/components/templates';
+import { openExternal } from '@/lib/external-link';
 import { formatDate, formatTime, humanise } from '@/lib/format';
 
 import { useRecentSeismic } from '../hooks';
@@ -89,7 +88,7 @@ export function SeismicScreen() {
                           </Text>
                           {event.webUrl ? (
                             <Pressable
-                              onPress={() => void WebBrowser.openBrowserAsync(event.webUrl!)}
+                              onPress={() => void openExternal(event.webUrl!)}
                               accessibilityLabel={`Open source record for magnitude ${event.magnitude} earthquake`}
                               style={{ minHeight: 0 }}
                             >
@@ -108,7 +107,7 @@ export function SeismicScreen() {
 
             {data.source ? (
               <Pressable
-                onPress={() => void WebBrowser.openBrowserAsync(data.source!.url)}
+                onPress={() => void openExternal(data.source!.url)}
                 accessibilityLabel={`Source: ${data.source.department.en}. Opens in a browser.`}
                 style={{ minHeight: 0 }}
               >

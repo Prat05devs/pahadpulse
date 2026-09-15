@@ -67,17 +67,20 @@ export function Text({
   const theme = useTheme();
   const ramp = theme.typography[variant];
   const resolvedWeight = weight ?? ramp.weight;
+  const content = textOf(children);
 
   return (
     <RNText
       allowFontScaling
+      // Per step, from the type ramp. A caller may still pass its own to override.
+      maxFontSizeMultiplier={ramp.maxFontScale}
       style={[
         {
-          fontFamily: familyFor(textOf(children), resolvedWeight),
+          fontFamily: familyFor(content, resolvedWeight),
           fontSize: ramp.fontSize,
           lineHeight: ramp.lineHeight,
           color: theme.colors[color],
-          ...platformTextFixes,
+          ...platformTextFixes(content),
           ...(align ? { textAlign: align } : null),
           ...(tabular || variant === 'metric'
             ? { fontVariant: ['tabular-nums'] as TextStyle['fontVariant'] }

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { View, type ViewProps } from 'react-native';
+import { Platform, View, type ViewProps } from 'react-native';
 
 import { useTheme, type ElevationToken, type RadiusToken, type SpacingToken } from '@/theme';
 
@@ -14,7 +14,15 @@ export type CardProps = ViewProps & {
   children?: ReactNode;
 };
 
-/** The standard raised surface. Every panel on every screen is one of these. */
+const isAndroid = Platform.OS === 'android';
+
+/**
+ * The standard raised surface. Every panel on every screen is one of these.
+ *
+ * On Android an elevated card also draws a hairline border: Android's elevation shadow is
+ * too faint on light surfaces and invisible on dark ones to define an edge by itself, which is
+ * what iOS's soft shadow does. See `elevation` in `theme/tokens.ts`.
+ */
 export function Card({
   padding = 'lg',
   radius = 'lg',
@@ -33,7 +41,11 @@ export function Card({
       : tone === 'tertiary'
         ? theme.colors.surfaceTertiary
         : tone === 'glass'
-          ? theme.colors.surfaceGlassStrong
+          ? // An elevation shadow shows through a translucent fill on Android, so the glass
+            // tone is opaque there.
+            isAndroid
+            ? theme.colors.surfaceElevated
+            : theme.colors.surfaceGlassStrong
           : tone === 'warning'
             ? theme.colors.warningSubtle
             : theme.colors.surface;
@@ -47,7 +59,13 @@ export function Card({
           padding: theme.spacing[padding],
           ...(showBorder
             ? { borderWidth: 1, borderColor: theme.colors.border }
-            : { ...theme.elevation[elevation], shadowColor: theme.colors.shadow }),
+            : {
+                ...theme.elevation[elevation],
+                shadowColor: theme.colors.shadow,
+                ...(isAndroid && elevation !== 'none'
+                  ? { borderWidth: 1, borderColor: theme.colors.borderSubtle }
+                  : null),
+              }),
         },
         style,
       ]}

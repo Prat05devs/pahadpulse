@@ -1,9 +1,10 @@
-import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
+import { useWindowDimensions } from 'react-native';
 
 import { Card, Divider, HStack, Icon, Pressable, Text, VStack } from '@/components/atoms';
 import { QueryBoundary, SeverityBadge, SourceNote } from '@/components/molecules';
 import { Screen } from '@/components/templates';
+import { openExternal } from '@/lib/external-link';
 import { formatDate, formatRelative, formatTime, humanise, localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
@@ -40,7 +41,10 @@ export function AlertDetailScreen({ id }: { id: number }) {
                 <Divider />
 
                 <VStack gap="xs">
-                  <Detail label="Issued" value={`${formatDate(alert.issuedAt)}, ${formatTime(alert.issuedAt)}`} />
+                  <Detail
+                    label="Issued"
+                    value={`${formatDate(alert.issuedAt)}, ${formatTime(alert.issuedAt)}`}
+                  />
                   {alert.effectiveFrom ? (
                     <Detail
                       label="In force from"
@@ -59,7 +63,12 @@ export function AlertDetailScreen({ id }: { id: number }) {
             </Card>
 
             {alert.instruction ? (
-              <Card style={{ borderLeftWidth: 4, borderLeftColor: theme.colors.severity[alert.severity] }}>
+              <Card
+                style={{
+                  borderLeftWidth: 4,
+                  borderLeftColor: theme.colors.severity[alert.severity],
+                }}
+              >
                 <VStack gap="xs">
                   <HStack align="center" gap="xs">
                     <Icon name="information-circle-outline" size={16} tone="danger" />
@@ -102,7 +111,7 @@ export function AlertDetailScreen({ id }: { id: number }) {
                 <SourceNote provenance={alert.provenance} />
                 {alert.webUrl ? (
                   <Pressable
-                    onPress={() => void WebBrowser.openBrowserAsync(alert.webUrl as string)}
+                    onPress={() => void openExternal(alert.webUrl as string)}
                     accessibilityLabel="Open the original notice"
                     style={{ minHeight: 0 }}
                   >
@@ -124,9 +133,15 @@ export function AlertDetailScreen({ id }: { id: number }) {
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
+  const theme = useTheme();
+  const { fontScale } = useWindowDimensions();
+  // The label column scales with the system font, so it keeps its proportion instead of
+  // wrapping every label once the reader's text is larger than 1x.
+  const labelWidth = 104 * Math.min(fontScale, theme.typography.caption.maxFontScale);
+
   return (
     <HStack gap="md" align="flex-start">
-      <Text variant="caption" color="textMuted" style={{ width: 104 }}>
+      <Text variant="caption" color="textMuted" style={{ width: labelWidth }}>
         {label}
       </Text>
       <Text variant="caption" style={{ flex: 1 }}>

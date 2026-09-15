@@ -1,3 +1,5 @@
+import { Platform, type ViewStyle } from 'react-native';
+
 import type { FontWeightToken } from './fonts';
 
 /**
@@ -415,48 +417,72 @@ export type RadiusToken = keyof typeof radius;
  *
  * `lineHeight` is absolute because React Native rejects unitless multipliers, and letting
  * each component compute its own is how baselines drift between screens.
+ *
+ * `maxFontScale` caps how far the reader's system font size may enlarge a step. Android
+ * allows up to 2x (iOS accessibility sizes go further), and many Android phones ship above
+ * 1x by default. Reading text keeps full scaling; only the steps that live in fixed geometry
+ * — figures in a tile, screen titles — are capped, because a 52px metric no longer fits the
+ * card it was designed for and wraps mid-word instead.
  */
 export const typography = {
-  display: { fontSize: 32, lineHeight: 40, weight: 'bold' },
-  title: { fontSize: 22, lineHeight: 30, weight: 'bold' },
-  heading: { fontSize: 17, lineHeight: 24, weight: 'semibold' },
-  body: { fontSize: 15, lineHeight: 22, weight: 'regular' },
-  bodyStrong: { fontSize: 15, lineHeight: 22, weight: 'semibold' },
-  caption: { fontSize: 13, lineHeight: 18, weight: 'regular' },
-  /** For source lines and timestamps — the smallest size we allow. */
-  footnote: { fontSize: 11, lineHeight: 16, weight: 'medium' },
+  display: { fontSize: 32, lineHeight: 40, weight: 'bold', maxFontScale: 1.2 },
+  title: { fontSize: 22, lineHeight: 30, weight: 'bold', maxFontScale: 1.3 },
+  heading: { fontSize: 17, lineHeight: 24, weight: 'semibold', maxFontScale: 1.5 },
+  body: { fontSize: 15, lineHeight: 22, weight: 'regular', maxFontScale: 2 },
+  bodyStrong: { fontSize: 15, lineHeight: 22, weight: 'semibold', maxFontScale: 2 },
+  caption: { fontSize: 13, lineHeight: 18, weight: 'regular', maxFontScale: 2 },
+  /** For source lines and timestamps — the smallest size we allow. Also badges and pills. */
+  footnote: { fontSize: 11, lineHeight: 16, weight: 'medium', maxFontScale: 1.6 },
   /** Figures. Tabular so digits do not jitter as values refresh. */
-  metric: { fontSize: 26, lineHeight: 32, weight: 'bold' },
+  metric: { fontSize: 26, lineHeight: 32, weight: 'bold', maxFontScale: 1.2 },
 } as const satisfies Record<
   string,
-  { fontSize: number; lineHeight: number; weight: FontWeightToken }
+  { fontSize: number; lineHeight: number; weight: FontWeightToken; maxFontScale: number }
 >;
 
 export type TypographyToken = keyof typeof typography;
 
 /**
- * Elevation. iOS reads shadows, Android reads `elevation`; both are set so a card looks
- * raised on either platform without a `Platform.select` at every call site.
+ * Elevation, resolved per platform here so no component ever writes a `Platform.select`.
+ *
+ * The two platforms do not have the same depth model, and pretending they do is what broke
+ * the AgniVision cards on Android:
+ *
+ * - iOS draws a soft, spread shadow whose opacity and colour are honoured.
+ * - Android ignores `shadowOpacity` and `shadowRadius` entirely. `elevation` casts a harder
+ *   grey shadow from the view's outline, a coloured `shadowColor` paints a wide halo rather
+ *   than a glow, and the shadow shows THROUGH a translucent background.
+ *
+ * So Android gets a lower elevation, and `Card` adds a hairline border there so the edge
+ * stays legible without leaning on the shadow. Tinted cards (severity) must not use these at
+ * all on Android — see `AlertCard`.
  */
-export const elevation = {
+const iosElevation = {
   none: {},
   low: {
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   medium: {
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
   },
-} as const;
+} as const satisfies Record<string, ViewStyle>;
 
-export type ElevationToken = keyof typeof elevation;
+const androidElevation = {
+  none: {},
+  low: { elevation: 1 },
+  medium: { elevation: 3 },
+} as const satisfies Record<keyof typeof iosElevation, ViewStyle>;
+
+export type ElevationToken = keyof typeof iosElevation;
+
+export const elevation: Record<ElevationToken, ViewStyle> =
+  Platform.OS === 'android' ? androidElevation : iosElevation;
 
 /**
  * Minimum visual touch target shared by both platforms.

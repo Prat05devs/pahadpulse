@@ -122,8 +122,16 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
   );
 
   const theme = useTheme();
-  const { width } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
   const stackDistrictSelectors = width < 390;
+  /*
+   * The two result cards sit side by side only when each column has room for a district name,
+   * its score and the metric labels. Most Android phones are 360–400dp wide, where two columns
+   * left ~130dp each and "Road Infrastructure" and "Rudraprayag" wrapped or collided with the
+   * score. Below that they stack.
+   */
+  const stackDistrictCards = width < 400 || fontScale >= 1.3;
+  const ResultRow = stackDistrictCards ? VStack : HStack;
 
   const selectedScenarioId = scenarioId || scenarios?.[0]?.id || '';
 
@@ -247,15 +255,15 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
               </VStack>
             </Card>
 
-            <HStack gap="md" align="flex-start">
+            <ResultRow gap="md" align={stackDistrictCards ? 'stretch' : 'flex-start'}>
               {[report.districtA, report.districtB].map((dist) => {
                 const isWinner = report.winner === dist.slug;
                 return (
-                  <View key={dist.slug} style={{ flex: 1 }}>
+                  <View key={dist.slug} style={stackDistrictCards ? undefined : { flex: 1 }}>
                     <Card padding="md" style={isWinner ? { backgroundColor: theme.colors.primaryMuted, borderColor: theme.colors.primary, borderWidth: 1 } : {}}>
                       <VStack gap="lg">
-                        <HStack justify="space-between" align="center">
-                          <Text variant="heading" color={isWinner ? 'primary' : 'text'}>{dist.name}</Text>
+                        <HStack justify="space-between" align="center" gap="sm">
+                          <Text variant="heading" color={isWinner ? 'primary' : 'text'} style={{ flexShrink: 1 }}>{dist.name}</Text>
                           <Text variant="metric" color={isWinner ? 'primary' : 'text'}><AnimatedNumber value={dist.score} /></Text>
                         </HStack>
                         
@@ -280,7 +288,7 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
                   </View>
                 );
               })}
-            </HStack>
+            </ResultRow>
           </VStack>
         </Entrance>
       ) : null}

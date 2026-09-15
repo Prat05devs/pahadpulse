@@ -339,7 +339,12 @@ export function TodayScreen() {
       {/* Quick Access */}
       <VStack gap="sm">
         <SectionHeader title="Explore" subtitle="More state intelligence" />
-        <HStack gap="sm">
+        {/*
+         * `wrap` so that when StatTile asks to stack (narrow screen or large system font) the
+         * tiles actually fall onto their own rows. Without it a full-width basis in a
+         * non-wrapping row just squeezed both tiles back to half width.
+         */}
+        <HStack gap="sm" wrap>
           <StatTile
             label="Tourism"
             value={
@@ -363,7 +368,7 @@ export function TodayScreen() {
             onPress={() => router.push('/compare')}
           />
         </HStack>
-        <HStack gap="sm">
+        <HStack gap="sm" wrap>
           <StatTile
             label="Connectivity"
             value="Network"

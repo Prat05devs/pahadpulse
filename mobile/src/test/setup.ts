@@ -7,7 +7,9 @@
 
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(),
+  performAndroidHapticsAsync: jest.fn(),
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
+  AndroidHaptics: { Virtual_Key: 'virtual-key' },
 }));
 
 jest.mock('expo-web-browser', () => ({

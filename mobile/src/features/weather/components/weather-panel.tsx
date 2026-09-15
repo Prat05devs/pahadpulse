@@ -1,3 +1,5 @@
+import { useWindowDimensions } from 'react-native';
+
 import { Card, Divider, HStack, Icon, Text, VStack, type IconName } from '@/components/atoms';
 import { SourceNote } from '@/components/molecules';
 import { formatDate, formatRelative, formatUnit, localise } from '@/lib/format';
@@ -14,10 +16,17 @@ function conditionIcon(key: keyof typeof CONDITION_ICONS | undefined): IconName 
 function ForecastRow({ day }: { day: ForecastDay }) {
   const language = useLanguage();
   const theme = useTheme();
+  const { fontScale } = useWindowDimensions();
+  /*
+   * The date and temperature columns grow with the reader's font size, up to the caption's
+   * own cap. Fixed widths fit at 1x and wrapped "16 Sept 2026" onto two lines as soon as the
+   * system font was a step larger — the default on many Android phones.
+   */
+  const columnScale = Math.min(fontScale, theme.typography.caption.maxFontScale);
 
   return (
     <HStack align="center" gap="md" paddingY="xs">
-      <Text variant="caption" color="textMuted" style={{ width: 78 }}>
+      <Text variant="caption" color="textMuted" style={{ minWidth: 78 * columnScale }}>
         {formatDate(day.date)}
       </Text>
 
@@ -33,7 +42,11 @@ function ForecastRow({ day }: { day: ForecastDay }) {
         </Text>
       ) : null}
 
-      <Text variant="caption" tabular style={{ width: 74, textAlign: 'right' }}>
+      <Text
+        variant="caption"
+        tabular
+        style={{ minWidth: 74 * columnScale, textAlign: 'right' }}
+      >
         {day.maxTemperatureC === null ? '—' : `${Math.round(day.maxTemperatureC)}°`}
         <Text variant="caption" color="textMuted">
           {day.minTemperatureC === null ? '' : ` / ${Math.round(day.minTemperatureC)}°`}
@@ -84,9 +97,7 @@ export function WeatherPanel({ weather }: { weather: WeatherData }) {
           <VStack grow gap="xxs">
             <HStack align="baseline" gap="xs">
               <Text variant="display" tabular>
-                {weather.temperature
-                  ? `${Math.round(weather.temperature.value)}°`
-                  : '—'}
+                {weather.temperature ? `${Math.round(weather.temperature.value)}°` : '—'}
               </Text>
               {weather.condition ? (
                 <Text variant="caption" color="textMuted" numberOfLines={1}>

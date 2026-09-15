@@ -1,8 +1,11 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
+import { useEffect } from 'react';
 
 import { AppProviders, AppShell } from '@/components/templates';
 import { useTheme } from '@/theme';
+import { fontFamily } from '@/theme/fonts';
 
 /**
  * Anchor every route to the tab bar.
@@ -23,6 +26,16 @@ export const unstable_settings = {
 function RootNavigator() {
   const theme = useTheme();
 
+  /*
+   * The native window behind every screen. It defaults to white, and Android reveals it
+   * during screen transitions and while the keyboard resizes the window — a white flash on
+   * every push in dark mode. Kept in step with the theme rather than set once in config,
+   * because the reader can switch theme at runtime.
+   */
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(theme.colors.background);
+  }, [theme.colors.background]);
+
   return (
     <>
       <StatusBar style={theme.scheme === 'dark' ? 'light' : 'dark'} />
@@ -30,6 +43,11 @@ function RootNavigator() {
         screenOptions={{
           headerStyle: { backgroundColor: theme.colors.surface },
           headerTintColor: theme.colors.text,
+          // The native header is not a Text atom, so its font and alignment are pinned here.
+          // Left alone it renders Roboto, left-aligned, on Android and San Francisco,
+          // centred, on iOS — every pushed screen looked like a different app.
+          headerTitleStyle: { fontFamily: fontFamily.semibold },
+          headerTitleAlign: 'center',
           headerShadowVisible: false,
           headerBackTitle: 'Back',
           contentStyle: { backgroundColor: theme.colors.background },

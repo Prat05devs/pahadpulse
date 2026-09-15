@@ -1,6 +1,5 @@
-import * as WebBrowser from 'expo-web-browser';
-
 import { Badge, HStack, Icon, Pressable, Text, VStack } from '@/components/atoms';
+import { openExternal } from '@/lib/external-link';
 import { formatDate, formatRelative, localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
@@ -46,7 +45,7 @@ export function SourceNote({
     if (!provenance.url) return;
     // In-app browser rather than leaving the app: the reader is mid-task, and a source link
     // is a detour, not a destination.
-    void WebBrowser.openBrowserAsync(provenance.url);
+    void openExternal(provenance.url);
   };
 
   const body = (

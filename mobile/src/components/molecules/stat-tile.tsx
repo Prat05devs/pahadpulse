@@ -108,8 +108,19 @@ export function StatTile({
         </HStack>
 
         <HStack align="baseline" gap="xxs" wrap>
+          {/*
+           * One line, shrinking to fit rather than wrapping. Some tiles hold a word
+           * ("Highways") rather than a figure, and on a 360dp Android screen a word that does
+           * not fit was broken across two lines mid-word — the tile then stood taller than
+           * its neighbour. `flexShrink` lets the text measure against the tile, not overflow.
+           */}
           {countTo === undefined ? (
-            <Text variant="metric" style={{ color: theme.colors[TONE_COLORS[tone]] }}>
+            <Text
+              variant="metric"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={{ color: theme.colors[TONE_COLORS[tone]], flexShrink: 1 }}
+            >
               {value}
             </Text>
           ) : (
@@ -117,7 +128,9 @@ export function StatTile({
               value={countTo}
               format={countFormat}
               variant="metric"
-              style={{ color: theme.colors[TONE_COLORS[tone]] }}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={{ color: theme.colors[TONE_COLORS[tone]], flexShrink: 1 }}
             />
           )}
           {unit ? (
