@@ -1,16 +1,17 @@
 import { Badge, HStack, Icon, Pressable, Text, VStack } from '@/components/atoms';
+import { useT, type TranslationKey } from '@/i18n';
 import { openExternal } from '@/lib/external-link';
 import { formatDate, formatRelative, localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
 import type { Provenance } from '@/types/api';
 
-const FRESHNESS_LABEL = {
-  fresh: 'Up to date',
-  stale: 'May be out of date',
-  expired: 'Out of date',
-  unknown: 'Currency unknown',
-} as const;
+const FRESHNESS_KEY = {
+  fresh: 'freshness.fresh',
+  stale: 'freshness.stale',
+  expired: 'freshness.expired',
+  unknown: 'freshness.unknown',
+} as const satisfies Record<string, TranslationKey>;
 
 /**
  * Where a figure came from, rendered next to the figure.
@@ -29,11 +30,12 @@ export function SourceNote({
 }) {
   const theme = useTheme();
   const language = useLanguage();
+  const t = useT();
 
   if (!provenance) {
     return (
       <Text variant="footnote" color="textMuted">
-        Source not recorded
+        {t('common.sourceNotRecorded')}
       </Text>
     );
   }
@@ -52,7 +54,7 @@ export function SourceNote({
     <VStack gap="xxs">
       <HStack align="center" gap="xs" wrap>
         <Badge
-          label={FRESHNESS_LABEL[provenance.freshness]}
+          label={t(FRESHNESS_KEY[provenance.freshness])}
           color={freshnessColor}
           variant="dot"
         />
@@ -67,7 +69,10 @@ export function SourceNote({
 
       {compact ? null : (
         <Text variant="footnote" color="textMuted">
-          {`Data for ${formatDate(provenance.vintage)} · retrieved ${formatRelative(provenance.fetchedAt)}`}
+          {t('source.dataForRetrieved', {
+            vintage: formatDate(provenance.vintage),
+            fetched: formatRelative(provenance.fetchedAt),
+          })}
         </Text>
       )}
     </VStack>
@@ -79,7 +84,7 @@ export function SourceNote({
     <Pressable
       onPress={openSource}
       style={{ minHeight: 0 }}
-      accessibilityLabel={`Source: ${department}. Opens in a browser.`}
+      accessibilityLabel={t('source.openedInBrowser', { department })}
     >
       {body}
     </Pressable>

@@ -1,4 +1,5 @@
 import { HStack, Pressable, Spacer, Text, VStack, Icon } from '@/components/atoms';
+import { useT } from '@/i18n';
 
 type SectionHeaderProps = {
   title: string;
@@ -13,8 +14,11 @@ export function SectionHeader({
   title,
   subtitle,
   onPressAction,
-  actionLabel = 'See all',
+  actionLabel,
 }: SectionHeaderProps) {
+  const t = useT();
+  const action = actionLabel ?? t('common.seeAll');
+
   return (
     <HStack align="center" gap="sm">
       <VStack grow>
@@ -30,12 +34,12 @@ export function SectionHeader({
       {onPressAction ? (
         <Pressable
           onPress={onPressAction}
-          accessibilityLabel={`${actionLabel}, ${title}`}
+          accessibilityLabel={`${action}, ${title}`}
           style={{ minHeight: 0 }}
         >
           <HStack align="center" gap="xxs">
             <Text variant="footnote" color="primary">
-              {actionLabel}
+              {action}
             </Text>
             <Icon name="chevron-forward" size={14} tone="primary" />
           </HStack>

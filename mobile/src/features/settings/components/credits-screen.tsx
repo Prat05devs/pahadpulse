@@ -1,6 +1,7 @@
 import { Card, Divider, Text, VStack } from '@/components/atoms';
 import { SectionHeader } from '@/components/molecules';
 import { Screen } from '@/components/templates';
+import { useT, type TranslationKey } from '@/i18n';
 
 /**
  * Where the data and the map come from.
@@ -10,70 +11,74 @@ import { Screen } from '@/components/templates';
  * caption across the terrain covers the thing it is crediting. The (i) control on the map
  * opens the same credit, and this is its full form.
  */
-const MAP_SOURCES = [
+/**
+ * Source names stay as published — "OpenStreetMap" is a proper noun in any language, and a
+ * translated licence name would no longer identify the licence. Only our own descriptions of
+ * them are translated.
+ */
+type Credit = { title: string; detailKey: TranslationKey; licenceKey: TranslationKey };
+
+const MAP_SOURCES: Credit[] = [
   {
     title: 'OpenStreetMap',
-    detail:
-      'District boundaries, and the highway numbers the NH and SH layers are matched on. Collected by OpenStreetMap contributors and queried through Overpass.',
-    licence: 'Open Database Licence (ODbL)',
+    detailKey: 'credits.osm.detail',
+    licenceKey: 'credits.licence.odbl',
   },
   {
     title: 'AWS Terrain Tiles',
-    detail:
-      'The elevation model behind the hillshade and the 3D view. Served from the AWS public dataset registry, originally from Mapzen.',
-    licence: 'Public dataset, keyless',
+    detailKey: 'credits.terrain.detail',
+    licenceKey: 'credits.licence.publicDataset',
   },
   {
     title: 'OpenFreeMap',
-    detail: 'The vector basemap the districts and highways are drawn over.',
-    licence: 'Free, no API key',
+    detailKey: 'credits.openfreemap.detail',
+    licenceKey: 'credits.licence.freeNoKey',
   },
   {
     title: 'MapLibre GL',
-    detail:
-      'The renderer, used by both this app and the web portal so the two maps read the same way.',
-    licence: 'BSD-3-Clause',
+    detailKey: 'credits.maplibre.detail',
+    licenceKey: 'credits.licence.bsd',
   },
 ];
 
-const DATA_SOURCES = [
+const DATA_SOURCES: Credit[] = [
   {
     title: 'India Meteorological Department, and SACHET / NDMA',
-    detail: 'Weather warnings and disaster alerts, as published in CAP format.',
-    licence: 'Government of India',
+    detailKey: 'credits.imd.detail',
+    licenceKey: 'credits.licence.govIndia',
   },
-
   {
     title: 'Open-Meteo',
-    detail: 'Observations and forecasts for the station nearest each district.',
-    licence: 'Free for non-commercial use',
+    detailKey: 'credits.openMeteo.detail',
+    licenceKey: 'credits.licence.nonCommercial',
   },
 ];
 
 export function CreditsScreen() {
+  const t = useT();
+
   return (
     <Screen>
       <VStack gap="lg">
         <VStack gap="xs">
-          <Text variant="title">Data and technology</Text>
+          <Text variant="title">{t('credits.title')}</Text>
           <Text variant="body" color="textMuted">
-            Every figure in this app is published by someone else, and this is who. Nothing
-            here is modelled or estimated by us.
+            {t('credits.intro')}
           </Text>
         </VStack>
 
         <VStack gap="sm">
-          <SectionHeader title="The map" subtitle="Keyless, and not Google Maps" />
+          <SectionHeader title={t('credits.map.title')} subtitle={t('credits.map.subtitle')} />
           <Card padding="md">
             {MAP_SOURCES.map((source, index) => (
               <VStack key={source.title} gap="xs">
                 {index > 0 ? <Divider /> : null}
                 <Text variant="bodyStrong">{source.title}</Text>
                 <Text variant="caption" color="textMuted">
-                  {source.detail}
+                  {t(source.detailKey)}
                 </Text>
                 <Text variant="caption" color="textMuted">
-                  {source.licence}
+                  {t(source.licenceKey)}
                 </Text>
               </VStack>
             ))}
@@ -81,17 +86,20 @@ export function CreditsScreen() {
         </VStack>
 
         <VStack gap="sm">
-          <SectionHeader title="The figures" subtitle="Departments that publish them" />
+          <SectionHeader
+            title={t('credits.figures.title')}
+            subtitle={t('credits.figures.subtitle')}
+          />
           <Card padding="md">
             {DATA_SOURCES.map((source, index) => (
               <VStack key={source.title} gap="xs">
                 {index > 0 ? <Divider /> : null}
                 <Text variant="bodyStrong">{source.title}</Text>
                 <Text variant="caption" color="textMuted">
-                  {source.detail}
+                  {t(source.detailKey)}
                 </Text>
                 <Text variant="caption" color="textMuted">
-                  {source.licence}
+                  {t(source.licenceKey)}
                 </Text>
               </VStack>
             ))}

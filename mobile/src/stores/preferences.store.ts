@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { deviceLanguage } from '@/i18n';
 import { STORAGE_KEYS } from '@/lib/storage';
 
 /**
@@ -35,7 +36,13 @@ type PreferencesState = {
 };
 
 const INITIAL = {
-  language: 'en' as Language,
+  /**
+   * Seeded from the phone, not hardcoded to English: a reader whose device is set to Hindi
+   * should not have to find a setting to read the app in Hindi. Only the first launch is
+   * affected — once `setLanguage` runs, the persisted choice wins and the device is never
+   * consulted again.
+   */
+  language: deviceLanguage() as Language,
   themeMode: 'system' as ThemeMode,
   savedDistricts: [] as string[],
   hasSeenIntro: false,

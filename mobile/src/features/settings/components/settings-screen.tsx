@@ -6,6 +6,7 @@ import { Card, Divider, HStack, Pressable, Text, VStack } from '@/components/ato
 import { Chip, ListRow, SectionHeader } from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { env } from '@/config/env';
+import { useT, type TranslationKey } from '@/i18n';
 import { usePreferencesStore, type Language, type ThemeMode } from '@/stores';
 import { useTheme } from '@/theme';
 
@@ -14,10 +15,10 @@ const LANGUAGES: { label: string; value: Language }[] = [
   { label: 'हिन्दी', value: 'hi' },
 ];
 
-const THEMES: { label: string; value: ThemeMode }[] = [
-  { label: 'System', value: 'system' },
-  { label: 'Light', value: 'light' },
-  { label: 'Dark', value: 'dark' },
+const THEMES: { labelKey: TranslationKey; value: ThemeMode }[] = [
+  { labelKey: 'settings.theme.system', value: 'system' },
+  { labelKey: 'settings.theme.light', value: 'light' },
+  { labelKey: 'settings.theme.dark', value: 'dark' },
 ];
 
 /**
@@ -29,6 +30,7 @@ const THEMES: { label: string; value: ThemeMode }[] = [
  */
 export function SettingsScreen() {
   const theme = useTheme();
+  const t = useT();
 
   const language = usePreferencesStore((s) => s.language);
   const setLanguage = usePreferencesStore((s) => s.setLanguage);
@@ -52,14 +54,10 @@ export function SettingsScreen() {
   };
 
   const confirmReset = () => {
-    Alert.alert(
-      'Reset preferences?',
-      'This clears your language, appearance and followed districts on this device.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Reset', style: 'destructive', onPress: reset },
-      ],
-    );
+    Alert.alert(t('settings.reset.confirmTitle'), t('settings.reset.confirmBody'), [
+      { text: t('settings.reset.cancel'), style: 'cancel' },
+      { text: t('settings.reset.confirm'), style: 'destructive', onPress: reset },
+    ]);
   };
 
   return (
@@ -69,18 +67,21 @@ export function SettingsScreen() {
           headerRight: () => (
             <Pressable
               onPress={dismiss}
-              accessibilityLabel="Close settings"
+              accessibilityLabel={t('settings.closeSettings')}
               style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 4 }}
             >
               <Text variant="bodyStrong" color="primary">
-                Done
+                {t('common.done')}
               </Text>
             </Pressable>
           ),
         }}
       />
       <VStack gap="sm">
-        <SectionHeader title="Language" subtitle="Applies to names and labels from the API" />
+        <SectionHeader
+          title={t('settings.language')}
+          subtitle={t('settings.language.subtitle')}
+        />
         <Card padding="md">
           <HStack gap="xs" wrap>
             {LANGUAGES.map((option) => (
@@ -93,19 +94,19 @@ export function SettingsScreen() {
             ))}
           </HStack>
           <Text variant="footnote" color="textMuted" style={{ marginTop: theme.spacing.sm }}>
-            Where a source publishes in one language only, that name is shown as published.
+            {t('settings.language.note')}
           </Text>
         </Card>
       </VStack>
 
       <VStack gap="sm">
-        <SectionHeader title="Appearance" />
+        <SectionHeader title={t('settings.appearance')} />
         <Card padding="md">
           <HStack gap="xs" wrap>
             {THEMES.map((option) => (
               <Chip
                 key={option.value}
-                label={option.label}
+                label={t(option.labelKey)}
                 selected={themeMode === option.value}
                 onPress={() => setThemeMode(option.value)}
               />
@@ -115,18 +116,18 @@ export function SettingsScreen() {
       </VStack>
 
       <VStack gap="sm">
-        <SectionHeader title="Your data" />
+        <SectionHeader title={t('settings.yourData')} />
         <Card padding="md">
           <ListRow
-            title="Followed districts"
-            subtitle="Stored on this device only"
+            title={t('settings.followed')}
+            subtitle={t('settings.followed.subtitle')}
             value={String(savedDistricts.length)}
             showChevron={false}
           />
           <Divider />
           <ListRow
-            title="Reset preferences"
-            subtitle="Clears language, theme and followed districts"
+            title={t('settings.reset')}
+            subtitle={t('settings.reset.subtitle')}
             icon="trash-outline"
             onPress={confirmReset}
             showChevron={false}
@@ -135,24 +136,32 @@ export function SettingsScreen() {
       </VStack>
 
       <VStack gap="sm">
-        <SectionHeader title="About" />
+        <SectionHeader title={t('settings.about')} />
         <Card padding="md">
-          <ListRow title="Version" value={version} showChevron={false} />
-          <Divider />
-          <ListRow title="API" value={env.apiUrl.replace(/^https?:\/\//, '')} showChevron={false} />
-          <Divider />
-          <ListRow title="Web portal" value={env.webUrl.replace(/^https?:\/\//, '')} showChevron={false} />
+          <ListRow title={t('settings.version')} value={version} showChevron={false} />
           <Divider />
           <ListRow
-            title="Support"
-            subtitle="Help, corrections and accessibility feedback"
+            title={t('settings.api')}
+            value={env.apiUrl.replace(/^https?:\/\//, '')}
+            showChevron={false}
+          />
+          <Divider />
+          <ListRow
+            title={t('settings.webPortal')}
+            value={env.webUrl.replace(/^https?:\/\//, '')}
+            showChevron={false}
+          />
+          <Divider />
+          <ListRow
+            title={t('settings.support')}
+            subtitle={t('settings.support.subtitle')}
             icon="help-circle-outline"
             onPress={() => void Linking.openURL(`${env.webUrl}/support`)}
           />
           <Divider />
           <ListRow
-            title="Privacy policy"
-            subtitle="How Pahad Pulse handles information"
+            title={t('settings.privacy')}
+            subtitle={t('settings.privacy.subtitle')}
             icon="shield-checkmark-outline"
             onPress={() => void Linking.openURL(`${env.webUrl}/privacy`)}
           />
@@ -160,9 +169,7 @@ export function SettingsScreen() {
 
         <Card tone="muted" elevation="none">
           <Text variant="caption" color="textMuted">
-            Pahad Pulse consolidates data published by Uttarakhand government departments. It
-            does not author any figure. Where a source restricts redistribution, its data is
-            shown in the app but not exported.
+            {t('settings.disclaimer')}
           </Text>
         </Card>
       </VStack>

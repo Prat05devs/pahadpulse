@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 import { Platform, View } from 'react-native';
 
 import { useAlertSummary } from '@/features/alerts';
+import { useT } from '@/i18n';
 import { fontFamily } from '@/theme/fonts';
 import { useTheme } from '@/theme';
 
@@ -31,6 +32,7 @@ function TabBarBackground() {
  */
 export default function TabsLayout() {
   const theme = useTheme();
+  const t = useT();
   const { data: summary } = useAlertSummary();
 
   const activeAlerts = summary?.activeCount ?? 0;
@@ -58,21 +60,21 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Today',
+          title: t('nav.today'),
           tabBarIcon: ({ color, size }) => <Ionicons name="pulse" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="map"
         options={{
-          title: 'Map',
+          title: t('nav.map'),
           tabBarIcon: ({ color, size }) => <Ionicons name="map" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="districts"
         options={{
-          title: 'Districts',
+          title: t('nav.districts'),
           // A list icon, not a map one: the map metaphor belongs to the tab that actually
           // renders a map, and this tab is a searchable list of thirteen districts.
           tabBarIcon: ({ color, size }) => <Ionicons name="list" size={size} color={color} />,
@@ -81,7 +83,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="alerts"
         options={{
-          title: 'Alerts',
+          title: t('nav.alerts'),
           // The badge is the reason the summary is fetched here rather than on the alerts
           // screen: a reader needs to see there is a warning without opening the tab.
           tabBarBadge: activeAlerts > 0 ? activeAlerts : undefined,
@@ -100,7 +102,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="more"
         options={{
-          title: 'More',
+          title: t('nav.more'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="ellipsis-horizontal" size={size} color={color} />
           ),

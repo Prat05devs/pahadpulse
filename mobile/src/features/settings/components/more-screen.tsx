@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { Card, Divider, Text, VStack } from '@/components/atoms';
 import { ListRow, SectionHeader } from '@/components/molecules';
 import { Screen } from '@/components/templates';
+import { useT } from '@/i18n';
 import { useTheme } from '@/theme';
 
 /**
@@ -13,6 +14,7 @@ import { useTheme } from '@/theme';
 export function MoreScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const t = useT();
   const insets = useSafeAreaInsets();
 
   const header = (
@@ -26,88 +28,88 @@ export function MoreScreen() {
         borderBottomColor: theme.colors.border,
       }}
     >
-      <Text variant="title">More</Text>
+      <Text variant="title">{t('more.title')}</Text>
     </View>
   );
 
   return (
     <Screen header={header}>
       <VStack gap="sm">
-        <SectionHeader title="In the app" />
+        <SectionHeader title={t('more.inTheApp')} />
         <Card padding="md">
           <ListRow
-            title="Districts"
-            subtitle="All thirteen, with statistics and sources"
+            title={t('nav.districts')}
+            subtitle={t('more.districts.subtitle')}
             icon="map-outline"
             onPress={() => router.push('/districts')}
           />
           <Divider />
           <ListRow
-            title="Alerts"
-            subtitle="Weather, river, road and disaster warnings"
+            title={t('nav.alerts')}
+            subtitle={t('more.alerts.subtitle')}
             icon="warning-outline"
             onPress={() => router.push('/alerts')}
           />
           <Divider />
           <ListRow
-            title="Map"
-            subtitle="Districts, highways and alerts in relief"
+            title={t('nav.map')}
+            subtitle={t('more.map.subtitle')}
             icon="earth-outline"
             onPress={() => router.push('/map')}
           />
           <Divider />
           <ListRow
-            title="Tourism"
-            subtitle="Published Char Dham arrivals by shrine and year"
+            title={t('more.tourism')}
+            subtitle={t('more.tourism.subtitle')}
             icon="compass-outline"
             onPress={() => router.push('/tourism')}
           />
           <Divider />
           <ListRow
-            title="Compare Districts"
-            subtitle="Compare ease of doing business across districts"
+            title={t('more.compare')}
+            subtitle={t('more.compare.subtitle')}
             icon="trending-up-outline"
             onPress={() => router.push('/compare')}
           />
           <Divider />
           <ListRow
-            title="Roads & Highways"
-            subtitle="Recorded National and State Highway network"
+            title={t('more.roads')}
+            subtitle={t('more.roads.subtitle')}
             icon="car-outline"
             onPress={() => router.push('/roads')}
           />
           <Divider />
           <ListRow
-            title="Connectivity"
-            subtitle="Fixed and mobile network performance"
+            title={t('more.connectivity')}
+            subtitle={t('more.connectivity.subtitle')}
             icon="wifi-outline"
             onPress={() => router.push('/connectivity')}
           />
           <Divider />
           <ListRow
-            title="Air quality"
-            subtitle="National AQI and pollutants by district"
+            title={t('more.airQuality')}
+            subtitle={t('more.airQuality.subtitle')}
             icon="cloud-outline"
             onPress={() => router.push('/air-quality')}
           />
           <Divider />
           <ListRow
-            title="Seismic"
-            subtitle="Recent earthquake events"
+            title={t('more.seismic')}
+            subtitle={t('more.seismic.subtitle')}
             icon="pulse-outline"
             onPress={() => router.push('/seismic')}
           />
           <Divider />
           <ListRow
-            title="Settings"
-            subtitle="Language, appearance and your data"
+            title={t('nav.settings')}
+            subtitle={t('more.settings.subtitle')}
             icon="settings-outline"
             onPress={() => router.push('/settings')}
           />
           <Divider />
           <ListRow
-            title="Data and technology"
-            subtitle="Where every figure and the map itself come from"
+            title={t('more.credits')}
+            subtitle={t('more.credits.subtitle')}
             icon="information-circle-outline"
             onPress={() => router.push('/credits')}
           />

@@ -57,7 +57,7 @@ export function AnimatedNumber({
         duration: durationMs,
         // Decelerating: fast enough to feel immediate, settling rather than stopping dead.
         easing: Easing.out(Easing.cubic),
-      }),
+      })
     );
   }, [value, durationMs, progress, reduceMotion]);
 
@@ -70,7 +70,7 @@ export function AnimatedNumber({
     (current) => {
       runOnJS(updateDisplay)(current);
     },
-    [updateDisplay],
+    [updateDisplay]
   );
 
   return (

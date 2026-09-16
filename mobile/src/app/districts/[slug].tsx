@@ -20,7 +20,7 @@ const SlugParam = z
       .string()
       .min(1)
       .regex(/^[a-z0-9-]+$/i)
-      .transform((slug) => slug.toLowerCase()),
+      .transform((slug) => slug.toLowerCase())
   );
 
 /** `/districts/dehradun`, and the deep link `pahadpulse://districts/dehradun`. */

@@ -44,15 +44,15 @@ export function LiveDot({ tone = 'fresh', size = 8, active = true }: LiveDotProp
 
     halo.set(
       withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1400, easing: Easing.out(Easing.ease) }),
-        // A pause at rest, so it reads as a heartbeat rather than a throb.
-        withTiming(0, { duration: 0 }),
-        withTiming(0, { duration: 600 }),
-      ),
+        withSequence(
+          withTiming(1, { duration: 1400, easing: Easing.out(Easing.ease) }),
+          // A pause at rest, so it reads as a heartbeat rather than a throb.
+          withTiming(0, { duration: 0 }),
+          withTiming(0, { duration: 600 })
+        ),
         -1,
-        false,
-      ),
+        false
+      )
     );
 
     // Cancelled on unmount: a repeat left running keeps the UI thread animating a view

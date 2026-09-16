@@ -4,6 +4,7 @@ import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 
 import { AppProviders, AppShell } from '@/components/templates';
+import { useT } from '@/i18n';
 import { useTheme } from '@/theme';
 import { fontFamily } from '@/theme/fonts';
 
@@ -25,6 +26,7 @@ export const unstable_settings = {
  */
 function RootNavigator() {
   const theme = useTheme();
+  const t = useT();
 
   /*
    * The native window behind every screen. It defaults to white, and Android reveals it
@@ -49,24 +51,24 @@ function RootNavigator() {
           headerTitleStyle: { fontFamily: fontFamily.semibold },
           headerTitleAlign: 'center',
           headerShadowVisible: false,
-          headerBackTitle: 'Back',
+          headerBackTitle: t('nav.back'),
           contentStyle: { backgroundColor: theme.colors.background },
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Home' }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('nav.home') }} />
         <Stack.Screen name="districts/[slug]" options={{ title: '' }} />
-        <Stack.Screen name="alerts/[id]" options={{ title: 'Alert' }} />
-        <Stack.Screen name="roads" options={{ title: 'Roads & highways' }} />
-        <Stack.Screen name="tourism" options={{ title: 'Tourism & pilgrimage' }} />
-        <Stack.Screen name="connectivity" options={{ title: 'Internet connectivity' }} />
-        <Stack.Screen name="seismic" options={{ title: 'Seismic activity' }} />
-        <Stack.Screen name="air-quality" options={{ title: 'Air quality' }} />
-        <Stack.Screen name="compare" options={{ title: 'Compare districts' }} />
-        <Stack.Screen name="credits" options={{ title: 'Data credits' }} />
+        <Stack.Screen name="alerts/[id]" options={{ title: t('nav.alert') }} />
+        <Stack.Screen name="roads" options={{ title: t('nav.roads') }} />
+        <Stack.Screen name="tourism" options={{ title: t('nav.tourism') }} />
+        <Stack.Screen name="connectivity" options={{ title: t('nav.connectivity') }} />
+        <Stack.Screen name="seismic" options={{ title: t('nav.seismic') }} />
+        <Stack.Screen name="air-quality" options={{ title: t('nav.airQuality') }} />
+        <Stack.Screen name="compare" options={{ title: t('nav.compare') }} />
+        <Stack.Screen name="credits" options={{ title: t('nav.credits') }} />
         <Stack.Screen
           name="settings"
           options={{
-            title: 'Settings',
+            title: t('nav.settings'),
             presentation: 'modal',
             // A modal has no back button of its own — iOS relies on a swipe-down gesture
             // that is invisible and undiscoverable. The screen draws its own Done button.

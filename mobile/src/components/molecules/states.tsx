@@ -1,6 +1,15 @@
 import type { ReactNode } from 'react';
 
-import { HStack, Icon, Pressable, Spinner, Text, VStack, type IconName } from '@/components/atoms';
+import {
+  HStack,
+  Icon,
+  Pressable,
+  Spinner,
+  Text,
+  VStack,
+  type IconName,
+} from '@/components/atoms';
+import { useT, type Translate } from '@/i18n';
 import { ApiError } from '@/lib/api';
 import { useTheme } from '@/theme';
 
@@ -54,8 +63,10 @@ function StateShell({
   );
 }
 
-export function LoadingState({ label = 'Loading' }: { label?: string }) {
+export function LoadingState({ label }: { label?: string }) {
   const theme = useTheme();
+  const t = useT();
+  const shown = label ?? t('common.loading');
   return (
     <VStack
       align="center"
@@ -64,11 +75,11 @@ export function LoadingState({ label = 'Loading' }: { label?: string }) {
       padding="xl"
       style={{ minHeight: 160 }}
       accessibilityRole="progressbar"
-      accessibilityLabel={label}
+      accessibilityLabel={shown}
     >
       <Spinner />
       <Text variant="caption" color="textMuted" style={{ marginTop: theme.spacing.xxs }}>
-        {label}
+        {shown}
       </Text>
     </VStack>
   );
@@ -88,11 +99,12 @@ export function EmptyState({
 
 function RetryButton({ onRetry }: { onRetry: () => void }) {
   const theme = useTheme();
+  const t = useT();
   return (
     <Pressable
       onPress={onRetry}
       haptic
-      accessibilityLabel="Try again"
+      accessibilityLabel={t('common.tryAgain')}
       style={{
         minHeight: 40,
         justifyContent: 'center',
@@ -105,7 +117,7 @@ function RetryButton({ onRetry }: { onRetry: () => void }) {
       <HStack align="center" gap="xs">
         <Icon name="refresh" size={15} tone="textInverse" />
         <Text variant="bodyStrong" color="textInverse">
-          Try again
+          {t('common.tryAgain')}
         </Text>
       </HStack>
     </Pressable>
@@ -119,50 +131,54 @@ function RetryButton({ onRetry }: { onRetry: () => void }) {
  * by walking uphill, the other by waiting. An app that says the same thing for both trains
  * people to ignore the message.
  */
-function describe(error: unknown): { icon: IconName; title: string; message: string } {
+function describe(
+  error: unknown,
+  t: Translate
+): { icon: IconName; title: string; message: string } {
   if (error instanceof ApiError) {
     switch (error.kind) {
       case 'offline':
         return {
           icon: 'cloud-offline-outline',
-          title: 'No connection',
-          message: 'Showing nothing new until you are back online. Saved pages still work.',
+          title: t('error.offline.title'),
+          message: t('error.offline.message'),
         };
       case 'timeout':
         return {
           icon: 'time-outline',
-          title: 'The server is slow to answer',
-          message: 'The connection may be weak. Try again in a moment.',
+          title: t('error.timeout.title'),
+          message: t('error.timeout.message'),
         };
       case 'not-found':
         return {
           icon: 'help-circle-outline',
-          title: 'Not found',
-          message: 'This page has no data yet. It may not have been published.',
+          title: t('error.notFound.title'),
+          message: t('error.notFound.message'),
         };
       case 'invalid-response':
         return {
           icon: 'bug-outline',
-          title: 'Unexpected data',
-          message: `${error.message} This is a bug on our side, not yours.`,
+          title: t('error.invalidResponse.title'),
+          message: t('error.invalidResponse.message', { detail: error.message }),
         };
       default:
         return {
           icon: 'alert-circle-outline',
-          title: 'Could not load',
+          title: t('error.generic.title'),
           message: error.message,
         };
     }
   }
   return {
     icon: 'alert-circle-outline',
-    title: 'Could not load',
-    message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+    title: t('error.generic.title'),
+    message: error instanceof Error ? error.message : t('error.generic.message'),
   };
 }
 
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
-  const { icon, title, message } = describe(error);
+  const t = useT();
+  const { icon, title, message } = describe(error, t);
   const retryable = !(error instanceof ApiError) || error.isRetryable;
 
   return (

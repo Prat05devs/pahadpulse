@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { Card, HStack, Icon, Text, VStack } from '@/components/atoms';
+import { useT } from '@/i18n';
 import { formatRelative } from '@/lib/format';
 
 import { EmptyState, ErrorState, LoadingState } from './states';
@@ -41,9 +42,12 @@ export function QueryBoundary<T>({
   children,
   loading,
   isEmpty,
-  emptyTitle = 'Nothing to show',
+  emptyTitle,
   emptyMessage,
 }: QueryBoundaryProps<T>) {
+  const t = useT();
+  const emptyHeading = emptyTitle ?? t('common.nothingToShow');
+
   if (query.isPending) {
     return <>{loading ?? <LoadingState />}</>;
   }
@@ -53,11 +57,11 @@ export function QueryBoundary<T>({
   }
 
   if (query.data === undefined) {
-    return <EmptyState title={emptyTitle} message={emptyMessage} />;
+    return <EmptyState title={emptyHeading} message={emptyMessage} />;
   }
 
   if (isEmpty?.(query.data)) {
-    return <EmptyState title={emptyTitle} message={emptyMessage} />;
+    return <EmptyState title={emptyHeading} message={emptyMessage} />;
   }
 
   return (
@@ -67,11 +71,13 @@ export function QueryBoundary<T>({
           <HStack gap="sm" align="center">
             <Icon name="cloud-offline-outline" size={20} tone="warning" />
             <VStack grow gap="xxs">
-              <Text variant="bodyStrong">Showing saved data</Text>
+              <Text variant="bodyStrong">{t('error.savedData.title')}</Text>
               <Text variant="caption" color="textMuted">
                 {query.dataUpdatedAt
-                  ? `Could not refresh · last checked ${formatRelative(new Date(query.dataUpdatedAt))}`
-                  : 'Could not refresh. Try again when you have a connection.'}
+                  ? t('error.savedData.checked', {
+                      when: formatRelative(new Date(query.dataUpdatedAt)),
+                    })
+                  : t('error.savedData.noConnection')}
               </Text>
             </VStack>
           </HStack>
