@@ -41,18 +41,22 @@ tests run on **both** platforms; jest-expo would otherwise only ever exercise iO
   properties. The template otherwise signs release with its bundled DEBUG key, which Play
   rejects. If the properties are missing the build FAILS naming
   `UPLOAD_KEYSTORE_NOT_CONFIGURED.jks` — that is deliberate.
-- **Keystore secrets live in `~/.gradle/gradle.properties`**, never in the repository:
+- **The keystore lives at `mobile/pahadpulse-upload.jks`**, beside the app it signs, as
+  AgniVision keeps its own. `*.jks` is gitignored, so it is never committed — which also means
+  **a fresh clone does not have it**. Back the file up, with its password, somewhere that
+  survives this folder being deleted. Losing it without Play App Signing ends the app's update
+  path permanently.
+- **Passwords live in `~/.gradle/gradle.properties`**, outside the repository:
 
   ```properties
-  PAHADPULSE_UPLOAD_STORE_FILE=/Users/you/keys/pahadpulse-upload.jks
+  PAHADPULSE_UPLOAD_STORE_FILE=/Users/you/…/mobile/pahadpulse-upload.jks
   PAHADPULSE_UPLOAD_STORE_PASSWORD=…
   PAHADPULSE_UPLOAD_KEY_ALIAS=upload
   PAHADPULSE_UPLOAD_KEY_PASSWORD=…
   ```
 
-  Back the `.jks` file and its passwords up somewhere durable. Enrol in **Play App Signing**
-  when creating the app: Google then holds the app signing key, and a lost UPLOAD key can be
-  reset by support instead of ending the app's update path forever.
+  Enrol in **Play App Signing** when creating the app: Google then holds the app signing key,
+  and a lost UPLOAD key can be reset by support instead of being fatal.
 
 - **versionCode:** owned by `app.config.ts` and incremented by hand for every upload, internal
   testing included. Play rejects a reused versionCode.
@@ -72,8 +76,10 @@ One-time setup: install the Android SDK (command-line tools, platform 36, build-
 platform-tools, NDK), set `ANDROID_HOME`, and create the upload keystore:
 
 ```sh
-keytool -genkeypair -v -keystore ~/keys/pahadpulse-upload.jks \
+cd mobile
+keytool -genkeypair -v -keystore pahadpulse-upload.jks \
   -alias upload -keyalg RSA -keysize 2048 -validity 10000
+# Country code is the two-letter ISO code — IN, not 91.
 ```
 
 Then write the four `PAHADPULSE_UPLOAD_*` properties above into `~/.gradle/gradle.properties`.
