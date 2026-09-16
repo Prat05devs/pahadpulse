@@ -7,6 +7,7 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { HStack, Icon, Pressable, Text, type IconName } from '@/components/atoms';
 import { ErrorState, LoadingState } from '@/components/molecules';
 import { Screen } from '@/components/templates';
+import { useT, type TranslationKey } from '@/i18n';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
 
@@ -22,10 +23,10 @@ import {
 import { MapMessageSchema } from '../schemas';
 
 /** What each toggle says, and the one-line reason it is worth turning on. */
-const LAYER_LABELS: Record<MapLayerKey, string> = {
-  districts: 'Districts',
-  alerts: 'Alerts',
-  highways: 'Highways',
+const LAYER_LABELS: Record<MapLayerKey, TranslationKey> = {
+  districts: 'map.layer.districts',
+  alerts: 'map.layer.alerts',
+  highways: 'map.layer.highways',
 };
 
 /**
@@ -41,6 +42,7 @@ export function MapScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const language = useLanguage();
+  const t = useT();
   const [ready, setReady] = useState(false);
   const [documentError, setDocumentError] = useState<string | null>(null);
   const [layers, setLayers] = useState<MapLayerState>(DEFAULT_LAYERS);
@@ -63,7 +65,7 @@ export function MapScreen() {
         alerts: alerts.data ?? null,
         language,
       }),
-    [districts.data, alerts.data, language],
+    [districts.data, alerts.data, language]
   );
 
   /*
@@ -75,16 +77,14 @@ export function MapScreen() {
     setLayers((current) => {
       const next = { ...current, [key]: !current[key] };
       webRef.current?.injectJavaScript(
-        `window.ppSetLayers && window.ppSetLayers(${JSON.stringify(next)}); true;`,
+        `window.ppSetLayers && window.ppSetLayers(${JSON.stringify(next)}); true;`
       );
       return next;
     });
   }, []);
 
   const zoomBy = useCallback((delta: number) => {
-    webRef.current?.injectJavaScript(
-      `window.ppZoom && window.ppZoom(${String(delta)}); true;`,
-    );
+    webRef.current?.injectJavaScript(`window.ppZoom && window.ppZoom(${String(delta)}); true;`);
   }, []);
 
   /** Back to the whole state. The way out of being lost at high zoom. */
@@ -96,7 +96,7 @@ export function MapScreen() {
     setTerrain((on) => {
       const next = !on;
       webRef.current?.injectJavaScript(
-        `window.ppSetTerrain && window.ppSetTerrain(${String(next)}); true;`,
+        `window.ppSetTerrain && window.ppSetTerrain(${String(next)}); true;`
       );
       return next;
     });
@@ -129,13 +129,13 @@ export function MapScreen() {
       }
       router.push(`/districts/${message.slug}`);
     },
-    [router],
+    [router]
   );
 
   if (districts.isPending) {
     return (
       <Screen scroll={false}>
-        <LoadingState label="Loading the map" />
+        <LoadingState label={t('map.loading')} />
       </Screen>
     );
   }
@@ -185,7 +185,9 @@ export function MapScreen() {
         domStorageEnabled
         accessible
         accessibilityRole="image"
-        accessibilityLabel={`Interactive map of Uttarakhand with ${districts.data?.features.length ?? 0} districts. Use the Districts tab for an accessible list of every district.`}
+        accessibilityLabel={t('map.label', {
+          count: districts.data?.features.length ?? 0,
+        })}
       />
 
       {!ready ? (
@@ -199,17 +201,17 @@ export function MapScreen() {
             },
           ]}
         >
-          <LoadingState label="Drawing the terrain" />
+          <LoadingState label={t('map.drawing')} />
         </View>
       ) : null}
 
       {/*
-        * Layer toggles, as a scrolling row over the map.
-        *
-        * Over the map rather than in a sheet: turning a layer on is the main thing a reader
-        * does here, and the point of toggling is watching the map change — a sheet that
-        * covers the map hides the very thing the control is acting on.
-        */}
+       * Layer toggles, as a scrolling row over the map.
+       *
+       * Over the map rather than in a sheet: turning a layer on is the main thing a reader
+       * does here, and the point of toggling is watching the map change — a sheet that
+       * covers the map hides the very thing the control is acting on.
+       */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -222,21 +224,26 @@ export function MapScreen() {
         {MAP_LAYERS.map((key) => (
           <LayerChip
             key={key}
-            label={LAYER_LABELS[key]}
+            label={t(LAYER_LABELS[key])}
             active={layers[key]}
             onPress={() => toggleLayer(key)}
           />
         ))}
-        <LayerChip label="3D" active={terrain} onPress={toggleTerrain} icon="triangle-outline" />
+        <LayerChip
+          label="3D"
+          active={terrain}
+          onPress={toggleTerrain}
+          icon="triangle-outline"
+        />
       </ScrollView>
 
       {/*
-        * Zoom and reset, stacked above the credits control.
-        *
-        * Pinch works, but it is not the only way anyone holds a phone — one-handed, gloved,
-        * or with limited dexterity, a pinch is awkward or impossible, and on a simulator it
-        * is worse. Buttons are the accessible path, not a fallback.
-        */}
+       * Zoom and reset, stacked above the credits control.
+       *
+       * Pinch works, but it is not the only way anyone holds a phone — one-handed, gloved,
+       * or with limited dexterity, a pinch is awkward or impossible, and on a simulator it
+       * is worse. Buttons are the accessible path, not a fallback.
+       */}
       <View
         style={{
           position: 'absolute',
@@ -249,24 +256,24 @@ export function MapScreen() {
           backgroundColor: theme.colors.surface,
         }}
       >
-        <MapButton label="Zoom in" icon="add" onPress={() => zoomBy(1)} />
+        <MapButton label={t('map.zoomIn')} icon="add" onPress={() => zoomBy(1)} />
         <View style={{ height: 1, backgroundColor: theme.colors.border }} />
-        <MapButton label="Zoom out" icon="remove" onPress={() => zoomBy(-1)} />
+        <MapButton label={t('map.zoomOut')} icon="remove" onPress={() => zoomBy(-1)} />
         <View style={{ height: 1, backgroundColor: theme.colors.border }} />
-        <MapButton label="Fit the whole state" icon="scan-outline" onPress={resetFrame} />
+        <MapButton label={t('map.fitState')} icon="scan-outline" onPress={resetFrame} />
       </View>
 
       {/*
-        * Attribution lives behind this control rather than printed across the map.
-        *
-        * OpenStreetMap's licence requires the credit to be reachable, not that it sit on the
-        * map itself — the standard treatment on a phone, where a permanent two-line caption
-        * covers the terrain it is crediting.
-        */}
+       * Attribution lives behind this control rather than printed across the map.
+       *
+       * OpenStreetMap's licence requires the credit to be reachable, not that it sit on the
+       * map itself — the standard treatment on a phone, where a permanent two-line caption
+       * covers the terrain it is crediting.
+       */}
       <Pressable
         onPress={() => setCreditsOpen(true)}
         accessibilityRole="button"
-        accessibilityLabel="Map sources and credits"
+        accessibilityLabel={t('map.credits')}
         style={{
           position: 'absolute',
           right: theme.spacing.md,
@@ -290,13 +297,10 @@ export function MapScreen() {
         transparent
         onRequestClose={() => setCreditsOpen(false)}
       >
-        <View
-          style={{ flex: 1, justifyContent: 'flex-end' }}
-          accessibilityViewIsModal
-        >
+        <View style={{ flex: 1, justifyContent: 'flex-end' }} accessibilityViewIsModal>
           <Pressable
             onPress={() => setCreditsOpen(false)}
-            accessibilityLabel="Close map sources"
+            accessibilityLabel={t('map.creditsClose')}
             style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.scrim }]}
           />
           <View
@@ -310,8 +314,11 @@ export function MapScreen() {
             }}
           >
             <HStack justify="space-between" align="center">
-              <Text variant="title">Map sources</Text>
-              <Pressable onPress={() => setCreditsOpen(false)} accessibilityLabel="Close map sources">
+              <Text variant="title">{t('map.creditsTitle')}</Text>
+              <Pressable
+                onPress={() => setCreditsOpen(false)}
+                accessibilityLabel={t('map.creditsClose')}
+              >
                 <Icon name="close" size={24} tone="text" />
               </Pressable>
             </HStack>
@@ -319,9 +326,7 @@ export function MapScreen() {
               {MAP_ATTRIBUTION}
             </Text>
             <Text variant="caption" color="textMuted">
-              District boundaries and highway numbers come from OpenStreetMap. Elevation is
-              from the AWS Terrain Tiles public dataset. Nothing on this map requires an API
-              key.
+              {t('map.creditsBody')}
             </Text>
           </View>
         </View>

@@ -4,6 +4,7 @@ import { ScrollView } from 'react-native';
 import { Card, HStack, Icon, Pressable, Skeleton, Text, VStack } from '@/components/atoms';
 import { useDistricts } from '@/features/areas';
 import { useAreaWeather } from '@/features/weather';
+import { useT } from '@/i18n';
 import { localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
@@ -18,6 +19,7 @@ import { useTheme } from '@/theme';
 function SavedDistrictTile({ slug }: { slug: string }) {
   const router = useRouter();
   const language = useLanguage();
+  const t = useT();
 
   const districts = useDistricts();
   const weather = useAreaWeather(slug);
@@ -30,7 +32,9 @@ function SavedDistrictTile({ slug }: { slug: string }) {
     <Pressable
       onPress={() => router.push(`/districts/${slug}`)}
       accessibilityLabel={
-        temperature ? `${name}, ${Math.round(temperature.value)} degrees` : name
+        temperature
+          ? t('districts.tileLabel', { name, degrees: Math.round(temperature.value) })
+          : name
       }
       style={{ minHeight: 0 }}
     >
@@ -49,7 +53,7 @@ function SavedDistrictTile({ slug }: { slug: string }) {
             </HStack>
           ) : (
             <Text variant="caption" color="textMuted">
-              No station
+              {t('districts.noStation')}
             </Text>
           )}
 
@@ -57,7 +61,7 @@ function SavedDistrictTile({ slug }: { slug: string }) {
             {weather.data?.condition
               ? localise(weather.data.condition.label, language)
               : district?.division
-                ? `${district.division} division`
+                ? t('districts.division', { division: district.division })
                 : ' '}
           </Text>
         </VStack>

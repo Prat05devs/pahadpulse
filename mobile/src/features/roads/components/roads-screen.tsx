@@ -10,6 +10,7 @@ import {
   SectionHeader,
   SourceNote,
 } from '@/components/molecules';
+import { useT } from '@/i18n';
 import { Screen } from '@/components/templates';
 import { formatDate, formatNumber } from '@/lib/format';
 import { shouldStackCardGrid } from '@/lib/layout';
@@ -20,6 +21,7 @@ import { useRoadNetwork } from '../hooks';
 type Network = 'NH' | 'SH';
 
 export function RoadsScreen() {
+  const t = useT();
   const theme = useTheme();
   const router = useRouter();
   const { width, fontScale } = useWindowDimensions();
@@ -33,18 +35,18 @@ export function RoadsScreen() {
         <HStack gap="sm" align="flex-start">
           <Icon name="warning-outline" tone="warning" />
           <Text variant="caption" style={{ flex: 1 }}>
-            <Text variant="bodyStrong">This does not show whether a road is open.</Text>{' '}
-            Closures and landslide blocks have no reliable live feed here. Check the district
-            administration before travelling.
+            <Text variant="bodyStrong">{t('roads.notOpenStatus')}</Text> Closures and landslide
+            blocks have no reliable live feed here. Check the district administration before
+            travelling.
           </Text>
         </HStack>
       </Card>
 
       <QueryBoundary
         query={roadNetwork}
-        loading={<LoadingState label="Loading road network" />}
+        loading={<LoadingState label={t('roads.loading')} />}
         isEmpty={(data) => data.national.length === 0 && data.state.length === 0}
-        emptyTitle="No road data"
+        emptyTitle={t('roads.empty')}
       >
         {(data) => {
           const routes = network === 'NH' ? data.national : data.state;
@@ -58,7 +60,7 @@ export function RoadsScreen() {
                 >
                   <VStack gap="xs">
                     <Text variant="footnote" color="textMuted">
-                      NATIONAL HIGHWAYS
+                      {t('roads.nationalUpper')}
                     </Text>
                     <Text variant="metric" color="primary">
                       {formatNumber(data.national.length)}
@@ -74,7 +76,7 @@ export function RoadsScreen() {
                 >
                   <VStack gap="xs">
                     <Text variant="footnote" color="textMuted">
-                      STATE HIGHWAYS
+                      {t('roads.stateUpper')}
                     </Text>
                     <Text variant="metric" color="accent">
                       {formatNumber(data.state.length)}
@@ -88,17 +90,17 @@ export function RoadsScreen() {
 
               <VStack gap="sm">
                 <SectionHeader
-                  title="Highway register"
-                  subtitle="Reference and mapped segment count"
+                  title={t('roads.register')}
+                  subtitle={t('roads.register.subtitle')}
                 />
                 <HStack gap="xs" wrap>
                   <Chip
-                    label={`National (${data.national.length})`}
+                    label={t('roads.national', { count: data.national.length })}
                     selected={network === 'NH'}
                     onPress={() => setNetwork('NH')}
                   />
                   <Chip
-                    label={`State (${data.state.length})`}
+                    label={t('roads.state', { count: data.state.length })}
                     selected={network === 'SH'}
                     onPress={() => setNetwork('SH')}
                   />
@@ -127,7 +129,7 @@ export function RoadsScreen() {
 
               <Pressable
                 onPress={() => router.push('/map')}
-                accessibilityLabel="Open highway map"
+                accessibilityLabel={t('roads.openMap')}
                 style={{
                   backgroundColor: theme.colors.primary,
                   borderRadius: theme.radius.md,
@@ -136,7 +138,7 @@ export function RoadsScreen() {
                 }}
               >
                 <Text variant="bodyStrong" color="textInverse">
-                  Open highway map
+                  {t('roads.openMap')}
                 </Text>
               </Pressable>
 
@@ -144,7 +146,7 @@ export function RoadsScreen() {
                 <Text variant="caption" color="textMuted">
                   This is a crowd-sourced map register, not an NHAI or PWD register. A highway
                   may be missing or newly renumbered.
-                  {source ? ` Network read ${formatDate(source.vintage)}.` : ''}
+                  {source ? t('roads.networkRead', { date: formatDate(source.vintage) }) : ''}
                 </Text>
               </Card>
               <SourceNote provenance={source} />

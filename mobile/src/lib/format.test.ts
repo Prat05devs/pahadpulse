@@ -125,7 +125,7 @@ describe('formatRelative', () => {
     }
   });
 
-  it('reads the API\'s UTC format', () => {
+  it("reads the API's UTC format", () => {
     expect(formatRelative('2026-09-10 09:00:00')).toBe('3 hours ago');
   });
 

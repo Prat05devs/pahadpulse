@@ -176,7 +176,11 @@ const UNIT_LABELS: Record<string, string> = {
   ms: ' ms',
 };
 
-export function formatUnit(value: number, unit: string | null | undefined, decimals = 0): string {
+export function formatUnit(
+  value: number,
+  unit: string | null | undefined,
+  decimals = 0
+): string {
   const number = formatNumber(value, decimals);
   if (!unit) return number;
   const label = UNIT_LABELS[unit.toLowerCase()];

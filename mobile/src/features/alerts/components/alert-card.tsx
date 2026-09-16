@@ -4,12 +4,22 @@ import { Platform, View } from 'react-native';
 
 import { HStack, Icon, Pressable, Text, VStack, type IconName } from '@/components/atoms';
 import { SeverityBadge, SourceNote } from '@/components/molecules';
+import { SEVERITY_KEY } from '@/components/molecules/severity-badge';
+import { useT, type TranslationKey } from '@/i18n';
 import { formatRelative, localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
 import { withAlpha } from '@/theme/tokens';
 
 import type { Alert } from '../schemas';
+
+const TYPE_KEY = {
+  weather: 'alertType.weather',
+  river: 'alertType.river',
+  flood: 'alertType.flood',
+  road: 'alertType.road',
+  disaster: 'alertType.disaster',
+} as const satisfies Record<Alert['type'], TranslationKey>;
 
 const TYPE_ICONS: Record<Alert['type'], IconName> = {
   weather: 'thunderstorm-outline',
@@ -36,18 +46,27 @@ export const AlertCard = memo(function AlertCard({
 }) {
   const theme = useTheme();
   const language = useLanguage();
+  const t = useT();
   const severityColor = theme.colors.severity[alert.severity];
   const supportsNativeGlass = Platform.OS === 'ios' && isGlassEffectAPIAvailable();
 
   const areas = alert.areas.map((area) => localise(area.name, language)).filter(Boolean);
   const areaLabel =
     areas.length === 0
-      ? 'Statewide'
+      ? t('common.statewide')
       : areas.length <= 2
         ? areas.join(', ')
-        : `${areas.slice(0, 2).join(', ')} +${areas.length - 2}`;
+        : t('alerts.card.areasMore', {
+            areas: areas.slice(0, 2).join(', '),
+            count: areas.length - 2,
+          });
 
-  const label = `${alert.severity} ${alert.type} alert. ${alert.headline}. Affects ${areaLabel}.`;
+  const label = t('alerts.card.label', {
+    severity: t(SEVERITY_KEY[alert.severity]),
+    type: t(TYPE_KEY[alert.type]),
+    headline: alert.headline,
+    areas: areaLabel,
+  });
 
   const cardContent = (
     <VStack grow gap="sm" padding="lg">

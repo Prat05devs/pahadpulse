@@ -17,12 +17,7 @@ import { env } from '@/config/env';
 
 /** Why a request failed, in terms a screen can act on. */
 export type ApiErrorKind =
-  | 'offline'
-  | 'timeout'
-  | 'not-found'
-  | 'http'
-  | 'invalid-response'
-  | 'unknown';
+  'offline' | 'timeout' | 'not-found' | 'http' | 'invalid-response' | 'unknown';
 
 export class ApiError extends Error {
   readonly kind: ApiErrorKind;
@@ -133,7 +128,9 @@ async function request<T>(
 
     if (!response.ok) {
       const parsed = ErrorEnvelopeSchema.safeParse(json);
-      const code = parsed.success ? (parsed.data.error?.code ?? response.status) : response.status;
+      const code = parsed.success
+        ? (parsed.data.error?.code ?? response.status)
+        : response.status;
       const message = parsed.success
         ? (parsed.data.error?.message ?? parsed.data.message ?? response.statusText)
         : response.statusText;

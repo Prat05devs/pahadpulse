@@ -15,7 +15,10 @@ const EnvSchema = z.object({
     .url('EXPO_PUBLIC_API_URL must be a full URL, e.g. http://localhost:3000/api')
     .transform((url) => url.replace(/\/+$/, '')),
   /** The public web portal, for "read more" links out of the app. */
-  webUrl: z.string().url().transform((url) => url.replace(/\/+$/, '')),
+  webUrl: z
+    .string()
+    .url()
+    .transform((url) => url.replace(/\/+$/, '')),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

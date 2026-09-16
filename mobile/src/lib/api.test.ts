@@ -20,7 +20,8 @@ type FakeResponse = {
 };
 
 function mockFetch(response: FakeResponse) {
-  const body = typeof response.body === 'string' ? response.body : JSON.stringify(response.body);
+  const body =
+    typeof response.body === 'string' ? response.body : JSON.stringify(response.body);
   global.fetch = jest.fn().mockResolvedValue({
     ok: response.ok ?? true,
     status: response.status ?? 200,

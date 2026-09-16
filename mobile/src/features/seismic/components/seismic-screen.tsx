@@ -9,6 +9,7 @@ import {
   VStack,
 } from '@/components/atoms';
 import { EmptyState, LoadingState, QueryBoundary, SectionHeader } from '@/components/molecules';
+import { useT } from '@/i18n';
 import { Screen } from '@/components/templates';
 import { openExternal } from '@/lib/external-link';
 import { formatDate, formatTime, humanise } from '@/lib/format';
@@ -16,17 +17,18 @@ import { formatDate, formatTime, humanise } from '@/lib/format';
 import { useRecentSeismic } from '../hooks';
 
 export function SeismicScreen() {
+  const t = useT();
   const seismic = useRecentSeismic();
 
   return (
     <Screen onRefresh={() => void seismic.refetch()} refreshing={seismic.isRefetching}>
-      <QueryBoundary query={seismic} loading={<LoadingState label="Loading seismic data" />}>
+      <QueryBoundary query={seismic} loading={<LoadingState label={t('seismic.loading')} />}>
         {(data) => (
           <VStack gap="lg">
             <Card padding="lg">
               <VStack gap="sm">
                 <Text variant="footnote" color="textMuted">
-                  LAST 30 DAYS
+                  {t('seismic.last30Days')}
                 </Text>
                 <Text variant="metric" color="primary">
                   {data.countLast30Days}
@@ -34,7 +36,7 @@ export function SeismicScreen() {
                 <Text variant="body" color="textMuted">
                   {data.countLast30Days === 0
                     ? 'No earthquakes recorded in Uttarakhand.'
-                    : `${data.countLast30Days} earthquake${data.countLast30Days === 1 ? '' : 's'} recorded${data.largest ? `; largest M${data.largest.magnitude.toFixed(1)} near ${data.largest.place}` : ''}.`}
+                    : `${data.countLast30Days} earthquake${data.countLast30Days === 1 ? '' : 's'} recorded${data.largest ? t('seismic.largest', { magnitude: data.largest.magnitude.toFixed(1), place: data.largest.place }) : ''}.`}
                 </Text>
               </VStack>
             </Card>
@@ -43,19 +45,18 @@ export function SeismicScreen() {
               <HStack gap="sm" align="flex-start">
                 <Icon name="information-circle-outline" tone="primary" />
                 <Text variant="caption" color="textMuted" style={{ flex: 1 }}>
-                  These events have already happened. Earthquakes cannot be predicted, and
-                  automatic solutions may be revised.
+                  {t('seismic.caveat')}
                 </Text>
               </HStack>
             </Card>
 
             <VStack gap="sm">
               <SectionHeader
-                title="Recorded events"
-                subtitle="Magnitude, time, depth and review status"
+                title={t('seismic.events')}
+                subtitle={t('seismic.events.subtitle')}
               />
               {data.events.length === 0 ? (
-                <EmptyState title="No recent events" />
+                <EmptyState title={t('seismic.empty')} />
               ) : (
                 <Card padding="md">
                   {data.events.map((event, index) => (
@@ -82,18 +83,20 @@ export function SeismicScreen() {
                           <Text variant="caption" color="textMuted">
                             {event.depthKm === null
                               ? 'Depth not reported'
-                              : `${event.depthKm.toFixed(0)} km deep`}{' '}
+                              : t('seismic.depth', { depth: event.depthKm.toFixed(0) })}{' '}
                             · {event.magnitudeType ?? 'magnitude type unknown'} ·{' '}
                             {event.reviewStatus ?? 'review status unknown'}
                           </Text>
                           {event.webUrl ? (
                             <Pressable
                               onPress={() => void openExternal(event.webUrl!)}
-                              accessibilityLabel={`Open source record for magnitude ${event.magnitude} earthquake`}
+                              accessibilityLabel={t('seismic.openRecord', {
+                                magnitude: event.magnitude,
+                              })}
                               style={{ minHeight: 0 }}
                             >
                               <Text variant="footnote" color="primary">
-                                Open event record
+                                {t('seismic.openEventRecord')}
                               </Text>
                             </Pressable>
                           ) : null}
@@ -108,7 +111,9 @@ export function SeismicScreen() {
             {data.source ? (
               <Pressable
                 onPress={() => void openExternal(data.source!.url)}
-                accessibilityLabel={`Source: ${data.source.department.en}. Opens in a browser.`}
+                accessibilityLabel={t('source.openedInBrowser', {
+                  department: data.source.department.en,
+                })}
                 style={{ minHeight: 0 }}
               >
                 <Text variant="caption" color="textMuted">

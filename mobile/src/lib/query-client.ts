@@ -48,7 +48,7 @@ export function createQueryClient(): QueryClient {
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,
         /** Keep showing the previous page's data while the next one loads. */
-        placeholderData: <T,>(previous: T) => previous,
+        placeholderData: <T>(previous: T) => previous,
       },
       mutations: {
         retry: false,

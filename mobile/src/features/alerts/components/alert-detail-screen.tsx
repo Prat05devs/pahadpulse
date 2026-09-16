@@ -4,8 +4,9 @@ import { useWindowDimensions } from 'react-native';
 import { Card, Divider, HStack, Icon, Pressable, Text, VStack } from '@/components/atoms';
 import { QueryBoundary, SeverityBadge, SourceNote } from '@/components/molecules';
 import { Screen } from '@/components/templates';
+import { useT } from '@/i18n';
 import { openExternal } from '@/lib/external-link';
-import { formatDate, formatRelative, formatTime, humanise, localise } from '@/lib/format';
+import { formatDate, formatRelative, formatTime, localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
 
@@ -16,6 +17,7 @@ export function AlertDetailScreen({ id }: { id: number }) {
   const theme = useTheme();
   const router = useRouter();
   const language = useLanguage();
+  const t = useT();
   const query = useAlert(id);
 
   return (
@@ -28,7 +30,11 @@ export function AlertDetailScreen({ id }: { id: number }) {
                 <HStack gap="sm" align="center" wrap>
                   <SeverityBadge severity={alert.severity} />
                   <Text variant="footnote" color="textMuted">
-                    {`${humanise(alert.type)} · ${humanise(alert.urgency)} · ${humanise(alert.certainty)}`}
+                    {t('alertDetail.meta', {
+                      type: t(`alertType.${alert.type}`),
+                      urgency: t(`urgency.${alert.urgency}`),
+                      certainty: t(`certainty.${alert.certainty}`),
+                    })}
                   </Text>
                 </HStack>
 
@@ -42,22 +48,32 @@ export function AlertDetailScreen({ id }: { id: number }) {
 
                 <VStack gap="xs">
                   <Detail
-                    label="Issued"
-                    value={`${formatDate(alert.issuedAt)}, ${formatTime(alert.issuedAt)}`}
+                    label={t('alertDetail.issued')}
+                    value={t('alertDetail.dateTime', {
+                      date: formatDate(alert.issuedAt),
+                      time: formatTime(alert.issuedAt),
+                    })}
                   />
                   {alert.effectiveFrom ? (
                     <Detail
-                      label="In force from"
-                      value={`${formatDate(alert.effectiveFrom)}, ${formatTime(alert.effectiveFrom)}`}
+                      label={t('alertDetail.inForceFrom')}
+                      value={t('alertDetail.dateTime', {
+                        date: formatDate(alert.effectiveFrom),
+                        time: formatTime(alert.effectiveFrom),
+                      })}
                     />
                   ) : null}
                   {alert.expiresAt ? (
                     <Detail
-                      label="Expires"
-                      value={`${formatDate(alert.expiresAt)}, ${formatTime(alert.expiresAt)} (${formatRelative(alert.expiresAt)})`}
+                      label={t('alertDetail.expires')}
+                      value={t('alertDetail.dateTimeRelative', {
+                        date: formatDate(alert.expiresAt),
+                        time: formatTime(alert.expiresAt),
+                        relative: formatRelative(alert.expiresAt),
+                      })}
                     />
                   ) : null}
-                  <Detail label="Authority" value={alert.authority} />
+                  <Detail label={t('alertDetail.authority')} value={alert.authority} />
                 </VStack>
               </VStack>
             </Card>
@@ -73,7 +89,7 @@ export function AlertDetailScreen({ id }: { id: number }) {
                   <HStack align="center" gap="xs">
                     <Icon name="information-circle-outline" size={16} tone="danger" />
                     <Text variant="footnote" color="textMuted">
-                      WHAT TO DO
+                      {t('alertDetail.whatToDo')}
                     </Text>
                   </HStack>
                   <Text variant="body">{alert.instruction}</Text>
@@ -83,14 +99,16 @@ export function AlertDetailScreen({ id }: { id: number }) {
 
             {alert.areas.length > 0 ? (
               <VStack gap="sm">
-                <Text variant="heading">Affected areas</Text>
+                <Text variant="heading">{t('alertDetail.affectedAreas')}</Text>
                 <Card padding="md">
                   {alert.areas.map((area, index) => (
                     <VStack key={area.slug}>
                       {index > 0 ? <Divider /> : null}
                       <Pressable
                         onPress={() => router.push(`/districts/${area.slug}`)}
-                        accessibilityLabel={`Open ${localise(area.name, language)}`}
+                        accessibilityLabel={t('alertDetail.openArea', {
+                          name: localise(area.name, language),
+                        })}
                       >
                         <HStack align="center" gap="sm" paddingY="md">
                           <Icon name="location-outline" size={16} tone="textMuted" />
@@ -112,13 +130,13 @@ export function AlertDetailScreen({ id }: { id: number }) {
                 {alert.webUrl ? (
                   <Pressable
                     onPress={() => void openExternal(alert.webUrl as string)}
-                    accessibilityLabel="Open the original notice"
+                    accessibilityLabel={t('alertDetail.originalNoticeLabel')}
                     style={{ minHeight: 0 }}
                   >
                     <HStack align="center" gap="xs">
                       <Icon name="open-outline" size={14} tone="primary" />
                       <Text variant="footnote" color="primary">
-                        Read the original notice
+                        {t('alertDetail.originalNotice')}
                       </Text>
                     </HStack>
                   </Pressable>

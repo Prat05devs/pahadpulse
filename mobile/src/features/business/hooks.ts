@@ -16,7 +16,11 @@ export function useBusinessScenarios() {
   });
 }
 
-export function useBusinessComparison(districtA: string, districtB: string, scenarioId: string) {
+export function useBusinessComparison(
+  districtA: string,
+  districtB: string,
+  scenarioId: string
+) {
   return useQuery({
     queryKey: businessKeys.compare(districtA, districtB, scenarioId),
     queryFn: () => compareDistricts(districtA, districtB, scenarioId),

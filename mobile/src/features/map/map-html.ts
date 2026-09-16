@@ -72,7 +72,11 @@ export const DEFAULT_LAYERS: MapLayerState = {
  * own validated, cached data is what gets drawn — the WebView never talks to our API, and
  * there is exactly one place (the Zod schemas) where a payload is trusted.
  */
-export function buildMapHtml({ districts, alerts, language = 'en' }: BuildMapHtmlOptions): string {
+export function buildMapHtml({
+  districts,
+  alerts,
+  language = 'en',
+}: BuildMapHtmlOptions): string {
   const districtJson = toScriptJson(districts ?? { type: 'FeatureCollection', features: [] });
   const alertJson = toScriptJson(alerts ?? { type: 'FeatureCollection', features: [] });
 

@@ -24,6 +24,7 @@ import { AlertCard, useAreaAlerts } from '@/features/alerts';
 import { useGroupedAreaIndicators } from '@/features/indicators';
 import { WeatherPanel, useAreaWeather } from '@/features/weather';
 import { useAreaNetwork } from '@/features/connectivity';
+import { useT } from '@/i18n';
 import { formatNumber, humanise, localise } from '@/lib/format';
 import { useIsDistrictSaved, useLanguage, usePreferencesStore } from '@/stores';
 import { useTheme } from '@/theme';
@@ -44,6 +45,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
   // Stable across renders so AlertCard's memo holds.
   const openAlert = useCallback((id: number) => router.push(`/alerts/${id}`), [router]);
   const language = useLanguage();
+  const t = useT();
 
   const detail = useDistrictDetail(slug);
   const weather = useAreaWeather(slug);
@@ -77,7 +79,9 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
             <Pressable
               onPress={() => toggleSaved(slug)}
               haptic
-              accessibilityLabel={isSaved ? `Unfollow ${name}` : `Follow ${name}`}
+              accessibilityLabel={
+                isSaved ? t('districts.unfollow', { name }) : t('districts.follow', { name })
+              }
               accessibilityState={{ selected: isSaved }}
               style={{
                 minHeight: 48,
@@ -97,28 +101,38 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
       />
 
       {/* Identity */}
-      <QueryBoundary query={detail} loading={<LoadingState label={`Loading ${name}`} />}>
+      <QueryBoundary
+        query={detail}
+        loading={<LoadingState label={t('districtDetail.loading', { name })} />}
+      >
         {(data) => (
           <Card>
             <VStack gap="sm">
               <Text variant="title">{localise(data.district.name, language)}</Text>
               <HStack gap="xs" wrap>
                 {data.district.division ? (
-                  <Badge label={`${data.district.division} division`} tone="primary" />
+                  <Badge
+                    label={t('districts.division', { division: data.district.division })}
+                    tone="primary"
+                  />
                 ) : null}
                 {data.district.headquarters ? (
                   <Badge
-                    label={`HQ ${localise(data.district.headquarters, language)}`}
+                    label={t('districtDetail.hq', {
+                      name: localise(data.district.headquarters, language),
+                    })}
                     tone="neutral"
                   />
                 ) : null}
-                {data.boundary ? null : <Badge label="No map boundary" tone="warning" />}
+                {data.boundary ? null : (
+                  <Badge label={t('districtDetail.noBoundary')} tone="warning" />
+                )}
               </HStack>
               <Divider spacing="xs" />
               <HStack gap="xl">
                 <VStack>
                   <Text variant="footnote" color="textMuted">
-                    TEHSILS
+                    {t('districtDetail.tehsilsUpper')}
                   </Text>
                   <Text variant="bodyStrong" tabular>
                     {formatNumber(data.tehsils.length)}
@@ -126,7 +140,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
                 </VStack>
                 <VStack>
                   <Text variant="footnote" color="textMuted">
-                    LGD CODE
+                    {t('districtDetail.lgdCode')}
                   </Text>
                   <Text variant="bodyStrong" tabular>
                     {data.district.officialIds.lgd ?? '—'}
@@ -141,8 +155,14 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
       {/* Weather. Absent rather than errored when the district has no station. */}
       {weather.data || weather.isPending ? (
         <VStack gap="sm">
-          <SectionHeader title="Weather" subtitle="Nearest observation station" />
-          <QueryBoundary query={weather} loading={<LoadingState label="Loading weather" />}>
+          <SectionHeader
+            title={t('districtDetail.weather')}
+            subtitle={t('districtDetail.weather.subtitle')}
+          />
+          <QueryBoundary
+            query={weather}
+            loading={<LoadingState label={t('districtDetail.weather.loading')} />}
+          >
             {(data) => <WeatherPanel weather={data} />}
           </QueryBoundary>
         </VStack>
@@ -151,16 +171,16 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
       {/* Alerts */}
       <VStack gap="sm">
         <SectionHeader
-          title="Active alerts"
-          subtitle={`Warnings in force for ${name}`}
+          title={t('today.activeAlerts')}
+          subtitle={t('districtDetail.alerts.subtitle', { name })}
           onPressAction={() => router.push('/alerts')}
         />
         <QueryBoundary
           query={alerts}
-          loading={<LoadingState label="Loading alerts" />}
+          loading={<LoadingState label={t('today.alerts.loading')} />}
           isEmpty={(list) => list.length === 0}
-          emptyTitle="No active alerts"
-          emptyMessage="No warnings are in force for this district right now."
+          emptyTitle={t('alerts.empty.all')}
+          emptyMessage={t('districtDetail.alerts.empty')}
         >
           {(list) => (
             <VStack gap="sm">
@@ -174,13 +194,16 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
 
       {/* Statistics */}
       <VStack gap="sm">
-        <SectionHeader title="Statistics" subtitle="Every figure carries its source" />
+        <SectionHeader
+          title={t('districtDetail.stats')}
+          subtitle={t('districtDetail.stats.subtitle')}
+        />
         <QueryBoundary
           query={indicators}
-          loading={<LoadingState label="Loading statistics" />}
+          loading={<LoadingState label={t('districtDetail.stats.loading')} />}
           isEmpty={() => indicators.groups.length === 0}
-          emptyTitle="No published figures"
-          emptyMessage="Nothing has been published for this district yet."
+          emptyTitle={t('districtDetail.stats.empty')}
+          emptyMessage={t('districtDetail.stats.emptyMessage')}
         >
           {() => (
             <VStack gap="md">
@@ -212,7 +235,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
                 <Card padding="md" tone="muted" elevation="none">
                   <VStack gap="xs">
                     <Text variant="footnote" color="textMuted">
-                      STILL BEING COMPILED
+                      {t('districtDetail.stillCompiling')}
                     </Text>
                     <Text variant="caption" color="textMuted">
                       {indicators.pending
@@ -230,13 +253,16 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
       {/* Measured connectivity, matching the district view on the web portal. */}
       {connectivity.data || connectivity.isPending ? (
         <VStack gap="sm">
-          <SectionHeader title="Connectivity" subtitle="Measured Speedtest performance" />
+          <SectionHeader
+            title={t('districtDetail.connectivity')}
+            subtitle={t('districtDetail.connectivity.subtitle')}
+          />
           <QueryBoundary
             query={connectivity}
-            loading={<LoadingState label="Loading connectivity" />}
+            loading={<LoadingState label={t('districtDetail.connectivity.loading')} />}
             isEmpty={(data) => data.connections.length === 0}
-            emptyTitle="No network measurements"
-            emptyMessage="No Speedtest measurements were recorded for this district in the latest quarter."
+            emptyTitle={t('districtDetail.connectivity.empty')}
+            emptyMessage={t('districtDetail.connectivity.emptyMessage')}
           >
             {(data) => (
               <VStack gap="sm">
@@ -249,7 +275,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
                       <HStack gap="lg" wrap>
                         <VStack gap="xxs">
                           <Text variant="footnote" color="textMuted">
-                            DOWNLOAD
+                            {t('districtDetail.download')}
                           </Text>
                           <Text variant="heading" color="primary">
                             {connection.downloadMbps.toFixed(1)} Mbps
@@ -257,7 +283,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
                         </VStack>
                         <VStack gap="xxs">
                           <Text variant="footnote" color="textMuted">
-                            UPLOAD
+                            {t('districtDetail.upload')}
                           </Text>
                           <Text variant="bodyStrong">
                             {connection.uploadMbps.toFixed(1)} Mbps
@@ -265,7 +291,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
                         </VStack>
                         <VStack gap="xxs">
                           <Text variant="footnote" color="textMuted">
-                            LATENCY
+                            {t('districtDetail.latency')}
                           </Text>
                           <Text variant="bodyStrong">{connection.latencyMs.toFixed(0)} ms</Text>
                         </VStack>
@@ -282,7 +308,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
                   </Card>
                 ))}
                 <Text variant="caption" color="textMuted">
-                  Measured results are not a coverage map or advertised speed.
+                  {t('districtDetail.notCoverage')}
                 </Text>
               </VStack>
             )}
@@ -294,12 +320,12 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
       <QueryBoundary query={detail} loading={<></>}>
         {(data) =>
           data.tehsils.length === 0 ? (
-            <EmptyState title="No tehsils recorded" />
+            <EmptyState title={t('districtDetail.tehsils.empty')} />
           ) : (
             <VStack gap="sm">
               <SectionHeader
-                title="Tehsils"
-                subtitle={`${data.tehsils.length} in this district`}
+                title={t('districtDetail.tehsils')}
+                subtitle={t('districtDetail.tehsils.subtitle', { count: data.tehsils.length })}
               />
               <Card padding="md">
                 {data.tehsils.map((tehsil, index) => (
@@ -309,7 +335,9 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
                       title={localise(tehsil.name, language)}
                       subtitle={
                         tehsil.villages.length > 0
-                          ? `${formatNumber(tehsil.villages.length)} villages`
+                          ? t('districtDetail.villages', {
+                              count: formatNumber(tehsil.villages.length),
+                            })
                           : undefined
                       }
                       showChevron={false}

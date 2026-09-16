@@ -8,6 +8,7 @@ import {
   SectionHeader,
   SourceNote,
 } from '@/components/molecules';
+import { useT } from '@/i18n';
 import { Screen } from '@/components/templates';
 import { formatDate, formatNumber, localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
@@ -21,6 +22,7 @@ const KIND_LABEL: Record<ConnectionKind, string> = {
 };
 
 export function ConnectivityScreen() {
+  const t = useT();
   const language = useLanguage();
   const [kind, setKind] = useState<ConnectionKind>('fixed');
   const network = useStateNetwork();
@@ -44,9 +46,9 @@ export function ConnectivityScreen() {
     <Screen onRefresh={() => void network.refetch()} refreshing={network.isRefetching}>
       <QueryBoundary
         query={network}
-        loading={<LoadingState label="Loading network data" />}
+        loading={<LoadingState label={t('net.loading')} />}
         isEmpty={(data) => data.spread.length === 0}
-        emptyTitle="No network measurements"
+        emptyTitle={t('net.empty')}
       >
         {(data) => {
           const names = new Map(
@@ -61,17 +63,16 @@ export function ConnectivityScreen() {
             <VStack gap="lg">
               <Card tone="muted" elevation="none">
                 <Text variant="body" color="textMuted">
-                  These figures show what people who ran Speedtest actually received. They do
-                  not say whether every village has a connection.
+                  {t('net.caveat')}
                 </Text>
               </Card>
 
               <VStack gap="sm">
                 <SectionHeader
-                  title="State spread"
+                  title={t('net.spread')}
                   subtitle={
                     data.quarterStart
-                      ? `Measurements for ${formatDate(data.quarterStart)}`
+                      ? t('net.spread.subtitle', { quarter: formatDate(data.quarterStart) })
                       : 'Latest measured quarter'
                   }
                 />
@@ -80,7 +81,10 @@ export function ConnectivityScreen() {
                     <VStack gap="sm">
                       <HStack justify="space-between" align="center">
                         <Text variant="bodyStrong">{KIND_LABEL[spread.kind]}</Text>
-                        <Badge label={`${spread.ratio.toFixed(1)}× spread`} tone="primary" />
+                        <Badge
+                          label={t('net.spreadRatio', { ratio: spread.ratio.toFixed(1) })}
+                          tone="primary"
+                        />
                       </HStack>
                       <Text variant="metric" color="primary">
                         {spread.stateAverageMbps.toFixed(1)} Mbps
@@ -103,18 +107,15 @@ export function ConnectivityScreen() {
               </VStack>
 
               <VStack gap="sm">
-                <SectionHeader
-                  title="District ranking"
-                  subtitle="Download, upload, latency and sample size"
-                />
+                <SectionHeader title={t('net.ranking')} subtitle={t('net.ranking.subtitle')} />
                 <HStack gap="xs" wrap>
                   <Chip
-                    label="Fixed broadband"
+                    label={t('net.fixed')}
                     selected={kind === 'fixed'}
                     onPress={() => setKind('fixed')}
                   />
                   <Chip
-                    label="Mobile"
+                    label={t('net.mobile')}
                     selected={kind === 'mobile'}
                     onPress={() => setKind('mobile')}
                   />
@@ -148,7 +149,7 @@ export function ConnectivityScreen() {
                           {formatNumber(connection.sample.devices)} devices
                         </Text>
                         {connection.sample.strength === 'thin' ? (
-                          <Badge label="Thin sample" tone="warning" />
+                          <Badge label={t('net.thinSample')} tone="warning" />
                         ) : null}
                       </HStack>
                     </VStack>
@@ -177,11 +178,9 @@ export function ConnectivityScreen() {
               ) : null}
               <Card tone="muted" elevation="none">
                 <VStack gap="xs">
-                  <Text variant="bodyStrong">How to read this</Text>
+                  <Text variant="bodyStrong">{t('net.howToRead')}</Text>
                   <Text variant="caption" color="textMuted">
-                    Speed tests are self-selected, so they compare measured performance—not
-                    universal access. A thin sample should be read cautiously. BharatNet
-                    readiness and operator coverage are not loaded yet.
+                    {t('net.caveatLong')}
                   </Text>
                 </VStack>
               </Card>

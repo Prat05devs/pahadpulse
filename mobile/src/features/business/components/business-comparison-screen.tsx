@@ -2,68 +2,133 @@ import React, { useState } from 'react';
 import { View, ScrollView, Modal, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBusinessScenarios, useBusinessComparison } from '../hooks';
-import { Text, Card, HStack, VStack, Icon, Pressable, Skeleton, Entrance } from '@/components/atoms';
+import {
+  Text,
+  Card,
+  HStack,
+  VStack,
+  Icon,
+  Pressable,
+  Skeleton,
+  Entrance,
+} from '@/components/atoms';
+import { useT, type Translate, type TranslationKey } from '@/i18n';
 import { useTheme } from '@/theme';
 import { AnimatedNumber } from '@/components/atoms/animated-number';
 
-const METRIC_LABELS: Record<string, string> = {
-  connectivity: 'Digital Connectivity',
-  tourism: 'Tourism Footfall',
-  roads: 'Road Infrastructure',
-  urbanPopulation: 'Urban Market Size',
-  agriculture: 'Agro/Dairy Output',
-  safety: 'Geological Safety',
+const METRIC_KEYS: Record<string, TranslationKey> = {
+  connectivity: 'compare.metric.connectivity',
+  tourism: 'compare.metric.tourism',
+  roads: 'compare.metric.roads',
+  urbanPopulation: 'compare.metric.urbanPopulation',
+  agriculture: 'compare.metric.agriculture',
+  safety: 'compare.metric.safety',
 };
 
+/** A metric the API added that this build has no label for is shown by its key, not hidden. */
+function metricLabel(t: Translate, key: string): string {
+  const translationKey = METRIC_KEYS[key];
+  return translationKey ? t(translationKey) : key;
+}
+
 // Generic Select component for Native
-function NativeSelect({ label, value, options, onSelect, disabledValues = [] }: { label: string, value: string, options: { label: string, value: string, description?: string }[], onSelect: (v: string) => void, disabledValues?: string[] }) {
+function NativeSelect({
+  label,
+  value,
+  options,
+  onSelect,
+  disabledValues = [],
+}: {
+  label: string;
+  value: string;
+  options: { label: string; value: string; description?: string }[];
+  onSelect: (v: string) => void;
+  disabledValues?: string[];
+}) {
   const [modalVisible, setModalVisible] = useState(false);
   const theme = useTheme();
-  
-  const selectedOption = options.find(o => o.value === value);
+  const t = useT();
+
+  const selectedOption = options.find((o) => o.value === value);
 
   return (
     <>
       <VStack gap="xs">
-        <Text variant="footnote" color="textMuted">{label}</Text>
+        <Text variant="footnote" color="textMuted">
+          {label}
+        </Text>
         <Pressable
           onPress={() => setModalVisible(true)}
           accessibilityLabel={`${label}: ${selectedOption?.label ?? 'not selected'}`}
-          accessibilityHint="Opens a list of choices"
+          accessibilityHint={t('compare.choicesHint')}
           accessibilityState={{ expanded: modalVisible }}
-          style={{ borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.md, borderRadius: theme.radius.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.colors.surface }}
+          style={{
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            padding: theme.spacing.md,
+            borderRadius: theme.radius.md,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: theme.colors.surface,
+          }}
         >
-          <Text variant="bodyStrong">{selectedOption ? selectedOption.label : 'Select...'}</Text>
+          <Text variant="bodyStrong">
+            {selectedOption ? selectedOption.label : t('compare.select')}
+          </Text>
           <Icon name="chevron-down" size={16} tone="textMuted" />
         </Pressable>
       </VStack>
 
-      <Modal visible={modalVisible} animationType="slide" presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'overFullScreen'} onRequestClose={() => setModalVisible(false)}>
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'overFullScreen'}
+        onRequestClose={() => setModalVisible(false)}
+      >
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-          <View style={{ padding: theme.spacing.md, paddingHorizontal: theme.spacing.xl, borderBottomWidth: 1, borderBottomColor: theme.colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View
+            style={{
+              padding: theme.spacing.md,
+              paddingHorizontal: theme.spacing.xl,
+              borderBottomWidth: 1,
+              borderBottomColor: theme.colors.border,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <Text variant="heading">{label}</Text>
-            <Pressable onPress={() => setModalVisible(false)} accessibilityLabel={`Close ${label} choices`}>
+            <Pressable
+              onPress={() => setModalVisible(false)}
+              accessibilityLabel={t('compare.closeChoices', { label })}
+            >
               <Icon name="close" size={24} tone="text" />
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={{ padding: theme.spacing.lg }}>
             <VStack gap="sm">
-              {options.map(opt => {
+              {options.map((opt) => {
                 const isSelected = opt.value === value;
                 const isDisabled = disabledValues.includes(opt.value);
                 return (
                   <Pressable
-                    key={opt.value} 
-                    onPress={() => { onSelect(opt.value); setModalVisible(false); }}
+                    key={opt.value}
+                    onPress={() => {
+                      onSelect(opt.value);
+                      setModalVisible(false);
+                    }}
                     disabled={isDisabled}
                     accessibilityRole="radio"
                     accessibilityLabel={opt.label}
                     accessibilityState={{ selected: isSelected, disabled: isDisabled }}
-                    style={{ 
-                      padding: theme.spacing.lg, 
-                      backgroundColor: isSelected ? theme.colors.primaryMuted : theme.colors.surface, 
-                      borderRadius: theme.radius.lg, 
-                      borderWidth: 1, 
+                    style={{
+                      padding: theme.spacing.lg,
+                      backgroundColor: isSelected
+                        ? theme.colors.primaryMuted
+                        : theme.colors.surface,
+                      borderRadius: theme.radius.lg,
+                      borderWidth: 1,
                       borderColor: isSelected ? theme.colors.primary : theme.colors.border,
                       flexDirection: 'row',
                       justifyContent: 'space-between',
@@ -72,8 +137,14 @@ function NativeSelect({ label, value, options, onSelect, disabledValues = [] }: 
                     }}
                   >
                     <VStack gap="xs" style={{ flex: 1 }}>
-                      <Text variant="bodyStrong" color={isSelected ? 'primary' : 'text'}>{opt.label}</Text>
-                      {opt.description && <Text variant="caption" color="textMuted">{opt.description}</Text>}
+                      <Text variant="bodyStrong" color={isSelected ? 'primary' : 'text'}>
+                        {opt.label}
+                      </Text>
+                      {opt.description && (
+                        <Text variant="caption" color="textMuted">
+                          {opt.description}
+                        </Text>
+                      )}
                     </VStack>
                     {isSelected && <Icon name="checkmark-circle" size={24} tone="primary" />}
                   </Pressable>
@@ -87,16 +158,44 @@ function NativeSelect({ label, value, options, onSelect, disabledValues = [] }: 
   );
 }
 
-function ScoreBar({ label, score, weight, isWinner }: { label: string; score: number; weight: number; isWinner: boolean }) {
+function ScoreBar({
+  label,
+  score,
+  weight,
+  isWinner,
+}: {
+  label: string;
+  score: number;
+  weight: number;
+  isWinner: boolean;
+}) {
   const theme = useTheme();
   return (
     <VStack gap="xs" style={{ marginVertical: theme.spacing.xs }}>
       <HStack justify="space-between" align="center">
-        <Text variant="caption" color="text">{label}</Text>
-        <Text variant="caption" color={isWinner ? 'primary' : 'textMuted'}>{Math.round(score)}</Text>
+        <Text variant="caption" color="text">
+          {label}
+        </Text>
+        <Text variant="caption" color={isWinner ? 'primary' : 'textMuted'}>
+          {Math.round(score)}
+        </Text>
       </HStack>
-      <View style={{ height: 6, backgroundColor: theme.colors.surfaceMuted, borderRadius: theme.radius.pill, overflow: 'hidden' }}>
-        <View style={{ height: '100%', width: `${Math.min(100, Math.max(0, score))}%`, backgroundColor: isWinner ? theme.colors.primary : theme.colors.borderStrong, borderRadius: theme.radius.pill }} />
+      <View
+        style={{
+          height: 6,
+          backgroundColor: theme.colors.surfaceMuted,
+          borderRadius: theme.radius.pill,
+          overflow: 'hidden',
+        }}
+      >
+        <View
+          style={{
+            height: '100%',
+            width: `${Math.min(100, Math.max(0, score))}%`,
+            backgroundColor: isWinner ? theme.colors.primary : theme.colors.borderStrong,
+            borderRadius: theme.radius.pill,
+          }}
+        />
       </View>
     </VStack>
   );
@@ -107,21 +206,39 @@ type DistrictOptionSource = {
   name: { en: string };
 };
 
-export function BusinessComparisonScreen({ districts = [] }: { districts: DistrictOptionSource[] }) {
+export function BusinessComparisonScreen({
+  districts = [],
+}: {
+  districts: DistrictOptionSource[];
+}) {
   const [districtA, setDistrictA] = useState('');
   const [districtB, setDistrictB] = useState('');
   const [scenarioId, setScenarioId] = useState('');
 
-  const [activeCompare, setActiveCompare] = useState<{a: string, b: string, scenarioId: string} | null>(null);
+  const [activeCompare, setActiveCompare] = useState<{
+    a: string;
+    b: string;
+    scenarioId: string;
+  } | null>(null);
 
-  const { data: scenarios, isLoading: scenariosLoading, error: scenariosError, refetch: refetchScenarios } = useBusinessScenarios();
-  const { data: report, isLoading: reportLoading, error } = useBusinessComparison(
+  const {
+    data: scenarios,
+    isLoading: scenariosLoading,
+    error: scenariosError,
+    refetch: refetchScenarios,
+  } = useBusinessScenarios();
+  const {
+    data: report,
+    isLoading: reportLoading,
+    error,
+  } = useBusinessComparison(
     activeCompare?.a || '',
     activeCompare?.b || '',
     activeCompare?.scenarioId || ''
   );
 
   const theme = useTheme();
+  const t = useT();
   const { width, fontScale } = useWindowDimensions();
   const stackDistrictSelectors = width < 390;
   /*
@@ -135,58 +252,97 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
 
   const selectedScenarioId = scenarioId || scenarios?.[0]?.id || '';
 
-  const scenarioOptions = scenarios?.map(s => ({
-    label: `${s.name} (${s.category})`,
-    value: s.id,
-    description: s.description
-  })) || [];
+  const scenarioOptions =
+    scenarios?.map((s) => ({
+      label: `${s.name} (${s.category})`,
+      value: s.id,
+      description: s.description,
+    })) || [];
 
-  const districtOptions = districts.map(d => ({
+  const districtOptions = districts.map((d) => ({
     label: d.name.en,
-    value: d.slug
+    value: d.slug,
   }));
 
-  const handleSelectScenario = (v: string) => { setScenarioId(v); setActiveCompare(null); };
-  const handleSelectA = (v: string) => { setDistrictA(v); setActiveCompare(null); };
-  const handleSelectB = (v: string) => { setDistrictB(v); setActiveCompare(null); };
-  const cannotCompare = !districtA || !districtB || districtA === districtB || !selectedScenarioId;
+  const handleSelectScenario = (v: string) => {
+    setScenarioId(v);
+    setActiveCompare(null);
+  };
+  const handleSelectA = (v: string) => {
+    setDistrictA(v);
+    setActiveCompare(null);
+  };
+  const handleSelectB = (v: string) => {
+    setDistrictB(v);
+    setActiveCompare(null);
+  };
+  const cannotCompare =
+    !districtA || !districtB || districtA === districtB || !selectedScenarioId;
 
   return (
     <VStack gap="xl">
       {/* Configurator */}
       <Card>
         <VStack gap="md">
-          <NativeSelect 
-            label="What business are you planning?" 
+          <NativeSelect
+            label={t('compare.whatBusiness')}
             value={selectedScenarioId}
-            options={scenarioOptions} 
-            onSelect={handleSelectScenario} 
+            options={scenarioOptions}
+            onSelect={handleSelectScenario}
           />
           {selectedScenarioId && scenarios ? (
             <Text variant="caption" color="textMuted">
-              {scenarios.find(s => s.id === selectedScenarioId)?.description}
+              {scenarios.find((s) => s.id === selectedScenarioId)?.description}
             </Text>
           ) : null}
 
-          <HStack gap="md" wrap={stackDistrictSelectors} style={{ marginTop: theme.spacing.md, alignItems: 'center' }}>
+          <HStack
+            gap="md"
+            wrap={stackDistrictSelectors}
+            style={{ marginTop: theme.spacing.md, alignItems: 'center' }}
+          >
             <View style={{ flex: 1 }}>
-              <NativeSelect label="Compare" value={districtA} options={districtOptions} onSelect={handleSelectA} disabledValues={districtB ? [districtB] : []} />
+              <NativeSelect
+                label={t('compare.districtA')}
+                value={districtA}
+                options={districtOptions}
+                onSelect={handleSelectA}
+                disabledValues={districtB ? [districtB] : []}
+              />
             </View>
-            {!stackDistrictSelectors ? <Text variant="bodyStrong" color="textMuted" style={{ marginTop: 24, marginHorizontal: 4 }}>VS</Text> : null}
+            {!stackDistrictSelectors ? (
+              <Text
+                variant="bodyStrong"
+                color="textMuted"
+                style={{ marginTop: 24, marginHorizontal: 4 }}
+              >
+                {t('compare.vs')}
+              </Text>
+            ) : null}
             <View style={{ flex: 1 }}>
-              <NativeSelect label="With" value={districtB} options={districtOptions} onSelect={handleSelectB} disabledValues={districtA ? [districtA] : []} />
+              <NativeSelect
+                label={t('compare.districtB')}
+                value={districtB}
+                options={districtOptions}
+                onSelect={handleSelectB}
+                disabledValues={districtA ? [districtA] : []}
+              />
             </View>
           </HStack>
 
           {districtA && districtA === districtB ? (
-            <Text variant="caption" color="danger">Choose two different districts.</Text>
+            <Text variant="caption" color="danger">
+              {t('compare.sameDistrict')}
+            </Text>
           ) : null}
 
-          <Pressable 
+          <Pressable
             disabled={cannotCompare}
             accessibilityState={{ disabled: cannotCompare }}
-            accessibilityHint="Builds a side-by-side district recommendation"
-            onPress={() => setActiveCompare({ a: districtA, b: districtB, scenarioId: selectedScenarioId })}
+            accessibilityHint={t('compare.runHint')}
+            onPress={() =>
+              setActiveCompare({ a: districtA, b: districtB, scenarioId: selectedScenarioId })
+            }
             style={{
               backgroundColor: cannotCompare ? theme.colors.surfaceMuted : theme.colors.accent,
               padding: theme.spacing.md,
@@ -196,20 +352,34 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
             }}
             pressedStyle={{ opacity: 0.9 }}
           >
-            <Text variant="bodyStrong" color="textInverse">Compare</Text>
+            <Text variant="bodyStrong" color="textInverse">
+              {t('compare.run')}
+            </Text>
           </Pressable>
         </VStack>
       </Card>
 
       {scenariosError ? (
-        <Card padding="lg" tone="surface" style={{ borderColor: theme.colors.danger, borderWidth: 1 }} accessibilityRole="alert">
+        <Card
+          padding="lg"
+          tone="surface"
+          style={{ borderColor: theme.colors.danger, borderWidth: 1 }}
+          accessibilityRole="alert"
+        >
           <VStack gap="sm">
             <HStack align="center" gap="sm">
               <Icon name="warning" size={24} tone="danger" />
-              <Text variant="bodyStrong" color="danger">Business types could not be loaded.</Text>
+              <Text variant="bodyStrong" color="danger">
+                {t('compare.scenariosFailed')}
+              </Text>
             </HStack>
-            <Pressable onPress={() => void refetchScenarios()} accessibilityLabel="Retry loading business types">
-              <Text variant="bodyStrong" color="primary">Try again</Text>
+            <Pressable
+              onPress={() => void refetchScenarios()}
+              accessibilityLabel={t('compare.retryScenarios')}
+            >
+              <Text variant="bodyStrong" color="primary">
+                {t('common.tryAgain')}
+              </Text>
             </Pressable>
           </VStack>
         </Card>
@@ -217,10 +387,16 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
 
       {error && activeCompare ? (
         <Entrance>
-          <Card padding="lg" tone="surface" style={{ borderColor: theme.colors.danger, borderWidth: 1 }}>
+          <Card
+            padding="lg"
+            tone="surface"
+            style={{ borderColor: theme.colors.danger, borderWidth: 1 }}
+          >
             <HStack align="center" gap="sm">
               <Icon name="warning" size={24} tone="danger" />
-              <Text variant="bodyStrong" color="danger">Failed to load comparison.</Text>
+              <Text variant="bodyStrong" color="danger">
+                {t('compare.failed')}
+              </Text>
             </HStack>
           </Card>
         </Entrance>
@@ -231,27 +407,48 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
           <VStack gap="lg" style={{ marginTop: theme.spacing.md }}>
             <Skeleton height={140} radius="lg" />
             <HStack gap="md">
-              <View style={{ flex: 1 }}><Skeleton height={300} radius="lg" /></View>
-              <View style={{ flex: 1 }}><Skeleton height={300} radius="lg" /></View>
+              <View style={{ flex: 1 }}>
+                <Skeleton height={300} radius="lg" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Skeleton height={300} radius="lg" />
+              </View>
             </HStack>
           </VStack>
         </Entrance>
       ) : activeCompare && report ? (
         <Entrance>
           <VStack gap="lg" style={{ marginTop: theme.spacing.md }}>
-            <Card 
-              padding="lg" 
-              tone={report.winner === 'tie' ? 'muted' : 'surface'} 
-              style={report.winner !== 'tie' ? { borderColor: theme.colors.primary, borderWidth: 1 } : {}}
+            <Card
+              padding="lg"
+              tone={report.winner === 'tie' ? 'muted' : 'surface'}
+              style={
+                report.winner !== 'tie'
+                  ? { borderColor: theme.colors.primary, borderWidth: 1 }
+                  : {}
+              }
             >
               <VStack gap="md">
                 <HStack align="center" gap="sm">
-                  <Icon name={report.winner === 'tie' ? 'scale' : 'trophy'} size={24} tone={report.winner === 'tie' ? 'textMuted' : 'primary'} />
+                  <Icon
+                    name={report.winner === 'tie' ? 'scale' : 'trophy'}
+                    size={24}
+                    tone={report.winner === 'tie' ? 'textMuted' : 'primary'}
+                  />
                   <Text variant="title" color={report.winner === 'tie' ? 'text' : 'primary'}>
-                    {report.winner === 'tie' ? 'It’s a tie!' : `${report.winner === report.districtA.slug ? report.districtA.name : report.districtB.name} is recommended`}
+                    {report.winner === 'tie'
+                      ? t('compare.tie')
+                      : t('compare.recommended', {
+                          name:
+                            report.winner === report.districtA.slug
+                              ? report.districtA.name
+                              : report.districtB.name,
+                        })}
                   </Text>
                 </HStack>
-                <Text variant="body" color="textMuted">{report.verdict}</Text>
+                <Text variant="body" color="textMuted">
+                  {report.verdict}
+                </Text>
               </VStack>
             </Card>
 
@@ -260,25 +457,47 @@ export function BusinessComparisonScreen({ districts = [] }: { districts: Distri
                 const isWinner = report.winner === dist.slug;
                 return (
                   <View key={dist.slug} style={stackDistrictCards ? undefined : { flex: 1 }}>
-                    <Card padding="md" style={isWinner ? { backgroundColor: theme.colors.primaryMuted, borderColor: theme.colors.primary, borderWidth: 1 } : {}}>
+                    <Card
+                      padding="md"
+                      style={
+                        isWinner
+                          ? {
+                              backgroundColor: theme.colors.primaryMuted,
+                              borderColor: theme.colors.primary,
+                              borderWidth: 1,
+                            }
+                          : {}
+                      }
+                    >
                       <VStack gap="lg">
                         <HStack justify="space-between" align="center" gap="sm">
-                          <Text variant="heading" color={isWinner ? 'primary' : 'text'} style={{ flexShrink: 1 }}>{dist.name}</Text>
-                          <Text variant="metric" color={isWinner ? 'primary' : 'text'}><AnimatedNumber value={dist.score} /></Text>
+                          <Text
+                            variant="heading"
+                            color={isWinner ? 'primary' : 'text'}
+                            style={{ flexShrink: 1 }}
+                          >
+                            {dist.name}
+                          </Text>
+                          <Text variant="metric" color={isWinner ? 'primary' : 'text'}>
+                            <AnimatedNumber value={dist.score} />
+                          </Text>
                         </HStack>
-                        
+
                         <VStack gap="sm">
-                          {(Object.keys(report.scenario.weights)).map((key) => {
-                            const weight = report.scenario.weights[key as keyof typeof report.scenario.weights];
+                          {Object.keys(report.scenario.weights).map((key) => {
+                            const weight =
+                              report.scenario.weights[
+                                key as keyof typeof report.scenario.weights
+                              ];
                             if (weight === 0) return null;
                             const score = dist.metrics[key as keyof typeof dist.metrics] || 0;
                             return (
-                              <ScoreBar 
-                                key={key} 
-                                label={METRIC_LABELS[key] || key} 
-                                score={score} 
-                                weight={weight} 
-                                isWinner={isWinner} 
+                              <ScoreBar
+                                key={key}
+                                label={metricLabel(t, key)}
+                                score={score}
+                                weight={weight}
+                                isWinner={isWinner}
                               />
                             );
                           })}

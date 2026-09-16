@@ -10,11 +10,23 @@ describe('the dictionaries', () => {
     });
 
     /*
-     * A handful are identical on purpose: proper nouns and licence names identify a thing and
-     * would stop identifying it if translated.
+     * A handful are identical on purpose, and they are listed out so a NEW one has to be
+     * justified here rather than slipping in unnoticed:
+     *
+     *  - licence names and "API" identify a thing, and stop identifying it if translated
+     *  - the rest are pure format strings — placeholders, separators and punctuation, with
+     *    no word of their own to translate
      */
     expect(untranslated.sort()).toEqual(
-      ['credits.licence.bsd', 'credits.licence.odbl', 'settings.api'].sort()
+      [
+        'alertDetail.dateTime',
+        'alertDetail.dateTimeRelative',
+        'alertDetail.meta',
+        'alerts.card.areasMore',
+        'credits.licence.bsd',
+        'credits.licence.odbl',
+        'settings.api',
+      ].sort()
     );
   });
 

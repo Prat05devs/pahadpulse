@@ -7,6 +7,7 @@ import { Entrance, Icon, Pressable, Text, VStack } from '@/components/atoms';
 import { EmptyState, ErrorState, LoadingState } from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { DISTRICT_COUNT } from '@/config/constants';
+import { useT } from '@/i18n';
 import { HIT_SLOP_MIN_SIZE, useTheme } from '@/theme';
 import { familyFor, platformTextFixes } from '@/theme/fonts';
 
@@ -23,6 +24,7 @@ export function DistrictsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const t = useT();
   const [search, setSearch] = useState('');
 
   // One stable handler for every row, so DistrictCard's memo actually holds.
@@ -51,11 +53,11 @@ export function DistrictsScreen() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder={`Search ${DISTRICT_COUNT} districts`}
+          placeholder={t('districts.search', { count: DISTRICT_COUNT })}
           placeholderTextColor={theme.colors.textMuted}
           autoCorrect={false}
           returnKeyType="search"
-          accessibilityLabel="Search districts"
+          accessibilityLabel={t('districts.searchLabel')}
           // Android otherwise paints the cursor and selection handles in the system accent
           // (often green or teal) rather than the brand colour iOS already uses.
           cursorColor={theme.colors.primary}
@@ -88,7 +90,7 @@ export function DistrictsScreen() {
         {search ? (
           <Pressable
             onPress={() => setSearch('')}
-            accessibilityLabel="Clear search"
+            accessibilityLabel={t('districts.clearSearch')}
             style={{
               position: 'absolute',
               right: 0,
@@ -108,7 +110,7 @@ export function DistrictsScreen() {
   if (isPending) {
     return (
       <Screen scroll={false} header={header}>
-        <LoadingState label="Loading districts" />
+        <LoadingState label={t('today.districts.loading')} />
       </Screen>
     );
   }
@@ -141,8 +143,8 @@ export function DistrictsScreen() {
         keyboardDismissMode="on-drag"
         ListEmptyComponent={
           <EmptyState
-            title="No district matches that"
-            message={`Nothing found for "${search}". Try part of the name.`}
+            title={t('districts.noMatch')}
+            message={t('districts.noMatchMessage', { query: search })}
             icon="search-outline"
           />
         }
@@ -150,7 +152,7 @@ export function DistrictsScreen() {
           districts.length > 0 ? (
             <VStack padding="lg" align="center">
               <Text variant="footnote" color="textMuted">
-                {`${districts.length} of ${DISTRICT_COUNT} districts`}
+                {t('districts.countOf', { shown: districts.length, total: DISTRICT_COUNT })}
               </Text>
             </VStack>
           ) : null

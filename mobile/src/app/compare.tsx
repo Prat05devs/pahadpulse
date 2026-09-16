@@ -1,11 +1,13 @@
 import React from 'react';
 import { BusinessComparisonScreen } from '@/features/business';
 import { useDistrictFeatures } from '@/features/map';
+import { useT } from '@/i18n';
 import { Screen } from '@/components/templates';
 import { ErrorState, LoadingState } from '@/components/molecules';
 
 export default function BusinessScreen() {
   const districts = useDistrictFeatures();
+  const t = useT();
 
   const mappedDistricts = (districts.data?.features || []).map((f) => ({
     slug: f.properties.slug,
@@ -15,7 +17,7 @@ export default function BusinessScreen() {
   if (districts.isPending) {
     return (
       <Screen>
-        <LoadingState label="Loading districts" />
+        <LoadingState label={t('today.districts.loading')} />
       </Screen>
     );
   }

@@ -9,7 +9,16 @@ const district: DistrictCollection = {
     {
       type: 'Feature',
       id: 1,
-      geometry: { type: 'Polygon', coordinates: [[[79.1, 30.1], [79.2, 30.1], [79.1, 30.2]]] },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [79.1, 30.1],
+            [79.2, 30.1],
+            [79.1, 30.2],
+          ],
+        ],
+      },
       properties: {
         areaId: 1,
         slug: 'chamoli',
@@ -79,12 +88,10 @@ describe('MapMessageSchema', () => {
 
   it('rejects an unknown message type', () => {
     expect(MapMessageSchema.safeParse({ type: 'navigate', to: '/settings' }).success).toBe(
-      false,
+      false
     );
   });
 });
-
-
 
 describe('the document control surface', () => {
   it('exposes the functions the screen injects', () => {

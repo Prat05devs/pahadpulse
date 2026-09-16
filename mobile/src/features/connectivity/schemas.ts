@@ -68,7 +68,10 @@ export const StateNetworkSchema = z.object({
     })
   ),
   notMeasured: z.array(
-    z.object({ slug: z.string(), name: z.object({ en: z.string(), hi: z.string().nullable() }) })
+    z.object({
+      slug: z.string(),
+      name: z.object({ en: z.string(), hi: z.string().nullable() }),
+    })
   ),
 });
 

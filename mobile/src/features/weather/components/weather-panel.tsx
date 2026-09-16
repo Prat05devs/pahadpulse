@@ -2,6 +2,7 @@ import { useWindowDimensions } from 'react-native';
 
 import { Card, Divider, HStack, Icon, Text, VStack, type IconName } from '@/components/atoms';
 import { SourceNote } from '@/components/molecules';
+import { useT } from '@/i18n';
 import { formatDate, formatRelative, formatUnit, localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
@@ -66,6 +67,7 @@ function ForecastRow({ day }: { day: ForecastDay }) {
 export function WeatherPanel({ weather }: { weather: WeatherData }) {
   const theme = useTheme();
   const language = useLanguage();
+  const t = useT();
 
   const stationName = localise(weather.station.name, language);
   const forecast = weather.forecast ?? [];
@@ -117,21 +119,21 @@ export function WeatherPanel({ weather }: { weather: WeatherData }) {
           {weather.rainfall ? (
             <Reading
               icon="rainy-outline"
-              label="Rain"
+              label={t('weather.rain')}
               value={formatUnit(weather.rainfall.value, weather.rainfall.unit, 1)}
             />
           ) : null}
           {weather.humidity ? (
             <Reading
               icon="water-outline"
-              label="Humidity"
+              label={t('weather.humidity')}
               value={formatUnit(weather.humidity.value, weather.humidity.unit)}
             />
           ) : null}
           {weather.wind ? (
             <Reading
               icon="navigate-outline"
-              label="Wind"
+              label={t('weather.wind')}
               value={formatUnit(weather.wind.value, weather.wind.unit)}
             />
           ) : null}
@@ -141,7 +143,7 @@ export function WeatherPanel({ weather }: { weather: WeatherData }) {
           <VStack gap="xxs">
             <Divider spacing="xs" />
             <Text variant="footnote" color="textMuted">
-              {`NEXT ${forecast.length} DAYS`}
+              {t('weather.nextDays', { count: forecast.length })}
             </Text>
             {forecast.map((day) => (
               <ForecastRow key={day.date} day={day} />

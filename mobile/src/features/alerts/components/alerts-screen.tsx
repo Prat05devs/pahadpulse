@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, Entrance, HStack, Icon, Text, VStack } from '@/components/atoms';
 import { Chip, EmptyState, ErrorState, LoadingState } from '@/components/molecules';
 import { Screen } from '@/components/templates';
+import { useT, type TranslationKey } from '@/i18n';
 import { formatRelative } from '@/lib/format';
 import { useTheme } from '@/theme';
 
@@ -13,13 +14,13 @@ import { isAlertInForce, SEVERITY_RANK, type AlertType } from '../schemas';
 import { useActiveAlerts } from '../hooks';
 import { AlertCard } from './alert-card';
 
-const TYPE_FILTERS: { label: string; value: AlertType | 'all' }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Weather', value: 'weather' },
-  { label: 'River', value: 'river' },
-  { label: 'Flood', value: 'flood' },
-  { label: 'Road', value: 'road' },
-  { label: 'Disaster', value: 'disaster' },
+const TYPE_FILTERS: { labelKey: TranslationKey; value: AlertType | 'all' }[] = [
+  { labelKey: 'alertType.all', value: 'all' },
+  { labelKey: 'alertType.weather', value: 'weather' },
+  { labelKey: 'alertType.river', value: 'river' },
+  { labelKey: 'alertType.flood', value: 'flood' },
+  { labelKey: 'alertType.road', value: 'road' },
+  { labelKey: 'alertType.disaster', value: 'disaster' },
 ];
 
 /**
@@ -33,12 +34,14 @@ export function AlertsScreen() {
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const t = useT();
   const [type, setType] = useState<AlertType | 'all'>('all');
 
   // One stable handler for every row, so AlertCard's memo actually holds.
   const openAlert = useCallback((id: number) => router.push(`/alerts/${id}`), [router]);
 
-  const { data, dataUpdatedAt, isPending, isError, error, refetch, isRefetching } = useActiveAlerts();
+  const { data, dataUpdatedAt, isPending, isError, error, refetch, isRefetching } =
+    useActiveAlerts();
 
   const alerts = useMemo(() => {
     const list = (data ?? []).filter((alert) => isAlertInForce(alert));
@@ -62,13 +65,13 @@ export function AlertsScreen() {
     >
       <VStack gap="sm" paddingY="sm">
         <VStack paddingX="lg">
-          <Text variant="title">Alerts</Text>
+          <Text variant="title">{t('nav.alerts')}</Text>
           <Text variant="footnote" color="textMuted">
             {isPending
-              ? 'Loading'
+              ? t('common.loading')
               : isError
-                ? `${alerts.length} saved active alert${alerts.length === 1 ? '' : 's'}`
-                : `${alerts.length} in force`}
+                ? t('alerts.savedActive', { count: alerts.length })
+                : t('alerts.inForce', { count: alerts.length })}
           </Text>
         </VStack>
 
@@ -83,7 +86,7 @@ export function AlertsScreen() {
           {TYPE_FILTERS.map((filter) => (
             <Chip
               key={filter.value}
-              label={filter.label}
+              label={t(filter.labelKey)}
               selected={type === filter.value}
               onPress={() => setType(filter.value)}
             />
@@ -96,7 +99,7 @@ export function AlertsScreen() {
   if (isPending) {
     return (
       <Screen scroll={false} header={header}>
-        <LoadingState label="Loading alerts" />
+        <LoadingState label={t('today.alerts.loading')} />
       </Screen>
     );
   }
@@ -137,11 +140,13 @@ export function AlertsScreen() {
               <HStack gap="sm" align="center">
                 <Icon name="cloud-offline-outline" size={20} tone="warning" />
                 <VStack grow gap="xxs">
-                  <Text variant="bodyStrong">Showing saved alerts</Text>
+                  <Text variant="bodyStrong">{t('alerts.savedTitle')}</Text>
                   <Text variant="caption" color="textMuted">
                     {dataUpdatedAt > 0
-                      ? `Could not refresh · last checked ${formatRelative(new Date(dataUpdatedAt))}`
-                      : 'Could not refresh. Pull down to try again.'}
+                      ? t('error.savedData.checked', {
+                          when: formatRelative(new Date(dataUpdatedAt)),
+                        })
+                      : t('alerts.savedPullDown')}
                   </Text>
                 </VStack>
               </HStack>
@@ -150,11 +155,13 @@ export function AlertsScreen() {
         }
         ListEmptyComponent={
           <EmptyState
-            title={type === 'all' ? 'No active alerts' : `No ${type} alerts`}
-            message={
+            title={
               type === 'all'
-                ? 'Nothing is in force across Uttarakhand right now.'
-                : 'Try another category, or pull down to refresh.'
+                ? t('alerts.empty.all')
+                : t('alerts.empty.filtered', { type: t(`alertType.${type}`) })
+            }
+            message={
+              type === 'all' ? t('alerts.empty.allMessage') : t('alerts.empty.filteredMessage')
             }
             icon="checkmark-circle-outline"
           />

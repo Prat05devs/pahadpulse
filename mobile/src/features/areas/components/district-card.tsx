@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
 import { Card, HStack, Icon, Pressable, Text, VStack } from '@/components/atoms';
+import { useT } from '@/i18n';
 import { formatCompact, localise } from '@/lib/format';
 import { useIsDistrictSaved, useLanguage, usePreferencesStore } from '@/stores';
 import { useTheme } from '@/theme';
@@ -24,18 +25,17 @@ export const DistrictCard = memo(function DistrictCard({
 }: DistrictCardProps) {
   const theme = useTheme();
   const language = useLanguage();
+  const t = useT();
   const isSaved = useIsDistrictSaved(district.slug);
   const toggleSaved = usePreferencesStore((s) => s.toggleSavedDistrict);
 
   const name = localise(district.name, language);
-  const headquarters = district.headquarters
-    ? localise(district.headquarters, language)
-    : null;
+  const headquarters = district.headquarters ? localise(district.headquarters, language) : null;
 
   return (
     <Pressable
       onPress={() => onPress(district.slug)}
-      accessibilityLabel={`${name} district`}
+      accessibilityLabel={t('districts.cardLabel', { name })}
       style={{ minHeight: 0 }}
     >
       <Card padding="md">
@@ -64,7 +64,10 @@ export const DistrictCard = memo(function DistrictCard({
             </HStack>
 
             <Text variant="footnote" color="textMuted">
-              {`${formatCompact(district.counts.tehsils)} tehsils · ${formatCompact(district.counts.villages)} villages`}
+              {t('districts.counts', {
+                tehsils: formatCompact(district.counts.tehsils),
+                villages: formatCompact(district.counts.villages),
+              })}
             </Text>
           </VStack>
 
@@ -73,8 +76,15 @@ export const DistrictCard = memo(function DistrictCard({
             haptic
             accessibilityRole="button"
             accessibilityState={{ selected: isSaved }}
-            accessibilityLabel={isSaved ? `Unfollow ${name}` : `Follow ${name}`}
-            style={{ minHeight: 48, minWidth: 48, alignItems: 'center', justifyContent: 'center' }}
+            accessibilityLabel={
+              isSaved ? t('districts.unfollow', { name }) : t('districts.follow', { name })
+            }
+            style={{
+              minHeight: 48,
+              minWidth: 48,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <Icon
               name={isSaved ? 'bookmark' : 'bookmark-outline'}

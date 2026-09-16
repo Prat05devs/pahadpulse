@@ -1,5 +1,6 @@
 import { Badge, Card, Divider, HStack, Icon, Text, VStack } from '@/components/atoms';
 import { EmptyState, LoadingState, QueryBoundary, SectionHeader } from '@/components/molecules';
+import { useT } from '@/i18n';
 import { Screen } from '@/components/templates';
 import { formatRelative, localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
@@ -28,12 +29,13 @@ const POLLUTANT_LABEL: Record<string, string> = {
 
 export function AirQualityScreen() {
   const theme = useTheme();
+  const t = useT();
   const language = useLanguage();
   const airQuality = useAllDistrictAirQuality();
 
   return (
     <Screen onRefresh={() => void airQuality.refetch()} refreshing={airQuality.isRefetching}>
-      <QueryBoundary query={airQuality} loading={<LoadingState label="Loading air quality" />}>
+      <QueryBoundary query={airQuality} loading={<LoadingState label={t('air.loading')} />}>
         {(entries) => {
           const readings = entries
             .map((entry) => entry.air)
@@ -45,16 +47,13 @@ export function AirQualityScreen() {
           return (
             <VStack gap="lg">
               {readings.length === 0 ? (
-                <EmptyState
-                  title="No air-quality readings"
-                  message="Readings arrive with the hourly ingestion run."
-                />
+                <EmptyState title={t('air.empty')} message={t('air.emptyMessage')} />
               ) : (
                 <>
                   <Card padding="lg">
                     <VStack gap="sm">
                       <Text variant="footnote" color="textMuted">
-                        STATE PICTURE
+                        {t('air.statePicture')}
                       </Text>
                       <Text variant="heading">
                         {worst?.nationalAqi
@@ -63,7 +62,7 @@ export function AirQualityScreen() {
                       </Text>
                       <Text variant="caption" color="textMuted">
                         {readings.length} district reading{readings.length === 1 ? '' : 's'}{' '}
-                        available{missing > 0 ? ` · ${missing} missing` : ''}
+                        available{missing > 0 ? t('air.missing', { count: missing }) : ''}
                       </Text>
                     </VStack>
                   </Card>
@@ -72,17 +71,15 @@ export function AirQualityScreen() {
                     <HStack gap="sm" align="flex-start">
                       <Icon name="information-circle-outline" tone="primary" />
                       <Text variant="caption" color="textMuted" style={{ flex: 1 }}>
-                        These are modelled estimates covering district headquarters, not
-                        readings from a reference-grade ground monitor. CPCB figures are
-                        authoritative where available.
+                        {t('air.caveat')}
                       </Text>
                     </HStack>
                   </Card>
 
                   <VStack gap="sm">
                     <SectionHeader
-                      title="By district"
-                      subtitle="National AQI, PM2.5 and PM10"
+                      title={t('air.byDistrict')}
+                      subtitle={t('air.byDistrict.subtitle')}
                     />
                     {readings.map((reading) => {
                       const national = reading.nationalAqi;
@@ -101,7 +98,9 @@ export function AirQualityScreen() {
                                 </Text>
                                 <Text variant="caption" color="textMuted">
                                   {reading.observedAt
-                                    ? `Observed ${formatRelative(reading.observedAt)}`
+                                    ? t('air.observed', {
+                                        when: formatRelative(reading.observedAt),
+                                      })
                                     : 'Observation time unavailable'}
                                 </Text>
                               </VStack>
@@ -142,7 +141,7 @@ export function AirQualityScreen() {
                               {national ? (
                                 <VStack gap="xxs">
                                   <Text variant="footnote" color="textMuted">
-                                    DOMINANT
+                                    {t('air.dominant')}
                                   </Text>
                                   <Text variant="bodyStrong">
                                     {POLLUTANT_LABEL[national.dominantPollutant] ??
@@ -172,9 +171,9 @@ export function AirQualityScreen() {
                 elevation="none"
               >
                 <Text variant="caption">
-                  <Text variant="bodyStrong">River levels are not published here yet.</Text>{' '}
-                  Until Central Water Commission gauge access is available, the app shows
-                  nothing rather than a potentially dangerous estimate.
+                  <Text variant="bodyStrong">{t('air.rivers')}</Text> Until Central Water
+                  Commission gauge access is available, the app shows nothing rather than a
+                  potentially dangerous estimate.
                 </Text>
               </Card>
             </VStack>

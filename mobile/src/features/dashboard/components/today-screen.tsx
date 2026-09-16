@@ -13,6 +13,7 @@ import { useDistricts } from '@/features/areas';
 import { useAreaIndicators } from '@/features/indicators';
 import { usePilgrimArrivals } from '@/features/tourism/hooks';
 import { useAreaWeather } from '@/features/weather';
+import { useT } from '@/i18n';
 import { formatCompact, formatDate, formatNumber, localise } from '@/lib/format';
 import { shouldStackCardGrid } from '@/lib/layout';
 import { useLanguage, useSavedDistricts } from '@/stores';
@@ -35,6 +36,7 @@ export function TodayScreen() {
   const insets = useSafeAreaInsets();
   const { width, fontScale } = useWindowDimensions();
   const language = useLanguage();
+  const t = useT();
   const savedSlugs = useSavedDistricts();
 
   const summary = useAlertSummary();
@@ -110,7 +112,7 @@ export function TodayScreen() {
           gap="xxs"
           accessible
           accessibilityRole="header"
-          accessibilityLabel="Pahad Pulse. Today in Uttarakhand"
+          accessibilityLabel={t('today.headerLabel')}
         >
           <Text
             variant="footnote"
@@ -118,15 +120,15 @@ export function TodayScreen() {
             weight="semibold"
             style={{ letterSpacing: 0.8 }}
           >
-            PAHAD PULSE
+            {t('today.brand')}
           </Text>
-          <Text variant="title">Today in Uttarakhand</Text>
+          <Text variant="title">{t('today.title')}</Text>
         </VStack>
 
         <Pressable
           onPress={() => router.push('/settings')}
-          accessibilityLabel="Open settings"
-          accessibilityHint="Opens language, appearance and app preferences"
+          accessibilityLabel={t('today.openSettings')}
+          accessibilityHint={t('today.openSettings.hint')}
           style={{
             width: 48,
             height: 48,
@@ -150,7 +152,7 @@ export function TodayScreen() {
       {/* State picture */}
       <HStack gap="sm" wrap>
         <StatTile
-          label="Active alerts"
+          label={t('today.activeAlerts')}
           value={summary.isPending ? '—' : formatCompact(activeCount)}
           // Counted up, and only once the figure is real: animating from zero while the
           // request is still in flight would show a confident "0 alerts" that is not known yet.
@@ -160,10 +162,14 @@ export function TodayScreen() {
           live={!summary.isPending && !summary.isError}
           icon="warning-outline"
           tone={severeCount > 0 ? 'danger' : 'default'}
-          caption={severeCount > 0 ? `${severeCount} severe or worse` : 'Statewide'}
+          caption={
+            severeCount > 0
+              ? t('today.severeOrWorse', { count: severeCount })
+              : t('common.statewide')
+          }
         />
         <StatTile
-          label="Districts"
+          label={t('nav.districts')}
           value={districts.isPending ? '—' : formatCompact(districts.data?.length ?? 0)}
           countTo={districts.isPending ? undefined : (districts.data?.length ?? 0)}
           countFormat={(next) => formatCompact(Math.round(next))}
@@ -173,20 +179,21 @@ export function TodayScreen() {
            * directly under the district count of 13 and reads as the same number twice.
            * The caption has room for the real figure.
            */
-          caption={totalVillages > 0 ? `${formatNumber(totalVillages)} villages` : undefined}
+          caption={
+            totalVillages > 0
+              ? t('today.villages', { count: formatNumber(totalVillages) })
+              : undefined
+          }
         />
       </HStack>
 
       <VStack gap="sm">
-        <SectionHeader
-          title="Uttarakhand at a glance"
-          subtitle="Published state profile figures"
-        />
+        <SectionHeader title={t('today.glance.title')} subtitle={t('today.glance.subtitle')} />
         <QueryBoundary
           query={stateIndicators}
-          loading={<LoadingState label="Loading state profile" />}
+          loading={<LoadingState label={t('today.glance.loading')} />}
           isEmpty={(data) => data.values.length === 0}
-          emptyTitle="No state profile figures"
+          emptyTitle={t('today.glance.empty')}
         >
           {(data) => (
             <HStack gap="sm" wrap>
@@ -204,11 +211,7 @@ export function TodayScreen() {
                   <Card
                     key={entry.indicator.key}
                     padding="md"
-                    style={
-                      stackProfileCards
-                        ? { width: '100%' }
-                        : { flex: 1, minWidth: 145 }
-                    }
+                    style={stackProfileCards ? { width: '100%' } : { flex: 1, minWidth: 145 }}
                   >
                     <VStack gap="xs">
                       <Text variant="footnote" color="textMuted">
@@ -240,10 +243,10 @@ export function TodayScreen() {
       {savedSlugs.length > 0 ? (
         <VStack gap="sm">
           <SectionHeader
-            title="Following"
-            subtitle="Districts you saved"
+            title={t('today.following.title')}
+            subtitle={t('today.following.subtitle')}
             onPressAction={() => router.push('/districts')}
-            actionLabel="Manage"
+            actionLabel={t('today.following.manage')}
           />
           <SavedDistrictStrip slugs={savedSlugs} />
         </VStack>
@@ -252,18 +255,18 @@ export function TodayScreen() {
           <HStack align="center" gap="md">
             <Icon name="bookmark-outline" size={22} tone="primary" />
             <VStack grow gap="xxs">
-              <Text variant="bodyStrong">Follow a district</Text>
+              <Text variant="bodyStrong">{t('today.follow.title')}</Text>
               <Text variant="caption" color="textMuted">
-                Saved districts appear here with their weather and alerts.
+                {t('today.follow.body')}
               </Text>
             </VStack>
             <Pressable
               onPress={() => router.push('/districts')}
-              accessibilityLabel="Browse districts"
+              accessibilityLabel={t('today.follow.browseLabel')}
               style={{ minHeight: 0 }}
             >
               <Text variant="footnote" color="primary">
-                Browse
+                {t('today.follow.browse')}
               </Text>
             </Pressable>
           </HStack>
@@ -273,16 +276,16 @@ export function TodayScreen() {
       {/* Alerts */}
       <VStack gap="sm">
         <SectionHeader
-          title="Latest alerts"
-          subtitle="Issued by IMD, CWC and district administrations"
+          title={t('today.alerts.title')}
+          subtitle={t('today.alerts.subtitle')}
           onPressAction={() => router.push('/alerts')}
         />
         <QueryBoundary
           query={alerts}
-          loading={<LoadingState label="Loading alerts" />}
+          loading={<LoadingState label={t('today.alerts.loading')} />}
           isEmpty={(list) => list.length === 0}
-          emptyTitle="No active alerts"
-          emptyMessage="Nothing is in force across the state right now."
+          emptyTitle={t('today.alerts.empty')}
+          emptyMessage={t('today.alerts.emptyMessage')}
         >
           {(list) => (
             <VStack gap="sm">
@@ -300,15 +303,15 @@ export function TodayScreen() {
       {/* Districts */}
       <VStack gap="sm">
         <SectionHeader
-          title="Districts"
-          subtitle="Open one for its statistics and sources"
+          title={t('nav.districts')}
+          subtitle={t('today.districts.subtitle')}
           onPressAction={() => router.push('/districts')}
         />
         <QueryBoundary
           query={districts}
-          loading={<LoadingState label="Loading districts" />}
+          loading={<LoadingState label={t('today.districts.loading')} />}
           isEmpty={(list) => list.length === 0}
-          emptyTitle="No districts loaded"
+          emptyTitle={t('today.districts.empty')}
         >
           {(list) => (
             <Card padding="md">
@@ -338,7 +341,10 @@ export function TodayScreen() {
 
       {/* Quick Access */}
       <VStack gap="sm">
-        <SectionHeader title="Explore" subtitle="More state intelligence" />
+        <SectionHeader
+          title={t('today.explore.title')}
+          subtitle={t('today.explore.subtitle')}
+        />
         {/*
          * `wrap` so that when StatTile asks to stack (narrow screen or large system font) the
          * tiles actually fall onto their own rows. Without it a full-width basis in a
@@ -346,7 +352,7 @@ export function TodayScreen() {
          */}
         <HStack gap="sm" wrap>
           <StatTile
-            label="Tourism"
+            label={t('today.explore.tourism')}
             value={
               arrivals.isPending
                 ? '—'
@@ -362,22 +368,22 @@ export function TodayScreen() {
             onPress={() => router.push('/tourism')}
           />
           <StatTile
-            label="Ease of Biz"
-            value="Compare"
+            label={t('today.explore.business')}
+            value={t('today.explore.compare')}
             icon="briefcase-outline"
             onPress={() => router.push('/compare')}
           />
         </HStack>
         <HStack gap="sm" wrap>
           <StatTile
-            label="Connectivity"
-            value="Network"
+            label={t('today.explore.connectivity')}
+            value={t('today.explore.network')}
             icon="wifi-outline"
             onPress={() => router.push('/connectivity')}
           />
           <StatTile
-            label="Roads"
-            value="Highways"
+            label={t('today.explore.roads')}
+            value={t('today.explore.highways')}
             icon="car-outline"
             onPress={() => router.push('/roads')}
           />
@@ -388,8 +394,7 @@ export function TodayScreen() {
         <HStack gap="md" align="center">
           <Icon name="shield-checkmark-outline" size={20} tone="primary" />
           <Text variant="caption" color="textMuted" style={{ flex: 1 }}>
-            Pahad Pulse does not author data. Every figure shows the department that published
-            it, the date it describes, and how fresh it is.
+            {t('today.promise')}
           </Text>
         </HStack>
       </Card>

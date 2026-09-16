@@ -14,7 +14,13 @@ import { LocalisedTextSchema, ProvenanceSchema, UtcDateTime } from '@/types/api'
 export const AlertTypeSchema = z.enum(['weather', 'river', 'flood', 'road', 'disaster']);
 export type AlertType = z.infer<typeof AlertTypeSchema>;
 
-export const AlertSeveritySchema = z.enum(['minor', 'moderate', 'severe', 'extreme', 'unknown']);
+export const AlertSeveritySchema = z.enum([
+  'minor',
+  'moderate',
+  'severe',
+  'extreme',
+  'unknown',
+]);
 export type AlertSeverity = z.infer<typeof AlertSeveritySchema>;
 
 const AlertAreaSummarySchema = z.object({
@@ -53,7 +59,7 @@ export type Alert = z.infer<typeof AlertSchema>;
 /** Re-check expiry before presenting a warning saved in the offline cache as current. */
 export function isAlertInForce(
   alert: Pick<Alert, 'status' | 'expiresAt'>,
-  now = Date.now(),
+  now = Date.now()
 ): boolean {
   if (alert.status !== 'active') return false;
   if (!alert.expiresAt) return true;

@@ -1,9 +1,6 @@
 /** @jest-environment node */
 
-import {
-  fetchAllDistrictAirQuality,
-  fetchAirQuality,
-} from '@/features/air-quality/services';
+import { fetchAllDistrictAirQuality, fetchAirQuality } from '@/features/air-quality/services';
 import {
   fetchActiveAlerts,
   fetchAlertSummary,
@@ -95,10 +92,7 @@ describeLive('production mobile API contract', () => {
   });
 
   it('loads pilgrim arrivals and a complete business comparison', async () => {
-    const [arrivals, scenarios] = await Promise.all([
-      fetchPilgrimArrivals(),
-      fetchScenarios(),
-    ]);
+    const [arrivals, scenarios] = await Promise.all([fetchPilgrimArrivals(), fetchScenarios()]);
 
     expect(arrivals.destinations.length).toBeGreaterThan(0);
     expect(arrivals.totals.length).toBeGreaterThan(0);

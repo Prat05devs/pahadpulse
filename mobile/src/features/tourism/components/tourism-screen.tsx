@@ -9,6 +9,7 @@ import {
   SourceNote,
   StatTile,
 } from '@/components/molecules';
+import { useT } from '@/i18n';
 import { Screen } from '@/components/templates';
 import { formatCompact, formatNumber, localise } from '@/lib/format';
 import { useLanguage } from '@/stores';
@@ -16,6 +17,7 @@ import { useLanguage } from '@/stores';
 import { usePilgrimArrivals } from '../hooks';
 
 export function TourismScreen() {
+  const t = useT();
   const language = useLanguage();
   const [year, setYear] = useState<number | null>(null);
   const arrivals = usePilgrimArrivals();
@@ -28,9 +30,9 @@ export function TourismScreen() {
     <Screen onRefresh={refreshAll} refreshing={arrivals.isRefetching}>
       <QueryBoundary
         query={arrivals}
-        loading={<LoadingState label="Loading pilgrim arrivals" />}
+        loading={<LoadingState label={t('tourism.loading')} />}
         isEmpty={(data) => data.destinations.length === 0}
-        emptyTitle="No pilgrim figures"
+        emptyTitle={t('tourism.empty')}
       >
         {(data) => {
           const latest = data.totals[data.totals.length - 1];
@@ -43,8 +45,10 @@ export function TourismScreen() {
           const ordered = [...data.destinations]
             .filter((d) => d.years.some((entry) => entry.year === selectedYear))
             .sort((a, b) => {
-              const aValue = a.years.find((entry) => entry.year === selectedYear)?.visitors ?? -1;
-              const bValue = b.years.find((entry) => entry.year === selectedYear)?.visitors ?? -1;
+              const aValue =
+                a.years.find((entry) => entry.year === selectedYear)?.visitors ?? -1;
+              const bValue =
+                b.years.find((entry) => entry.year === selectedYear)?.visitors ?? -1;
               return bValue - aValue;
             });
 
@@ -52,31 +56,37 @@ export function TourismScreen() {
             <VStack gap="lg">
               <Card tone="muted" elevation="none">
                 <Text variant="body" color="textMuted">
-                  These are yearly totals published by the state tourism department. They do not
-                  describe how busy a shrine is at this moment.
+                  {t('tourism.caveat')}
                 </Text>
               </Card>
 
               {latest ? (
                 <HStack gap="sm" wrap>
                   <StatTile
-                    label={`Tourists in ${latest.year}`}
+                    label={t('tourism.touristsIn', { year: latest.year })}
                     value={formatCompact(latest.visitors)}
-                    caption={`${formatNumber(latest.visitors)} across listed destinations (Ongoing)`}
+                    caption={t('tourism.acrossDestinations', {
+                      count: formatNumber(latest.visitors),
+                    })}
                     tone="primary"
                   />
                   {recordYear ? (
                     <StatTile
-                      label={`Tourists in ${recordYear.year}`}
+                      label={t('tourism.touristsIn', { year: recordYear.year })}
                       value={formatCompact(recordYear.visitors)}
-                      caption={`${formatNumber(recordYear.visitors)} (All-time record)`}
+                      caption={t('tourism.record', {
+                        count: formatNumber(recordYear.visitors),
+                      })}
                     />
                   ) : null}
                 </HStack>
               ) : null}
 
               <VStack gap="sm">
-                <SectionHeader title="Arrivals by destination" subtitle="Select a published year" />
+                <SectionHeader
+                  title={t('tourism.byDestination')}
+                  subtitle={t('tourism.selectYear')}
+                />
                 <HStack gap="xs" wrap>
                   {data.years.map((availableYear) => (
                     <Chip
@@ -89,9 +99,11 @@ export function TourismScreen() {
                 </HStack>
                 {selectedYear === 2026 ? (
                   <Card tone="warning" elevation="none" padding="md">
-                    <Text variant="bodyStrong" color="warning">Tentative Data</Text>
+                    <Text variant="bodyStrong" color="warning">
+                      {t('tourism.tentative')}
+                    </Text>
                     <Text variant="body" color="textMuted">
-                      The 2026 Yatra is currently ongoing. These figures represent the latest available estimates and are not final.
+                      {t('tourism.ongoing')}
                     </Text>
                   </Card>
                 ) : null}
@@ -119,7 +131,7 @@ export function TourismScreen() {
                   })}
                   <Divider />
                   <HStack justify="space-between" align="center">
-                    <Text variant="bodyStrong">Listed destinations total</Text>
+                    <Text variant="bodyStrong">{t('tourism.total')}</Text>
                     <Text variant="heading" color="primary" tabular>
                       {formatNumber(
                         data.totals.find((total) => total.year === selectedYear)?.visitors ?? 0
@@ -128,8 +140,7 @@ export function TourismScreen() {
                   </HStack>
                 </Card>
                 <Text variant="caption" color="textMuted">
-                  The suspended and capped seasons are shown as published rather than smoothed;
-                  the fall is historical, not missing data.
+                  {t('tourism.suspended')}
                 </Text>
               </VStack>
 
@@ -138,7 +149,6 @@ export function TourismScreen() {
           );
         }}
       </QueryBoundary>
-
     </Screen>
   );
 }
