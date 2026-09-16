@@ -44,3 +44,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Built store artifacts (.aab, universal .apk, mapping.txt). Never committed.
+/artifacts

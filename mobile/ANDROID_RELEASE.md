@@ -93,24 +93,37 @@ npx expo prebuild -p android --clean
 #    Verify the plugin applied, every time:
 grep -n "signingConfigs.release" android/app/build.gradle
 
-# 3. A release APK for device QA (an .aab cannot be installed directly)
-cd android && ./gradlew assembleRelease
-#    adb install -r app/build/outputs/apk/release/app-release.apk
-
-# 4. Run the device checklist below on that APK
-
-# 5. The store bundle
-./gradlew bundleRelease
+# 3. The store bundle
+cd android && ./gradlew bundleRelease
 #    -> android/app/build/outputs/bundle/release/app-release.aab
 
-# 6. Confirm it is signed with the upload key, NOT the debug key
-#    (CN=Android Debug means the plugin did not apply — do not upload it)
+# 4. Confirm it is signed with YOUR upload key, not the debug key.
+#    "CN=Android Debug" here means the signing plugin did not apply: do not upload.
 jarsigner -verify -verbose:summary -certs \
   app/build/outputs/bundle/release/app-release.aab | head -20
+
+# 5. Device QA runs on a universal APK generated FROM that bundle, so what is
+#    tested is the artifact that is uploaded — not a separately built APK.
+#    (brew install bundletool)
+bundletool build-apks --mode=universal \
+  --bundle=app/build/outputs/bundle/release/app-release.aab \
+  --output=/tmp/pahadpulse.apks \
+  --ks="$PAHADPULSE_UPLOAD_STORE_FILE" --ks-key-alias=upload
+unzip -p /tmp/pahadpulse.apks universal.apk > ../artifacts/PahadPulse-1.0.0-<code>-universal.apk
+adb install -r ../artifacts/PahadPulse-1.0.0-<code>-universal.apk
+
+# 6. Run the device checklist below on that APK
+
+# 7. Keep the artifact, named by version and versionCode, and record its hash.
+#    mobile/artifacts/ is gitignored; an .aab must never be committed.
+cp app/build/outputs/bundle/release/app-release.aab \
+   ../artifacts/PahadPulse-1.0.0-<code>.aab
+shasum -a 256 ../artifacts/PahadPulse-1.0.0-<code>.aab
 ```
 
-Upload the `.aab` in Play Console → Release → Internal testing → Create new release, and keep
-`mapping.txt` in mind only once R8 is enabled (it is not, for 1.0.0).
+Upload the `.aab` in Play Console → Release → Internal testing → Create new release. Once R8 is
+enabled, upload `android/app/build/outputs/mapping/release/mapping.txt` with each release too,
+or Play Console crash traces are unreadable — AgniVision keeps one per build in `artifacts/`.
 
 ## 4. Device QA checklist
 
