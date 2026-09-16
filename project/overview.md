@@ -320,6 +320,14 @@ Things that shape decisions across every module.
       Render's default egress uses shared regional ranges, not a dedicated static IP.
       See [Render outbound IP documentation](https://render.com/docs/outbound-ip-addresses).
       Postgres will run as a Render private service; backup storage and restore verification remain open. — _owner:_ `<TBD>`
+- [ ] **The apps have no UI translation layer.** Switching to हिन्दी localises only text the
+      API returns (district, headquarters, department and indicator names, weather conditions —
+      11 files call `localise`). Every word written in the app itself is hardcoded English, and
+      the website has no localisation at all. For an Uttarakhand audience this reads as "Hindi
+      does not work". Decided 2026-09-16 to ship 1.0.0 as-is — the Settings screen already
+      scopes the promise to "names and labels from the API" — and to build a real i18n layer
+      plus full Hindi copy as the next release. It touches nearly every screen and needs the
+      Hindi wording reviewed by a native speaker. — _owner:_ `<TBD>`
 - [ ] Default locale: `hi` or `en`? Recommend `hi` for a resident-facing state portal, with
       `/en` available. Affects the root redirect and SEO canonical URLs. — _owner:_ `<TBD>`
 - [ ] Is there a state-government stakeholder who can shorten the departmental data requests?
