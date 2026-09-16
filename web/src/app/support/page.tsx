@@ -135,7 +135,7 @@ export default function SupportPage() {
                 Read how information is handled.
               </p>
               <p className="mt-2 text-xs">
-                Developed by WT IT Solutions · Dehradun, Uttarakhand, India · © 2026
+                Built by Team Pahad Pulse · Dehradun, Uttarakhand, India · © 2026
               </p>
             </div>
             <Link href="/privacy" className="font-medium text-accent underline underline-offset-4">

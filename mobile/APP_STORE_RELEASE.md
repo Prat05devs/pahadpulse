@@ -11,8 +11,12 @@ localhost and non-HTTPS production URLs.
 - [x] Deploy and verify `https://www.pahadpulse.live/privacy` and
       `https://www.pahadpulse.live/support`.
 - [x] Support email: `admin@wtsolutions.cc`.
-- [x] Legal developer and copyright holder: WT IT Solutions, Dehradun, Uttarakhand, India;
-      support `admin@wtsolutions.cc`; copyright © 2026 WT IT Solutions.
+- [x] Public attribution is **Team Pahad Pulse** everywhere a reader can see it — the app,
+      the website, store listings and copyright lines (© 2026 Pahad Pulse). No individual or
+      company name appears in product copy; the client asked for the product to stand on its
+      own name. Support contact is `admin@wtsolutions.cc`. Note the store listings also show
+      the developer account name from App Store Connect and Play Console, which is set on
+      those accounts, not in this repository.
 - [ ] Create or confirm the Apple Developer and App Store Connect accounts.
 - [ ] Create the App Store Connect app for bundle ID `in.pahadpulse.app`; record its numeric
       Apple ID as `ascAppId` in `eas.json` only after it exists.

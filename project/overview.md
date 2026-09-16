@@ -271,6 +271,14 @@ Things that shape decisions across every module.
   reasons) is stored in its source language with a `language` column and is **never machine
   translated** — a mistranslated flood warning is a safety failure. Where a source publishes
   both languages, both are stored as separate rows.
+- **The product is attributed to Pahad Pulse alone.** No individual's name and no company name
+  appears in anything a reader can see — app screens, the website, store listings, copyright
+  lines, metadata or structured data. Where a human attribution is needed, it is **Team Pahad
+  Pulse**; copyright lines read © Pahad Pulse. Decided 2026-09-16 with the client, who wants the
+  product to stand on its own name. Two things sit outside the repository and must be set on the
+  accounts themselves: the developer name shown on the App Store and Play listings, and the
+  support mailbox (`admin@wtsolutions.cc`, which is deliberately unchanged — it is a contact
+  address, not a byline).
 - **Numerals stay Latin in both locales.** Devanagari digits are not used; they hurt scanning
   in tables and break `tabular-nums` alignment.
 - **All timestamps are UTC**; the pool is set to timezone `Z`. Display is IST (`Asia/Kolkata`),
