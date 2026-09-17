@@ -103,6 +103,35 @@ Suggested App Review note:
 - [ ] Confirm content rights for every government dataset, map layer, icon and image.
 - [ ] No review account is needed unless authentication is added before submission.
 
+## Archiving gotchas (learned on the 1.0.0 (2) resubmission)
+
+`/ios` is prebuild output, so everything below is fixed in `app.config.ts` rather than in
+Xcode — a change made in the Xcode UI is destroyed by the next prebuild.
+
+- **Signing team.** `ios.appleTeamId` alone is read by EAS but NOT applied by prebuild, so a
+  regenerated project has no `DEVELOPMENT_TEAM` and the archive fails at the signing step,
+  minutes in. `withDevelopmentTeam` writes it into the app target's build configurations.
+
+- **"Entitlements file was modified during the build".** This is Xcode's automatic signing
+  rewriting `PahadPulse.entitlements` mid-archive to match the App ID. It happened because
+  the App ID had Push Notifications enabled while nothing in the app used push: the
+  entitlement carried `aps-environment` with no `expo-notifications`, no registration code
+  and no sender. The entitlements file is now an empty dict and the capability is off in
+  Xcode. When push is actually built, it must come from the `expo-notifications` config
+  plugin so it survives a prebuild — never clicked into Xcode.
+
+- **"Upload Symbols Failed" warnings.** Warnings, never blocking; the build uploads and
+  reviews normally. Five of the eight were fixable: ExpoImage and the four SDWebImage
+  frameworks ship dSYMs with exactly the UUIDs Apple asked for, but CocoaPods symlinks those
+  xcframeworks into `node_modules` and Xcode walks past them. `withVendoredDsyms` adds a
+  Release-only build phase that copies them into the archive (`find -L`, following symlinks).
+  `React`, `ReactNativeDependencies` and `hermesvm` ship no dSYM at all — they are downloaded
+  release artifacts, and the only cure is building React Native from source
+  (`ios.buildReactNativeFromSource`), which is not worth the archive time or disk.
+
+- **Disk.** A full archive needs roughly 10–15 GB of intermediates. Keep >20 GB free; a
+  previous archive died mid-build when the disk filled.
+
 ## Release gate
 
 Use Node 24 (or another Expo-supported LTS release) for every command.

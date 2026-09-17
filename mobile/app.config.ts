@@ -78,6 +78,65 @@ const withScriptSandboxingDisabled: ConfigPlugin = (config) =>
   });
 
 /**
+ * Copy vendored dSYMs into the archive.
+ *
+ * Every framework here ships as a prebuilt `.xcframework`, and Xcode copies only some of
+ * their dSYMs into the archive. Uploading 1.0.0 (2) produced eight "Upload Symbols Failed"
+ * warnings — yet five of those frameworks (ExpoImage and the four SDWebImage ones) carry a
+ * dSYM inside the xcframework with exactly the UUID Apple asked for. This phase copies any
+ * it finds next to the ones Xcode collected.
+ *
+ * `React`, `ReactNativeDependencies` and `hermesvm` ship with no dSYM at all: they are
+ * downloaded release artifacts. Symbolicating those would mean building React Native from
+ * source (`ios.buildReactNativeFromSource`), which costs far more archive time and disk than
+ * readable third-party frames are worth. Those three warnings are expected and harmless —
+ * they never affect review, only the readability of crash reports inside those frameworks.
+ *
+ * Release only: a debug build has no archive to fill, and `DWARF_DSYM_FOLDER_PATH` is then
+ * the ordinary build folder.
+ */
+const COPY_VENDORED_DSYMS = [
+  'if [ "$CONFIGURATION" != "Release" ]; then exit 0; fi',
+  'if [ -z "$DWARF_DSYM_FOLDER_PATH" ] || [ ! -d "$PODS_ROOT" ]; then exit 0; fi',
+  'mkdir -p "$DWARF_DSYM_FOLDER_PATH"',
+  '# -L because CocoaPods symlinks vendored xcframeworks into node_modules; without it find',
+  '# walks straight past SDWebImage and friends, which is likely why Xcode missed them too.',
+  '# Device slice only — a simulator dSYM would collide on name and is never uploaded.',
+  'find -L "$PODS_ROOT" -maxdepth 8 -type d -path "*/ios-arm64/dSYMs/*.framework.dSYM" -prune -print0 |',
+  '  while IFS= read -r -d "" dsym; do',
+  '    name=$(basename "$dsym")',
+  '    if [ ! -d "$DWARF_DSYM_FOLDER_PATH/$name" ]; then',
+  '      cp -R "$dsym" "$DWARF_DSYM_FOLDER_PATH/" && echo "copied $name"',
+  '    fi',
+  '  done',
+].join('\n');
+
+const DSYM_PHASE_NAME = 'Copy vendored dSYMs';
+
+const withVendoredDsyms: ConfigPlugin = (config) =>
+  withXcodeProject(config, (modConfig) => {
+    const project = modConfig.modResults;
+    const phases: Record<string, unknown> =
+      project.hash.project.objects.PBXShellScriptBuildPhase ?? {};
+
+    // Prebuild regenerates `/ios`, but a second run over the same directory must not stack
+    // duplicate phases.
+    for (const phase of Object.values(phases)) {
+      if (typeof phase === 'object' && phase !== null && 'name' in phase) {
+        const { name } = phase as { name?: string };
+        if (name?.includes(DSYM_PHASE_NAME) === true) return modConfig;
+      }
+    }
+
+    project.addBuildPhase([], 'PBXShellScriptBuildPhase', DSYM_PHASE_NAME, undefined, {
+      shellPath: '/bin/sh',
+      shellScript: COPY_VENDORED_DSYMS,
+    });
+
+    return modConfig;
+  });
+
+/**
  * The signing team, written into every build configuration.
  *
  * `ios.appleTeamId` alone is read by EAS but NOT applied by prebuild, so the generated
@@ -288,109 +347,111 @@ assertProductionUrl('EXPO_PUBLIC_WEB_URL', process.env.EXPO_PUBLIC_WEB_URL);
 
 export default ({ config }: ConfigContext): ExpoConfig =>
   withAndroidReleaseSigning(
-    withDevelopmentTeam(
-      withSceneLifecycle(
-        withScriptSandboxingDisabled({
-          ...config,
-          name: NAME[VARIANT],
-          slug: 'pahad-pulse',
-          version: '1.0.0',
-          orientation: 'default',
-          icon: './assets/images/icon.png',
-          scheme: 'pahadpulse',
-          userInterfaceStyle: 'automatic',
-          /**
-           * Over-the-air updates are keyed to the runtime version. Tying it to `appVersion` means a
-           * JS-only fix ships to everyone on the same store build, while any change that touches
-           * native code requires a new store release rather than silently mismatching.
-           */
-          runtimeVersion: { policy: 'appVersion' },
-          ios: {
-            // iPhone only for v1: iPad would need its own QA pass and screenshot set before review.
-            supportsTablet: false,
-            bundleIdentifier: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
-            // Read by EAS, and by `withDevelopmentTeam` below for the local archive. Public: it
-            // is printed in every crash report and on the App Store listing.
-            appleTeamId: APPLE_TEAM_ID,
+    withVendoredDsyms(
+      withDevelopmentTeam(
+        withSceneLifecycle(
+          withScriptSandboxingDisabled({
+            ...config,
+            name: NAME[VARIANT],
+            slug: 'pahad-pulse',
+            version: '1.0.0',
+            orientation: 'default',
+            icon: './assets/images/icon.png',
+            scheme: 'pahadpulse',
+            userInterfaceStyle: 'automatic',
             /**
-             * Both store builds are produced locally — an Xcode archive and a Gradle bundle — so
-             * these two numbers are the real ones, not a starting point EAS would override.
-             * Increment on every upload: App Store Connect and Play each reject a repeat.
+             * Over-the-air updates are keyed to the runtime version. Tying it to `appVersion` means a
+             * JS-only fix ships to everyone on the same store build, while any change that touches
+             * native code requires a new store release rather than silently mismatching.
              */
-            buildNumber: '2',
-            infoPlist: { ITSAppUsesNonExemptEncryption: false },
-          },
-          android: {
-            package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
-            /**
-             * Raise this by one for EVERY .aab uploaded to Play, including one that is only ever
-             * used for internal testing. Play rejects a reused versionCode outright — AgniVision
-             * hit exactly this and had to rebuild. `versionName` comes from `version` above.
-             */
-            versionCode: 1,
-            predictiveBackGestureEnabled: false,
-            adaptiveIcon: {
-              backgroundColor: '#F2F7F7',
-              foregroundImage: './assets/images/android-icon-foreground.png',
-              monochromeImage: './assets/images/android-icon-monochrome.png',
+            runtimeVersion: { policy: 'appVersion' },
+            ios: {
+              // iPhone only for v1: iPad would need its own QA pass and screenshot set before review.
+              supportsTablet: false,
+              bundleIdentifier: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+              // Read by EAS, and by `withDevelopmentTeam` below for the local archive. Public: it
+              // is printed in every crash report and on the App Store listing.
+              appleTeamId: APPLE_TEAM_ID,
+              /**
+               * Both store builds are produced locally — an Xcode archive and a Gradle bundle — so
+               * these two numbers are the real ones, not a starting point EAS would override.
+               * Increment on every upload: App Store Connect and Play each reject a repeat.
+               */
+              buildNumber: '2',
+              infoPlist: { ITSAppUsesNonExemptEncryption: false },
             },
-            /**
-             * Permissions the app does not use, removed from the merged manifest.
-             *
-             * The Expo template requests "display over other apps" and legacy storage access by
-             * default. Neither is used here, and Play review asks for a justification of each — a
-             * read-only data app declaring them invites a delayed or rejected review. INTERNET and
-             * VIBRATE (haptics) stay.
-             */
-            blockedPermissions: [
-              'android.permission.ACCESS_COARSE_LOCATION',
-              'android.permission.ACCESS_FINE_LOCATION',
-              'android.permission.SYSTEM_ALERT_WINDOW',
-              'android.permission.READ_EXTERNAL_STORAGE',
-              'android.permission.WRITE_EXTERNAL_STORAGE',
-            ],
-          },
-          web: {
-            output: 'static',
-            favicon: './assets/images/favicon.png',
-          },
-          plugins: [
-            'expo-router',
-            'expo-secure-store',
-            'expo-localization',
-            [
-              'expo-splash-screen',
-              {
+            android: {
+              package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+              /**
+               * Raise this by one for EVERY .aab uploaded to Play, including one that is only ever
+               * used for internal testing. Play rejects a reused versionCode outright — AgniVision
+               * hit exactly this and had to rebuild. `versionName` comes from `version` above.
+               */
+              versionCode: 1,
+              predictiveBackGestureEnabled: false,
+              adaptiveIcon: {
                 backgroundColor: '#F2F7F7',
-                dark: { backgroundColor: '#071719' },
-                image: './assets/images/splash-icon.png',
-                imageWidth: 180,
+                foregroundImage: './assets/images/android-icon-foreground.png',
+                monochromeImage: './assets/images/android-icon-monochrome.png',
               },
+              /**
+               * Permissions the app does not use, removed from the merged manifest.
+               *
+               * The Expo template requests "display over other apps" and legacy storage access by
+               * default. Neither is used here, and Play review asks for a justification of each — a
+               * read-only data app declaring them invites a delayed or rejected review. INTERNET and
+               * VIBRATE (haptics) stay.
+               */
+              blockedPermissions: [
+                'android.permission.ACCESS_COARSE_LOCATION',
+                'android.permission.ACCESS_FINE_LOCATION',
+                'android.permission.SYSTEM_ALERT_WINDOW',
+                'android.permission.READ_EXTERNAL_STORAGE',
+                'android.permission.WRITE_EXTERNAL_STORAGE',
+              ],
+            },
+            web: {
+              output: 'static',
+              favicon: './assets/images/favicon.png',
+            },
+            plugins: [
+              'expo-router',
+              'expo-secure-store',
+              'expo-localization',
+              [
+                'expo-splash-screen',
+                {
+                  backgroundColor: '#F2F7F7',
+                  dark: { backgroundColor: '#071719' },
+                  image: './assets/images/splash-icon.png',
+                  imageWidth: 180,
+                },
+              ],
             ],
-          ],
-          experiments: {
-            typedRoutes: true,
-            reactCompiler: true,
-          },
-          extra: {
-            variant: VARIANT,
-            brandColor: BRAND_BLUE,
-            router: {},
-            /**
-             * The `eas` key is OMITTED entirely until a project ID exists, rather than set to null.
-             *
-             * Expo's config serialisation turns a null here into `{}`, which is truthy — so the dev
-             * server treats it as a real project ID, tries to sign the Expo Go manifest with it, and
-             * fails with "The path argument must be of type string". An absent key takes the
-             * unconfigured branch instead, which is what a fresh clone without EAS should do.
-             *
-             * `eas init` writes the real value; once it exists this passes it through.
-             */
-            ...(process.env.EAS_PROJECT_ID
-              ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
-              : null),
-          },
-        })
+            experiments: {
+              typedRoutes: true,
+              reactCompiler: true,
+            },
+            extra: {
+              variant: VARIANT,
+              brandColor: BRAND_BLUE,
+              router: {},
+              /**
+               * The `eas` key is OMITTED entirely until a project ID exists, rather than set to null.
+               *
+               * Expo's config serialisation turns a null here into `{}`, which is truthy — so the dev
+               * server treats it as a real project ID, tries to sign the Expo Go manifest with it, and
+               * fails with "The path argument must be of type string". An absent key takes the
+               * unconfigured branch instead, which is what a fresh clone without EAS should do.
+               *
+               * `eas init` writes the real value; once it exists this passes it through.
+               */
+              ...(process.env.EAS_PROJECT_ID
+                ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
+                : null),
+            },
+          })
+        )
       )
     )
   );
