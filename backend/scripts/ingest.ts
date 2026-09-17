@@ -10,6 +10,7 @@
  * scheme for a privileged endpoint, ingestion is driven from the shell — where access is
  * already controlled by who can reach the server.
  */
+import { env } from '../src/config/env.js';
 import { closeDatabase } from '../src/database/db.js';
 import * as sourceController from '../src/controllers/source.controller.js';
 import { runSource } from '../src/services/ingestion/index.js';
@@ -48,8 +49,17 @@ async function showStatus(): Promise<void> {
   }
 }
 
+/**
+ * Who asked for this run, recorded in `ingestion_runs.triggered_by`.
+ *
+ * Worth a column: every run in the log read `cli`, which is how it came to light that the
+ * scheduled jobs had never run at all and the data only moved when someone ran this by hand.
+ * The scheduler sets `INGEST_TRIGGERED_BY`; a run from a shell stays `cli`.
+ */
+const TRIGGERED_BY = env.INGEST_TRIGGERED_BY;
+
 async function runOne(key: string): Promise<void> {
-  const report = await runSource(key, 'cli');
+  const report = await runSource(key, TRIGGERED_BY);
   if (report.isErr()) {
     logger.error('run failed', { sourceKey: key, code: report.error.code });
     process.exitCode = 1;

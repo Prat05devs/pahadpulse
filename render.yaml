@@ -77,6 +77,16 @@ services:
   # ---------------------------------------------------------------------------------------
   # Ingestion.
   #
+  # NOT RUNNING HERE. These cron services were never created on Render — every row in
+  # `ingestion_runs` was `triggered_by = 'cli'`, so the data only moved when someone ran the
+  # command by hand and weather sat ten days stale before anyone noticed. Scheduling now
+  # lives in `.github/workflows/ingest.yml`, on the same cadences, because GitHub Actions is
+  # free for a public repository and Render's cron jobs are billed per service.
+  #
+  # The definitions below are kept as the record of what runs and why. If ingestion ever
+  # moves back to Render, apply this Blueprint and delete the workflow — never both, or two
+  # schedulers will race for the same sources.
+  #
   # This is why the API is not on Vercel. Ingestion is a CLI, a full run takes well over a
   # minute (the OSM boundary and village pass alone took ~80s), and the HTTP trigger
   # endpoints are deferred until `accounts` exists (datasets.md §8). A scheduled container

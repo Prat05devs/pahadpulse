@@ -28,6 +28,12 @@ const EnvSchema = z.object({
     .default('')
     .transform((value) => value.replace(/\\n/g, '\n')),
 
+  /**
+   * Who to record in `ingestion_runs.triggered_by`. The scheduler sets it; a run from a
+   * shell keeps the default. Bounded to the column width (VARCHAR(64), migration 003).
+   */
+  INGEST_TRIGGERED_BY: z.string().min(1).max(64).default('cli'),
+
   CORS_ORIGIN: z
     .string()
     .default('http://localhost:3001')

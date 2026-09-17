@@ -1,0 +1,124 @@
+# Scheduled ingestion.
+#
+# The cron services in `render.yaml` were never created — every run in `ingestion_runs` was
+# `triggered_by = 'cli'`, so the data only moved when someone ran the command by hand, and
+# weather sat ten days stale. These workflows run the same commands on the same cadences,
+# on GitHub's runners instead of Render's.
+#
+# Cadences are copied from `render.yaml` and the reasoning lives there: alerts every 15
+# minutes because SACHET publishes 3-hour nowcasts; weather and air hourly because that is
+# how often the model refreshes; seismic hourly because USGS revises magnitude for hours;
+# GDACS every 30 minutes because it scores events over days; the rollup nightly because
+# `observations` is what outgrows the free tier; reference weekly because OSM boundaries
+# change on the timescale of government notifications and Overpass is volunteer-run.
+#
+# GitHub cron is UTC, the same as Render's, so the offsets carry over unchanged. Scheduled
+# runs can be delayed by several minutes when GitHub is busy; every connector upserts and
+# re-reads a window rather than "since last run", so a late run loses nothing.
+#
+# SECRETS REQUIRED (Settings -> Secrets and variables -> Actions):
+#   DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_SSL_CA
+# The repository is public. Secrets are not exposed to pull requests from forks, and
+# scheduled workflows only ever run from the default branch.
+
+name: Ingest
+
+on:
+  schedule:
+    - cron: '*/15 * * * *' # alerts
+    - cron: '10 * * * *' # weather
+    - cron: '25 * * * *' # air quality
+    - cron: '40 * * * *' # seismic
+    - cron: '20,50 * * * *' # gdacs
+    - cron: '40 2 * * *' # observation rollup
+    - cron: '30 20 * * 6' # reference geography and roads
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Source key, or --all'
+        required: true
+        default: '--all'
+
+# Never let a slow run overlap the next tick of the same job. `startRun` would refuse the
+# second one anyway (it locks the source row), but a queued runner burns minutes waiting.
+concurrency:
+  group: ingest-${{ github.event.schedule || inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+        working-directory: backend
+
+      # One step per cadence: `github.event.schedule` is the cron line that fired, so each
+      # runs only on its own tick. A manual dispatch runs whatever key it was given.
+      - name: Alerts (SACHET)
+        if: github.event.schedule == '*/15 * * * *'
+        run: npm run ingest -- sachet-ndma
+        working-directory: backend
+
+      - name: Weather (Open-Meteo)
+        if: github.event.schedule == '10 * * * *'
+        run: npm run ingest -- open-meteo
+        working-directory: backend
+
+      - name: Air quality (Open-Meteo CAMS)
+        if: github.event.schedule == '25 * * * *'
+        run: npm run ingest -- open-meteo-air-quality
+        working-directory: backend
+
+      - name: Earthquakes (USGS)
+        if: github.event.schedule == '40 * * * *'
+        run: npm run ingest -- usgs-earthquakes
+        working-directory: backend
+
+      - name: Disaster events (GDACS)
+        if: github.event.schedule == '20,50 * * * *'
+        run: npm run ingest -- gdacs
+        working-directory: backend
+
+      - name: Observation rollup and retention
+        if: github.event.schedule == '40 2 * * *'
+        run: npm run db:rollup
+        working-directory: backend
+
+      - name: Reference geography and roads
+        if: github.event.schedule == '30 20 * * 6'
+        run: npm run ingest -- --all
+        working-directory: backend
+
+      - name: Manual run
+        if: github.event_name == 'workflow_dispatch'
+        run: npm run ingest -- ${{ inputs.target }}
+        working-directory: backend
+
+    env:
+      NODE_ENV: production
+      APP_ENV: production
+      LOG_LEVEL: info
+      # Recorded in `ingestion_runs.triggered_by`, so the run log distinguishes a scheduled
+      # run from someone running the CLI on a laptop.
+      INGEST_TRIGGERED_BY: github-actions
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: '5432'
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_SSL: 'true'
+      # Supabase's root CA is not in the runner's trust store; without it every connection
+      # fails with SELF_SIGNED_CERT_IN_CHAIN and ingestion silently never runs.
+      DB_SSL_CA: ${{ secrets.DB_SSL_CA }}
+      # A runner is short-lived and single-purpose; it needs very few connections, and the
+      # Supabase free tier allows 60 across everything that connects.
+      DB_POOL_LIMIT: '4'
