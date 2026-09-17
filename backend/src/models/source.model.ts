@@ -20,10 +20,10 @@ export interface SourceRow {
   licence: string;
   access_method: AccessMethod;
   cadence: Cadence;
-  may_redistribute: number;
+  may_redistribute: boolean;
   metadata_status: MetadataStatus;
   metadata_note: string | null;
-  is_enabled: number;
+  is_enabled: boolean;
   updated_at: string;
 }
 

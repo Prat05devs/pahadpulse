@@ -37,7 +37,7 @@ export async function runSource(
 
   const row = source.value;
 
-  if (row.is_enabled === 0) {
+  if (!row.is_enabled) {
     logger.info('source disabled, skipping', { sourceKey });
     return ok({
       sourceKey,
@@ -69,6 +69,17 @@ export async function runSource(
       vintage: null,
       notes: connector.unavailableReason,
     });
+  }
+
+  /*
+   * Close out runs abandoned by a process that died mid-run (a killed cron container, a
+   * crash). Nothing else ever does, so without this they stay `running` in the run log
+   * forever. Best-effort: the repository logs a failure, and the in-flight guard in
+   * `startRun` already ignores runs past the timeout, so a failed sweep must not block a run.
+   */
+  const expired = await SourceRepository.expireStuckRuns();
+  if (expired.isOk() && expired.value > 0) {
+    logger.warn('expired abandoned ingestion runs', { count: expired.value });
   }
 
   const started = await SourceRepository.startRun(row.id, triggeredBy);

@@ -44,7 +44,29 @@ async function run(): Promise<void> {
     await client.query('BEGIN');
 
     /*
-     * Summarise every day that is fully past the retention window.
+     * The cutoff is LOCAL MIDNIGHT, never "exactly 90 days ago".
+     *
+     * A timestamp cutoff lands mid-day — at 08:10 IST when this cron runs — and splits the
+     * boundary day in two. The first night summarised that day's morning and deleted it; the
+     * next night the upsert below rebuilt the same day from only the afternoon that was left,
+     * silently overwriting the morning's min, max, mean and sample count. Every rolled-up day
+     * lost part of itself, in the table that is kept forever.
+     *
+     * Truncating to an IST day boundary means a day is summarised only once all of it is
+     * past the window, and computing the value once means the summary and the prune can
+     * never disagree about which rows they cover. `observed_at` is naive UTC, so the local
+     * midnight is converted back to naive UTC before comparing.
+     */
+    const cutoffResult = await client.query<{ cutoff: string }>(
+      `SELECT ((date_trunc('day', now() AT TIME ZONE $2) - ($1 * INTERVAL '1 day'))
+                 AT TIME ZONE $2) AT TIME ZONE 'utc' AS cutoff`,
+      [RAW_RETENTION_DAYS, IST],
+    );
+    const cutoff = cutoffResult.rows[0]?.cutoff;
+    if (cutoff === undefined) throw new Error('rollup cutoff query returned no row');
+
+    /*
+     * Summarise every IST day that is fully past the retention window.
      *
      * Re-runnable: the upsert recomputes a day from whatever raw rows remain, so a job that
      * failed halfway or ran twice converges on the same answer rather than double-counting.
@@ -66,7 +88,7 @@ async function run(): Promise<void> {
               MIN(o.unit),
               MIN(o.source_id)
          FROM observations o
-        WHERE o.observed_at < ((now() AT TIME ZONE 'utc') - ($1 * INTERVAL '1 day'))
+        WHERE o.observed_at < $1
         GROUP BY o.station_id, o.metric,
                  (o.observed_at AT TIME ZONE 'utc' AT TIME ZONE $2)::date
        ON CONFLICT (station_id, metric, day) DO UPDATE SET
@@ -76,20 +98,21 @@ async function run(): Promise<void> {
          sample_count = EXCLUDED.sample_count,
          unit         = EXCLUDED.unit,
          source_id    = EXCLUDED.source_id`,
-      [RAW_RETENTION_DAYS, IST],
+      [cutoff, IST],
     );
 
     // Only rows that are now represented in the aggregate above.
     const pruned = await client.query(
       `DELETE FROM observations
-        WHERE observed_at < ((now() AT TIME ZONE 'utc') - ($1 * INTERVAL '1 day'))`,
-      [RAW_RETENTION_DAYS],
+        WHERE observed_at < $1`,
+      [cutoff],
     );
 
     await client.query('COMMIT');
 
     logger.info('rollup complete', {
       retentionDays: RAW_RETENTION_DAYS,
+      cutoffUtc: cutoff,
       daysWritten: rolled.rowCount ?? 0,
       rawRowsPruned: pruned.rowCount ?? 0,
     });

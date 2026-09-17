@@ -19,7 +19,7 @@ export interface StationRow {
   lat: string;
   lng: string;
   river_name: string | null;
-  is_active: number;
+  is_active: boolean;
 }
 
 export interface ObservationRow {

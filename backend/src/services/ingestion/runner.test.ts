@@ -35,10 +35,10 @@ const sourceRow = {
   licence: 'Demo licence',
   access_method: AccessMethod.Api,
   cadence: Cadence.Daily,
-  may_redistribute: 1,
+  may_redistribute: true,
   metadata_status: MetadataStatus.Provisional,
   metadata_note: null,
-  is_enabled: 1,
+  is_enabled: true,
   updated_at: '2026-09-03 00:00:00',
 } as SourceRow;
 
@@ -58,6 +58,7 @@ beforeEach(() => {
   clearConnectors();
   mockRepo.findRowByKey.mockResolvedValue(ok(sourceRow));
   mockRepo.startRun.mockResolvedValue(ok(42));
+  mockRepo.expireStuckRuns.mockResolvedValue(ok(0));
   mockRepo.completeRun.mockResolvedValue(ok(undefined));
 });
 
@@ -139,8 +140,28 @@ describe('runSource', () => {
     expect(mockRepo.completeRun).not.toHaveBeenCalled();
   });
 
+  it('expires abandoned runs before opening a new one', async () => {
+    registerConnector(connector());
+    mockRepo.expireStuckRuns.mockResolvedValue(ok(2));
+
+    await runSource('demo-source');
+
+    const expireOrder = mockRepo.expireStuckRuns.mock.invocationCallOrder[0] ?? Infinity;
+    const startOrder = mockRepo.startRun.mock.invocationCallOrder[0] ?? -Infinity;
+    expect(expireOrder).toBeLessThan(startOrder);
+  });
+
+  it('still runs when the abandoned-run sweep fails', async () => {
+    registerConnector(connector());
+    mockRepo.expireStuckRuns.mockResolvedValue(err(ERRORS.DATABASE_ERROR));
+
+    const result = await runSource('demo-source');
+
+    expect(result._unsafeUnwrap().status).toBe(RunStatus.Succeeded);
+  });
+
   it('skips a source disabled in the registry', async () => {
-    mockRepo.findRowByKey.mockResolvedValue(ok({ ...sourceRow, is_enabled: 0 }));
+    mockRepo.findRowByKey.mockResolvedValue(ok({ ...sourceRow, is_enabled: false }));
     registerConnector(connector());
 
     const result = await runSource('demo-source');

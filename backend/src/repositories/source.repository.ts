@@ -62,7 +62,7 @@ function toSource(row: SourceWithRunRow, now: Date): Source {
     licence: row.licence,
     accessMethod: row.access_method,
     cadence: row.cadence,
-    mayRedistribute: Boolean(row.may_redistribute),
+    mayRedistribute: row.may_redistribute,
     metadataStatus: row.metadata_status,
     freshness: freshnessOf(row.cadence, parseUtc(row.last_success_at), now),
     lastSuccessAt: row.last_success_at,
@@ -112,6 +112,9 @@ export interface ISourceRepository {
   ): Promise<Result<Paginated<IngestionRun>, RequestError>>;
   expireStuckRuns(): Promise<Result<number, RequestError>>;
 }
+
+/** Matches `ingestion_runs.notes VARCHAR(1024)` (migration 003). */
+const RUN_NOTES_MAX_LENGTH = 1024;
 
 class SourceRepositoryImpl implements ISourceRepository {
   async listAll(now: Date = new Date()): Promise<Result<Source[], RequestError>> {
@@ -183,18 +186,23 @@ class SourceRepositoryImpl implements ISourceRepository {
 
   /**
    * Opens a run, refusing if one is already in flight for this source.
-   * Guard and insert are one transaction so two schedulers cannot both start.
+   *
+   * The source row is locked first, and that lock is what serialises concurrent starts.
+   * `FOR UPDATE` on the in-flight query alone is not enough: when no run is in flight it
+   * matches zero rows and locks nothing, so two schedulers (the weekly `--all` cron and an
+   * hourly one, or a manual CLI run) would both see "none running" and both insert.
    */
   async startRun(sourceId: number, triggeredBy: string): Promise<Result<number, RequestError>> {
     const client = await db.connect();
     try {
       await client.query('BEGIN');
 
+      await client.query(`SELECT id FROM ${SOURCES_TABLE} WHERE id = $1 FOR UPDATE`, [sourceId]);
+
       const { rows: running } = await client.query<IngestionRunRow>(
         `SELECT id FROM ${INGESTION_RUNS_TABLE}
           WHERE source_id = $1 AND status = $2
-            AND started_at > ((now() AT TIME ZONE 'utc') - ($3 * INTERVAL '1 second'))
-          FOR UPDATE`,
+            AND started_at > ((now() AT TIME ZONE 'utc') - ($3 * INTERVAL '1 second'))`,
         [sourceId, RunStatus.Running, INGESTION_RUN_TIMEOUT_SECONDS],
       );
       if (running.length > 0) {
@@ -235,7 +243,9 @@ class SourceRepositoryImpl implements ISourceRepository {
           input.rowsWritten,
           input.rowsRejected,
           input.errorCode,
-          input.notes,
+          // `notes` is VARCHAR(1024) and often carries an upstream message of unknown length.
+          // An over-long one would fail this UPDATE and leave the run stuck as `running`.
+          input.notes?.slice(0, RUN_NOTES_MAX_LENGTH) ?? null,
           input.vintage,
           input.runId,
         ],

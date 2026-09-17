@@ -56,7 +56,7 @@ export async function listSourcesForOperator(
       ...source,
       id: detail.value.id,
       metadataNote: detail.value.metadata_note,
-      isEnabled: detail.value.is_enabled === 1,
+      isEnabled: detail.value.is_enabled,
       hasConnector: connector !== undefined,
       connectorAvailable: connector?.isAvailable ?? false,
       connectorUnavailableReason: connector?.unavailableReason ?? null,

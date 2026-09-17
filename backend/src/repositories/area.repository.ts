@@ -69,8 +69,8 @@ function toMapLayer(row: MapLayerRow): MapLayer {
     ownerModule: row.owner_module,
     name: { en: row.name_en, hi: row.name_hi },
     displayOrder: row.display_order,
-    isDefaultVisible: Boolean(row.is_default_visible),
-    isAvailable: Boolean(row.is_available),
+    isDefaultVisible: row.is_default_visible,
+    isAvailable: row.is_available,
   };
 }
 
@@ -257,7 +257,7 @@ class AreaRepositoryImpl implements IAreaRepository {
       return ok({
         areaId: row.area_id,
         geojson: typeof geometry === 'string' ? (JSON.parse(geometry) as unknown) : geometry,
-        isPlaceholder: Boolean(row.is_placeholder),
+        isPlaceholder: row.is_placeholder,
         sourceNote: row.source_note,
         updatedAt: row.updated_at,
       });
@@ -337,7 +337,7 @@ class AreaRepositoryImpl implements IAreaRepository {
               ? { lat: Number(row.centroid_lat), lng: Number(row.centroid_lng) }
               : null,
           geojson: typeof row.geojson === 'string' ? (JSON.parse(row.geojson) as unknown) : row.geojson,
-          isPlaceholder: Boolean(row.is_placeholder),
+          isPlaceholder: row.is_placeholder,
           sourceNote: row.source_note,
         })),
       );

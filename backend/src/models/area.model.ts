@@ -28,7 +28,7 @@ export interface AreaBoundaryRow {
   area_id: number;
   geojson: unknown;
   simplified_geojson: unknown;
-  is_placeholder: number;
+  is_placeholder: boolean;
   source_note: string;
   updated_at: string;
 }
@@ -40,8 +40,8 @@ export interface MapLayerRow {
   name_en: string;
   name_hi: string;
   display_order: number;
-  is_default_visible: number;
-  is_available: number;
+  is_default_visible: boolean;
+  is_available: boolean;
 }
 
 /** Result of a bare `COUNT(*)` aggregate. */
@@ -62,7 +62,7 @@ export interface DistrictBoundaryRow {
   centroid_lat: string | null;
   centroid_lng: string | null;
   geojson: unknown;
-  is_placeholder: number;
+  is_placeholder: boolean;
   source_note: string;
 }
 

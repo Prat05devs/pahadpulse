@@ -13,6 +13,17 @@ export const CACHE_TTL = {
   STATIC: 24 * 60 * 60,
 } as const;
 
+/**
+ * Ceiling on in-process cached responses.
+ *
+ * The cache key is the full URL, query string included, so without a ceiling every junk
+ * variant (`?x=1`, `?x=2`, …) becomes a new entry held for up to 24 hours on a 512 MB
+ * instance. Sized well above the legitimate key space (13 districts, 80 tehsils, their
+ * sub-resources and the list endpoints); once reached, responses are served uncached
+ * rather than evicting or growing.
+ */
+export const CACHE_MAX_ENTRIES = 5000;
+
 export const RATE_LIMIT = {
   WINDOW_MS: 15 * 60 * 1000,
   MAX_REQUESTS: 300,

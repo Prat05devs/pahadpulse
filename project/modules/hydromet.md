@@ -123,9 +123,10 @@ and recorded as an ingestion run.
 
 | Index | Serves |
 |---|---|
-| `pk (station_id, metric, observed_at)` | idempotent upsert (HYD-1) |
-| `idx_obs_station_metric_time (station_id, metric, observed_at DESC)` | "latest reading" and the chart series — the two queries that exist |
+| `pk (station_id, metric, observed_at)` | idempotent upsert (HYD-1), and — scanned backwards — "latest reading" and the chart series |
 | `idx_station_area_type (area_id, type)` | district dashboard: stations in this district |
+
+`idx_obs_station_metric_time` and `idx_obs_daily_station_metric_day` were dropped in migration 053: each duplicated its table's primary key column-for-column, and a B-tree serves `DESC` order by scanning backwards, so they only doubled index writes on the fastest-growing table.
 
 Retention is decided and implemented — see Open questions. `idx_obs_observed_at` exists solely to keep the nightly sweep off a full scan.
 
@@ -318,6 +319,11 @@ a bug and needs explaining in the UI.
 - [x] **Retention and rollup for `observations` — decided 2026-09-07.** Raw rows for 90
       days, daily aggregates kept indefinitely in `observations_daily`, swept nightly by
       `npm run db:rollup`.
+
+      The sweep cuts at IST midnight 90 days back, never at "now minus 90 days". A
+      timestamp cutoff split the boundary day, and the next night's upsert rebuilt that day
+      from only the rows left, overwriting the half already summarised and deleted
+      (fixed 2026-09-17).
 
       The measured write rate is 169 rows an hour (78 weather + 91 air quality), which is
       1.48 million rows a year and roughly 249 MB in Postgres. Against Supabase's 500 MB
