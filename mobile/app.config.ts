@@ -1,5 +1,11 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-import { withAppBuildGradle, withXcodeProject, type ConfigPlugin } from 'expo/config-plugins';
+import {
+  withAppBuildGradle,
+  withAppDelegate,
+  withInfoPlist,
+  withXcodeProject,
+  type ConfigPlugin,
+} from 'expo/config-plugins';
 
 /**
  * Expo config as TypeScript so one codebase can produce three apps.
@@ -70,6 +76,116 @@ const withScriptSandboxingDisabled: ConfigPlugin = (config) =>
 
     return modConfig;
   });
+
+/**
+ * UIScene lifecycle adoption, required from iOS/iPadOS 27.
+ *
+ * iOS 27 terminates any UIKit app that launches without a `UIApplicationSceneManifest`
+ * (`_UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption`, EXC_BREAKPOINT on launch).
+ * App Review rejected 1.0.0 (1) for exactly this. The Expo SDK 57 template still creates the
+ * window in `didFinishLaunchingWithOptions`, so the template is rewritten here: the app delegate
+ * only builds the React Native factory, and a scene delegate owns the window and starts React.
+ *
+ * Under scenes UIKit no longer calls the app delegate's open-URL / user-activity methods, so
+ * the scene delegate forwards deep links to `RCTLinkingManager`, and a cold-start link is passed
+ * in as launch options so `Linking.getInitialURL()` still sees it.
+ *
+ * Anchors are asserted, not replaced best-effort, so a changed template fails at prebuild.
+ */
+const TEMPLATE_WINDOW_START = `#if os(iOS) || os(tvOS)
+    window = UIWindow(frame: UIScreen.main.bounds)
+    factory.startReactNative(
+      withModuleName: "main",
+      in: window,
+      launchOptions: launchOptions)
+#endif
+`;
+
+const SCENE_DELEGATE_SWIFT = `
+// Added by withSceneLifecycle in app.config.ts — iOS 27 requires UIScene lifecycle adoption.
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+  var window: UIWindow?
+
+  func scene(
+    _ scene: UIScene,
+    willConnectTo session: UISceneSession,
+    options connectionOptions: UIScene.ConnectionOptions
+  ) {
+    guard
+      let windowScene = scene as? UIWindowScene,
+      let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+      let factory = appDelegate.reactNativeFactory
+    else { return }
+
+    let window = UIWindow(windowScene: windowScene)
+    self.window = window
+    appDelegate.window = window
+
+    // Rebuild the launch options React Native reads for Linking.getInitialURL().
+    var launchOptions: [UIApplication.LaunchOptionsKey: Any] = [:]
+    if let url = connectionOptions.urlContexts.first?.url {
+      launchOptions[.url] = url
+    }
+    if let activity = connectionOptions.userActivities.first(where: {
+      $0.activityType == NSUserActivityTypeBrowsingWeb
+    }) {
+      launchOptions[.userActivityDictionary] = [
+        UIApplication.LaunchOptionsKey.userActivityType.rawValue: activity.activityType,
+        "UIApplicationLaunchOptionsUserActivityKey": activity,
+      ]
+    }
+
+    factory.startReactNative(withModuleName: "main", in: window, launchOptions: launchOptions)
+  }
+
+  func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    for context in URLContexts {
+      _ = RCTLinkingManager.application(UIApplication.shared, open: context.url, options: [:])
+    }
+  }
+
+  func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+    _ = RCTLinkingManager.application(
+      UIApplication.shared, continue: userActivity, restorationHandler: { _ in })
+  }
+}
+`;
+
+const withSceneLifecycle: ConfigPlugin = (config) =>
+  withAppDelegate(
+    withInfoPlist(config, (modConfig) => {
+      modConfig.modResults.UIApplicationSceneManifest = {
+        UIApplicationSupportsMultipleScenes: false,
+        UISceneConfigurations: {
+          UIWindowSceneSessionRoleApplication: [
+            {
+              UISceneConfigurationName: 'Default Configuration',
+              UISceneDelegateClassName: '$(PRODUCT_MODULE_NAME).SceneDelegate',
+            },
+          ],
+        },
+      };
+      return modConfig;
+    }),
+    (modConfig) => {
+      const appDelegate = modConfig.modResults;
+      if (appDelegate.language !== 'swift') {
+        throw new Error(`Expected a Swift AppDelegate, found ${appDelegate.language}.`);
+      }
+      // Already rewritten by a previous prebuild into the same directory: nothing to do.
+      if (appDelegate.contents.includes('class SceneDelegate')) return modConfig;
+      if (!appDelegate.contents.includes(TEMPLATE_WINDOW_START)) {
+        throw new Error('Could not find the window setup in ios/PahadPulse/AppDelegate.swift.');
+      }
+
+      appDelegate.contents =
+        appDelegate.contents.replace(
+          TEMPLATE_WINDOW_START,
+          '    // The window and React Native start in SceneDelegate (UIScene lifecycle).\n'
+        ) + SCENE_DELEGATE_SWIFT;
+      return modConfig;
+    }
+  );
 
 /**
  * Release signing for the locally built Android bundle.
@@ -145,102 +261,104 @@ assertProductionUrl('EXPO_PUBLIC_WEB_URL', process.env.EXPO_PUBLIC_WEB_URL);
 
 export default ({ config }: ConfigContext): ExpoConfig =>
   withAndroidReleaseSigning(
-    withScriptSandboxingDisabled({
-      ...config,
-      name: NAME[VARIANT],
-      slug: 'pahad-pulse',
-      version: '1.0.0',
-      orientation: 'default',
-      icon: './assets/images/icon.png',
-      scheme: 'pahadpulse',
-      userInterfaceStyle: 'automatic',
-      /**
-       * Over-the-air updates are keyed to the runtime version. Tying it to `appVersion` means a
-       * JS-only fix ships to everyone on the same store build, while any change that touches
-       * native code requires a new store release rather than silently mismatching.
-       */
-      runtimeVersion: { policy: 'appVersion' },
-      ios: {
-        // iPhone only for v1: iPad would need its own QA pass and screenshot set before review.
-        supportsTablet: false,
-        bundleIdentifier: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+    withSceneLifecycle(
+      withScriptSandboxingDisabled({
+        ...config,
+        name: NAME[VARIANT],
+        slug: 'pahad-pulse',
+        version: '1.0.0',
+        orientation: 'default',
+        icon: './assets/images/icon.png',
+        scheme: 'pahadpulse',
+        userInterfaceStyle: 'automatic',
         /**
-         * Both store builds are produced locally — an Xcode archive and a Gradle bundle — so
-         * these two numbers are the real ones, not a starting point EAS would override.
-         * Increment on every upload: App Store Connect and Play each reject a repeat.
+         * Over-the-air updates are keyed to the runtime version. Tying it to `appVersion` means a
+         * JS-only fix ships to everyone on the same store build, while any change that touches
+         * native code requires a new store release rather than silently mismatching.
          */
-        buildNumber: '1',
-        infoPlist: { ITSAppUsesNonExemptEncryption: false },
-      },
-      android: {
-        package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
-        /**
-         * Raise this by one for EVERY .aab uploaded to Play, including one that is only ever
-         * used for internal testing. Play rejects a reused versionCode outright — AgniVision
-         * hit exactly this and had to rebuild. `versionName` comes from `version` above.
-         */
-        versionCode: 1,
-        predictiveBackGestureEnabled: false,
-        adaptiveIcon: {
-          backgroundColor: '#F2F7F7',
-          foregroundImage: './assets/images/android-icon-foreground.png',
-          monochromeImage: './assets/images/android-icon-monochrome.png',
+        runtimeVersion: { policy: 'appVersion' },
+        ios: {
+          // iPhone only for v1: iPad would need its own QA pass and screenshot set before review.
+          supportsTablet: false,
+          bundleIdentifier: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+          /**
+           * Both store builds are produced locally — an Xcode archive and a Gradle bundle — so
+           * these two numbers are the real ones, not a starting point EAS would override.
+           * Increment on every upload: App Store Connect and Play each reject a repeat.
+           */
+          buildNumber: '2',
+          infoPlist: { ITSAppUsesNonExemptEncryption: false },
         },
-        /**
-         * Permissions the app does not use, removed from the merged manifest.
-         *
-         * The Expo template requests "display over other apps" and legacy storage access by
-         * default. Neither is used here, and Play review asks for a justification of each — a
-         * read-only data app declaring them invites a delayed or rejected review. INTERNET and
-         * VIBRATE (haptics) stay.
-         */
-        blockedPermissions: [
-          'android.permission.ACCESS_COARSE_LOCATION',
-          'android.permission.ACCESS_FINE_LOCATION',
-          'android.permission.SYSTEM_ALERT_WINDOW',
-          'android.permission.READ_EXTERNAL_STORAGE',
-          'android.permission.WRITE_EXTERNAL_STORAGE',
-        ],
-      },
-      web: {
-        output: 'static',
-        favicon: './assets/images/favicon.png',
-      },
-      plugins: [
-        'expo-router',
-        'expo-secure-store',
-        'expo-localization',
-        [
-          'expo-splash-screen',
-          {
+        android: {
+          package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+          /**
+           * Raise this by one for EVERY .aab uploaded to Play, including one that is only ever
+           * used for internal testing. Play rejects a reused versionCode outright — AgniVision
+           * hit exactly this and had to rebuild. `versionName` comes from `version` above.
+           */
+          versionCode: 1,
+          predictiveBackGestureEnabled: false,
+          adaptiveIcon: {
             backgroundColor: '#F2F7F7',
-            dark: { backgroundColor: '#071719' },
-            image: './assets/images/splash-icon.png',
-            imageWidth: 180,
+            foregroundImage: './assets/images/android-icon-foreground.png',
+            monochromeImage: './assets/images/android-icon-monochrome.png',
           },
+          /**
+           * Permissions the app does not use, removed from the merged manifest.
+           *
+           * The Expo template requests "display over other apps" and legacy storage access by
+           * default. Neither is used here, and Play review asks for a justification of each — a
+           * read-only data app declaring them invites a delayed or rejected review. INTERNET and
+           * VIBRATE (haptics) stay.
+           */
+          blockedPermissions: [
+            'android.permission.ACCESS_COARSE_LOCATION',
+            'android.permission.ACCESS_FINE_LOCATION',
+            'android.permission.SYSTEM_ALERT_WINDOW',
+            'android.permission.READ_EXTERNAL_STORAGE',
+            'android.permission.WRITE_EXTERNAL_STORAGE',
+          ],
+        },
+        web: {
+          output: 'static',
+          favicon: './assets/images/favicon.png',
+        },
+        plugins: [
+          'expo-router',
+          'expo-secure-store',
+          'expo-localization',
+          [
+            'expo-splash-screen',
+            {
+              backgroundColor: '#F2F7F7',
+              dark: { backgroundColor: '#071719' },
+              image: './assets/images/splash-icon.png',
+              imageWidth: 180,
+            },
+          ],
         ],
-      ],
-      experiments: {
-        typedRoutes: true,
-        reactCompiler: true,
-      },
-      extra: {
-        variant: VARIANT,
-        brandColor: BRAND_BLUE,
-        router: {},
-        /**
-         * The `eas` key is OMITTED entirely until a project ID exists, rather than set to null.
-         *
-         * Expo's config serialisation turns a null here into `{}`, which is truthy — so the dev
-         * server treats it as a real project ID, tries to sign the Expo Go manifest with it, and
-         * fails with "The path argument must be of type string". An absent key takes the
-         * unconfigured branch instead, which is what a fresh clone without EAS should do.
-         *
-         * `eas init` writes the real value; once it exists this passes it through.
-         */
-        ...(process.env.EAS_PROJECT_ID
-          ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
-          : null),
-      },
-    })
+        experiments: {
+          typedRoutes: true,
+          reactCompiler: true,
+        },
+        extra: {
+          variant: VARIANT,
+          brandColor: BRAND_BLUE,
+          router: {},
+          /**
+           * The `eas` key is OMITTED entirely until a project ID exists, rather than set to null.
+           *
+           * Expo's config serialisation turns a null here into `{}`, which is truthy — so the dev
+           * server treats it as a real project ID, tries to sign the Expo Go manifest with it, and
+           * fails with "The path argument must be of type string". An absent key takes the
+           * unconfigured branch instead, which is what a fresh clone without EAS should do.
+           *
+           * `eas init` writes the real value; once it exists this passes it through.
+           */
+          ...(process.env.EAS_PROJECT_ID
+            ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
+            : null),
+        },
+      })
+    )
   );
