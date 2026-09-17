@@ -78,6 +78,33 @@ const withScriptSandboxingDisabled: ConfigPlugin = (config) =>
   });
 
 /**
+ * The signing team, written into every build configuration.
+ *
+ * `ios.appleTeamId` alone is read by EAS but NOT applied by prebuild, so the generated
+ * project came out with no `DEVELOPMENT_TEAM` and the store archive had to have the team
+ * picked by hand in Xcode after every prebuild — easy to forget, and the failure appears
+ * only at the signing step of a long archive. `/ios` is regenerated, so this belongs here.
+ */
+const APPLE_TEAM_ID = '9Q56J23Z23';
+
+const withDevelopmentTeam: ConfigPlugin = (config) =>
+  withXcodeProject(config, (modConfig) => {
+    const configurations: Record<string, unknown> =
+      modConfig.modResults.pbxXCBuildConfigurationSection();
+
+    for (const entry of Object.values(configurations)) {
+      // The section also holds `<id>_comment` string entries alongside the real configurations.
+      if (typeof entry !== 'object' || entry === null || !('buildSettings' in entry)) continue;
+      const { buildSettings } = entry as { buildSettings: Record<string, unknown> };
+      // Only the app target carries a bundle identifier; the Pods targets must stay untouched.
+      if (buildSettings.PRODUCT_BUNDLE_IDENTIFIER === undefined) continue;
+      buildSettings.DEVELOPMENT_TEAM = APPLE_TEAM_ID;
+    }
+
+    return modConfig;
+  });
+
+/**
  * UIScene lifecycle adoption, required from iOS/iPadOS 27.
  *
  * iOS 27 terminates any UIKit app that launches without a `UIApplicationSceneManifest`
@@ -261,104 +288,109 @@ assertProductionUrl('EXPO_PUBLIC_WEB_URL', process.env.EXPO_PUBLIC_WEB_URL);
 
 export default ({ config }: ConfigContext): ExpoConfig =>
   withAndroidReleaseSigning(
-    withSceneLifecycle(
-      withScriptSandboxingDisabled({
-        ...config,
-        name: NAME[VARIANT],
-        slug: 'pahad-pulse',
-        version: '1.0.0',
-        orientation: 'default',
-        icon: './assets/images/icon.png',
-        scheme: 'pahadpulse',
-        userInterfaceStyle: 'automatic',
-        /**
-         * Over-the-air updates are keyed to the runtime version. Tying it to `appVersion` means a
-         * JS-only fix ships to everyone on the same store build, while any change that touches
-         * native code requires a new store release rather than silently mismatching.
-         */
-        runtimeVersion: { policy: 'appVersion' },
-        ios: {
-          // iPhone only for v1: iPad would need its own QA pass and screenshot set before review.
-          supportsTablet: false,
-          bundleIdentifier: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+    withDevelopmentTeam(
+      withSceneLifecycle(
+        withScriptSandboxingDisabled({
+          ...config,
+          name: NAME[VARIANT],
+          slug: 'pahad-pulse',
+          version: '1.0.0',
+          orientation: 'default',
+          icon: './assets/images/icon.png',
+          scheme: 'pahadpulse',
+          userInterfaceStyle: 'automatic',
           /**
-           * Both store builds are produced locally — an Xcode archive and a Gradle bundle — so
-           * these two numbers are the real ones, not a starting point EAS would override.
-           * Increment on every upload: App Store Connect and Play each reject a repeat.
+           * Over-the-air updates are keyed to the runtime version. Tying it to `appVersion` means a
+           * JS-only fix ships to everyone on the same store build, while any change that touches
+           * native code requires a new store release rather than silently mismatching.
            */
-          buildNumber: '2',
-          infoPlist: { ITSAppUsesNonExemptEncryption: false },
-        },
-        android: {
-          package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
-          /**
-           * Raise this by one for EVERY .aab uploaded to Play, including one that is only ever
-           * used for internal testing. Play rejects a reused versionCode outright — AgniVision
-           * hit exactly this and had to rebuild. `versionName` comes from `version` above.
-           */
-          versionCode: 1,
-          predictiveBackGestureEnabled: false,
-          adaptiveIcon: {
-            backgroundColor: '#F2F7F7',
-            foregroundImage: './assets/images/android-icon-foreground.png',
-            monochromeImage: './assets/images/android-icon-monochrome.png',
+          runtimeVersion: { policy: 'appVersion' },
+          ios: {
+            // iPhone only for v1: iPad would need its own QA pass and screenshot set before review.
+            supportsTablet: false,
+            bundleIdentifier: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+            // Read by EAS, and by `withDevelopmentTeam` below for the local archive. Public: it
+            // is printed in every crash report and on the App Store listing.
+            appleTeamId: APPLE_TEAM_ID,
+            /**
+             * Both store builds are produced locally — an Xcode archive and a Gradle bundle — so
+             * these two numbers are the real ones, not a starting point EAS would override.
+             * Increment on every upload: App Store Connect and Play each reject a repeat.
+             */
+            buildNumber: '2',
+            infoPlist: { ITSAppUsesNonExemptEncryption: false },
           },
-          /**
-           * Permissions the app does not use, removed from the merged manifest.
-           *
-           * The Expo template requests "display over other apps" and legacy storage access by
-           * default. Neither is used here, and Play review asks for a justification of each — a
-           * read-only data app declaring them invites a delayed or rejected review. INTERNET and
-           * VIBRATE (haptics) stay.
-           */
-          blockedPermissions: [
-            'android.permission.ACCESS_COARSE_LOCATION',
-            'android.permission.ACCESS_FINE_LOCATION',
-            'android.permission.SYSTEM_ALERT_WINDOW',
-            'android.permission.READ_EXTERNAL_STORAGE',
-            'android.permission.WRITE_EXTERNAL_STORAGE',
-          ],
-        },
-        web: {
-          output: 'static',
-          favicon: './assets/images/favicon.png',
-        },
-        plugins: [
-          'expo-router',
-          'expo-secure-store',
-          'expo-localization',
-          [
-            'expo-splash-screen',
-            {
+          android: {
+            package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+            /**
+             * Raise this by one for EVERY .aab uploaded to Play, including one that is only ever
+             * used for internal testing. Play rejects a reused versionCode outright — AgniVision
+             * hit exactly this and had to rebuild. `versionName` comes from `version` above.
+             */
+            versionCode: 1,
+            predictiveBackGestureEnabled: false,
+            adaptiveIcon: {
               backgroundColor: '#F2F7F7',
-              dark: { backgroundColor: '#071719' },
-              image: './assets/images/splash-icon.png',
-              imageWidth: 180,
+              foregroundImage: './assets/images/android-icon-foreground.png',
+              monochromeImage: './assets/images/android-icon-monochrome.png',
             },
+            /**
+             * Permissions the app does not use, removed from the merged manifest.
+             *
+             * The Expo template requests "display over other apps" and legacy storage access by
+             * default. Neither is used here, and Play review asks for a justification of each — a
+             * read-only data app declaring them invites a delayed or rejected review. INTERNET and
+             * VIBRATE (haptics) stay.
+             */
+            blockedPermissions: [
+              'android.permission.ACCESS_COARSE_LOCATION',
+              'android.permission.ACCESS_FINE_LOCATION',
+              'android.permission.SYSTEM_ALERT_WINDOW',
+              'android.permission.READ_EXTERNAL_STORAGE',
+              'android.permission.WRITE_EXTERNAL_STORAGE',
+            ],
+          },
+          web: {
+            output: 'static',
+            favicon: './assets/images/favicon.png',
+          },
+          plugins: [
+            'expo-router',
+            'expo-secure-store',
+            'expo-localization',
+            [
+              'expo-splash-screen',
+              {
+                backgroundColor: '#F2F7F7',
+                dark: { backgroundColor: '#071719' },
+                image: './assets/images/splash-icon.png',
+                imageWidth: 180,
+              },
+            ],
           ],
-        ],
-        experiments: {
-          typedRoutes: true,
-          reactCompiler: true,
-        },
-        extra: {
-          variant: VARIANT,
-          brandColor: BRAND_BLUE,
-          router: {},
-          /**
-           * The `eas` key is OMITTED entirely until a project ID exists, rather than set to null.
-           *
-           * Expo's config serialisation turns a null here into `{}`, which is truthy — so the dev
-           * server treats it as a real project ID, tries to sign the Expo Go manifest with it, and
-           * fails with "The path argument must be of type string". An absent key takes the
-           * unconfigured branch instead, which is what a fresh clone without EAS should do.
-           *
-           * `eas init` writes the real value; once it exists this passes it through.
-           */
-          ...(process.env.EAS_PROJECT_ID
-            ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
-            : null),
-        },
-      })
+          experiments: {
+            typedRoutes: true,
+            reactCompiler: true,
+          },
+          extra: {
+            variant: VARIANT,
+            brandColor: BRAND_BLUE,
+            router: {},
+            /**
+             * The `eas` key is OMITTED entirely until a project ID exists, rather than set to null.
+             *
+             * Expo's config serialisation turns a null here into `{}`, which is truthy — so the dev
+             * server treats it as a real project ID, tries to sign the Expo Go manifest with it, and
+             * fails with "The path argument must be of type string". An absent key takes the
+             * unconfigured branch instead, which is what a fresh clone without EAS should do.
+             *
+             * `eas init` writes the real value; once it exists this passes it through.
+             */
+            ...(process.env.EAS_PROJECT_ID
+              ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
+              : null),
+          },
+        })
+      )
     )
   );
