@@ -267,8 +267,10 @@ the three do.
 ## 9. Open questions
 
 - [ ] Retention for `ingestion_runs` — it grows unboundedly. — _owner:_ `<TBD>`
-- [ ] Where does the scheduler run? In-process (`node-cron`, simple, single-instance only) or an
-      external job runner? Affects deployment topology. — _owner:_ `<TBD>`
+- [x] Where does the scheduler run? **In-process**, since 2026-09-22. It uses plain timers, not
+      `node-cron`, and must be enabled on exactly one instance (`SCHEDULER_ENABLED`). The free
+      Render instance is kept awake by an external `/health` pinger. See `project/operations.md`
+      § Ingestion schedule.
 - [ ] **Per-source redistribution rights are unconfirmed for all three seeded sources.** All are
       `metadata_status = provisional`. IMD is `may_redistribute = false`, so alerts ingested from
       it could not be displayed — this is the blocking question for the `alerts` module, not just

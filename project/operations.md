@@ -33,7 +33,7 @@ fix this section.
 
 The deployment configuration is in [`render.yaml`](../render.yaml). The selected database
 is PostgreSQL 16 on a Render private service, with 2 GB RAM and a 10 GB disk mounted at
-`/var/lib/postgres`. Postgres, the API, and both cron jobs must share a workspace and the Singapore
+`/var/lib/postgres`. Postgres and the API must share a workspace and the Singapore
 region. Live provisioning has not been verified.
 
 1. Push the reviewed Blueprint and create or sync it in Render. Review compute and disk
@@ -46,22 +46,69 @@ region. Live provisioning has not been verified.
    `NEXT_PUBLIC_API_URL=https://<render-host>/api` before building.
 4. Wait for Postgres initialization and successful API migrations before triggering ingestion.
    If initial migrations fail because Postgres is starting, redeploy the API once Postgres is ready.
-5. Trigger both ingestion jobs and inspect their source results. Check `/health`, `/ready`,
+5. Confirm the scheduler's first run in the API logs (`scheduler started`, then one
+   `ingestion run complete` per source), and set up the pinger below. Check `/health`, `/ready`,
    `/api/roads`, and `/api/map/districts`, then verify the live web app.
 
 `DB_SSL=false` applies to the Render private Postgres connection only; it does not traverse the
 public internet. The Postgres service has no public endpoint. External database connections
 should use `DB_SSL=true`, with `DB_SSL_CA` if needed. Do not expose this Postgres instance as a
-web service. Ensure environment isolation rules permit the API and cron jobs to reach it.
+web service. Ensure environment isolation rules permit the API to reach it.
 
 Switching an existing deployment to this Blueprint does not transfer external database data.
 The `MYSQL_*` initialization variables create users only on an empty disk. To rotate a
 password later, change it in Postgres and update the corresponding Render environment variable,
 then sync the Blueprint to propagate the value. Never delete the disk to reset credentials.
 
-Alerts run every 15 minutes. Reference ingestion (`--all`, which also includes alerts)
-runs at Saturday 20:30 UTC, or Sunday 02:00 IST. Render cron schedules use
-[UTC](https://render.com/docs/cronjobs).
+### Ingestion schedule
+
+Ingestion runs **inside the API process** when `SCHEDULER_ENABLED=true`
+(`backend/src/services/ingestion/scheduler.ts`). There are no Render cron services and no
+GitHub Actions workflow. Render bills each cron job separately, and the Actions workflow that
+replaced them stopped silently when the GitHub account was locked for billing. That left the
+data frozen from 17 Sep 2026 until this change.
+
+| Job | Every | Source key |
+| --- | --- | --- |
+| Alerts (SACHET) | 15 min | `sachet-ndma` |
+| Disaster events (GDACS) | 30 min | `gdacs` |
+| Earthquakes (USGS) | 1 h | `usgs-earthquakes` |
+| Weather (Open-Meteo) | 1 h | `open-meteo` |
+| Air quality (Open-Meteo CAMS) | 1 h | `open-meteo-air-quality` |
+| Observation rollup and 90-day prune | 24 h | none (`npm run db:rollup`) |
+
+Jobs are intervals, not clock times. A job is due once its interval has passed since its last
+run from any trigger, the CLI included. On boot, the scheduler reads the run log, so a server
+that slept or redeployed catches up at once, highest priority first. Jobs run one at a time.
+
+**Keeping the free instance awake.** Render's free plan sleeps a service after 15 minutes
+without inbound traffic, and a sleeping process runs no timers. An external pinger keeps it
+awake:
+
+1. Create a free account at [cron-job.org](https://cron-job.org).
+2. Add a cronjob: URL `https://pahadpulse.onrender.com/health`, every 10 minutes, method GET.
+3. Under the job's notification settings, turn on the email alert for failed executions.
+
+750 free instance hours a month cover one service awake all month (31 × 24 = 744), so this
+API must be the only free service in the Render workspace that stays awake. Pinging to stop
+sleep is a widely used workaround, not a Render-supported feature. Render's supported
+alternative is a paid instance.
+
+**Weekly manual step.** The reference refresh (`openstreetmap` boundaries and villages,
+`openstreetmap-roads`) is deliberately not scheduled. It holds the whole state's geometry in
+memory for over a minute, which could take down a 512 MB instance. Run it from a machine with
+the production `backend/.env`:
+
+```bash
+cd backend
+npm run ingest -- openstreetmap
+npm run ingest -- openstreetmap-roads
+npm run ingest            # status: every live source should read "fresh"
+```
+
+This data changes only when the government re-notifies boundaries or OSM volunteers edit
+roads, so a missed week costs nothing visible. The status check is the part that matters,
+because it is how a stopped scheduler gets noticed.
 
 The production image deliberately retains devDependencies, scripts, and SQL source files:
 the migration and ingestion CLIs require `tsx`, and TypeScript does not copy SQL assets.

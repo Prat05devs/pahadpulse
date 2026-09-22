@@ -60,6 +60,25 @@ export const FRESHNESS_GRACE = { STALE_AFTER: 1, EXPIRED_AFTER: 3 } as const;
 /** A run still `running` after this long is treated as dead, not as a lock (DS-4). */
 export const INGESTION_RUN_TIMEOUT_SECONDS = 30 * 60;
 
+/**
+ * The in-process ingestion scheduler (services/ingestion/scheduler.ts).
+ *
+ * Intervals, not clock times: a job is due when this long has passed since its last run,
+ * wherever that run came from. That is what lets a server that was asleep or redeploying
+ * catch up on boot instead of waiting for the next wall-clock slot. The reasoning for each
+ * cadence is on the job list in the scheduler.
+ */
+export const INGESTION_SCHEDULE = {
+  /** How often the scheduler checks for due jobs. Also the slack on every interval. */
+  TICK_MS: 60 * 1000,
+  ALERTS_MS: 15 * 60 * 1000,
+  GDACS_MS: 30 * 60 * 1000,
+  WEATHER_MS: 60 * 60 * 1000,
+  AIR_QUALITY_MS: 60 * 60 * 1000,
+  SEISMIC_MS: 60 * 60 * 1000,
+  ROLLUP_MS: 24 * 60 * 60 * 1000,
+} as const;
+
 /** Uttarakhand has exactly 13 districts. The seed asserts this (rule GEO-6). */
 export const UTTARAKHAND_DISTRICT_COUNT = 13;
 

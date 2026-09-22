@@ -36,7 +36,7 @@ from a source or it does not exist.
 | API     | Express 5 · TypeScript ESM · PostgreSQL 16 · neverthrow · Zod                  | `backend/` |
 | Web     | Next.js 15 App Router · React 19 · TanStack Query · Tailwind v4 · shadcn | `web/`     |
 | Mobile  | Expo SDK 57 · React Native 0.86 · React 19.2 · Expo Router · TanStack Query · Zustand · Zod | `mobile/`  |
-| Hosting | Planned: Render Singapore (private Postgres + API + cron), Vercel (web) | `render.yaml` |
+| Hosting | Render Singapore free plan (API, which also runs ingestion), Supabase Postgres, Vercel (web) | `render.yaml` |
 
 Deviations from `guidelines/common/13-approved-libraries.md`, each needing a logged decision in
 the module doc that introduces it:

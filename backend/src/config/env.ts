@@ -34,6 +34,16 @@ const EnvSchema = z.object({
    */
   INGEST_TRIGGERED_BY: z.string().min(1).max(64).default('cli'),
 
+  /**
+   * Run ingestion on a timer inside the API process (services/ingestion/scheduler.ts).
+   * Off by default so local dev, tests and one-off CLI runs never start it; production
+   * turns it on in render.yaml. Exactly one API instance may have it on — see the scheduler.
+   */
+  SCHEDULER_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+
   CORS_ORIGIN: z
     .string()
     .default('http://localhost:3001')

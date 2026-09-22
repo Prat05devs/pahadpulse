@@ -148,13 +148,11 @@ to a new database; it does not transfer the previous database's rows.
 
 | Render service | Purpose | Schedule |
 | --- | --- | --- |
-| `pahadpulse-mysql` | Private MySQL 8.0 with persistent disk | Long-running service |
-| `pahadpulse-api` | API, with migrations before rollout | Long-running service |
-| `pahadpulse-ingest-alerts` | SACHET alert ingestion | Every 15 minutes |
-| `pahadpulse-ingest-reference` | All available connectors | Sunday 02:00 IST |
+| `pahadpulse-api` | API, with migrations before rollout, and in-process ingestion | Long-running service |
 
-The weekly expression is `30 20 * * 6`: Saturday 20:30 UTC equals Sunday 02:00 IST.
-Render evaluates cron schedules in [UTC](https://render.com/docs/cronjobs).
+There are no cron services. The API runs ingestion itself when `SCHEDULER_ENABLED=true`, and an
+external pinger keeps the free instance awake. See
+[operations.md § Ingestion schedule](project/operations.md#ingestion-schedule).
 
 The Docker image intentionally retains source, SQL files, and devDependencies because the
 migration and ingestion scripts run through `tsx`. Its default command runs the compiled
