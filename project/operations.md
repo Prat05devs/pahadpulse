@@ -94,6 +94,27 @@ API must be the only free service in the Render workspace that stays awake. Ping
 sleep is a widely used workaround, not a Render-supported feature. Render's supported
 alternative is a paid instance.
 
+**SACHET relay (alerts).** SACHET drops every connection from Render, yet answers Vercel,
+including Vercel's US region (verified 2026-09-22 against another app fetching the national feed
+from `iad1`). The block is on Render's network, not on foreign traffic in general. Alert ingestion
+therefore fetches SACHET through `web/src/app/api/relay/sachet` on Vercel. `web/vercel.json` pins
+the web project to Mumbai (`bom1`), nearest to SACHET and to users; the Hobby plan allows one
+function region. The relay
+accepts only the feed, alert and polygon resources, builds the SACHET URL itself, and refuses
+any request without the shared key.
+
+1. Generate a key: `openssl rand -hex 32`.
+2. Vercel → web project → Settings → Environment Variables: `SACHET_RELAY_KEY` = the key
+   (Production). Redeploy.
+3. Test from any machine:
+   `curl -s -o /dev/null -w "%{http_code}\n" -H "x-relay-key: <key>" "https://www.pahadpulse.live/api/relay/sachet?resource=feed"`
+   gives `200` when Mumbai can reach SACHET. `502` means SACHET blocks Vercel Mumbai too.
+4. Only after a `200`: Render → API → Environment: `SACHET_RELAY_URL` =
+   `https://www.pahadpulse.live/api/relay/sachet` and `SACHET_RELAY_KEY` = the same key.
+   Set both or neither; the API refuses to boot with only one.
+
+Leave both unset on a machine in India: the CLI then fetches SACHET directly.
+
 **Weekly manual step.** The reference refresh (`openstreetmap` boundaries and villages,
 `openstreetmap-roads`) is deliberately not scheduled. It holds the whole state's geometry in
 memory for over a minute, which could take down a 512 MB instance. Run it from a machine with

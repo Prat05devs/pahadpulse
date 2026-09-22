@@ -1,6 +1,7 @@
 import { err, ok, type Result } from 'neverthrow';
 
 import { ALERT_SIMPLIFY_TOLERANCE_DEGREES, SACHET } from '../../../config/constants.js';
+import { env } from '../../../config/env.js';
 import { AlertRepository } from '../../../repositories/alert.repository.js';
 import { AreaRepository } from '../../../repositories/area.repository.js';
 import { AreaType } from '../../../types/area.js';
@@ -55,6 +56,32 @@ type ItemOutcome =
  * thunderstorm warning with no polygon still belongs on the list and in the count. It is
  * fetched second so that a slow or broken polygon endpoint degrades the map, not the alert.
  */
+type SachetResource = { resource: 'feed' } | { resource: 'alert' | 'polygon'; identifier: string };
+
+/**
+ * One SACHET fetch, direct or through the Mumbai relay (see `SACHET_RELAY_URL` in env.ts).
+ * The relay takes the resource name, not a URL, and builds the SACHET address itself.
+ */
+export function fetchSachet(target: SachetResource): Promise<Result<string, RequestError>> {
+  const options = { timeoutMs: SACHET.FETCH_TIMEOUT_MS, retries: SACHET.FETCH_RETRIES };
+
+  if (env.SACHET_RELAY_URL !== undefined && env.SACHET_RELAY_KEY !== undefined) {
+    const url = new URL(env.SACHET_RELAY_URL);
+    url.searchParams.set('resource', target.resource);
+    if (target.resource !== 'feed') url.searchParams.set('identifier', target.identifier);
+    return fetchText(url.toString(), {
+      ...options,
+      headers: { 'x-relay-key': env.SACHET_RELAY_KEY },
+    });
+  }
+
+  const url =
+    target.resource === 'feed'
+      ? SACHET.STATE_FEED_URL
+      : `${target.resource === 'alert' ? SACHET.ALERT_URL : SACHET.POLYGON_URL}${encodeURIComponent(target.identifier)}`;
+  return fetchText(url, options);
+}
+
 class SachetConnector implements SourceConnector {
   readonly sourceKey = 'sachet-ndma';
   readonly ownerModule = 'alerts';
@@ -62,10 +89,7 @@ class SachetConnector implements SourceConnector {
   readonly unavailableReason = null;
 
   async fetch(context: ConnectorContext): Promise<Result<ConnectorOutcome, RequestError>> {
-    const indexText = await fetchText(SACHET.STATE_FEED_URL, {
-      timeoutMs: SACHET.FETCH_TIMEOUT_MS,
-      retries: SACHET.FETCH_RETRIES,
-    });
+    const indexText = await fetchSachet({ resource: 'feed' });
     if (indexText.isErr()) return err(indexText.error);
 
     const items = parseSachetIndex(indexText.value);
@@ -134,10 +158,7 @@ class SachetConnector implements SourceConnector {
     districts: readonly DistrictNameCandidate[],
     context: ConnectorContext,
   ): Promise<ItemOutcome> {
-    const docText = await fetchText(`${SACHET.ALERT_URL}${encodeURIComponent(identifier)}`, {
-      timeoutMs: SACHET.FETCH_TIMEOUT_MS,
-      retries: SACHET.FETCH_RETRIES,
-    });
+    const docText = await fetchSachet({ resource: 'alert', identifier });
     if (docText.isErr()) {
       logger.warn('failed to fetch a SACHET alert', { identifier, code: docText.error.code });
       return { kind: 'rejected' };
@@ -225,10 +246,7 @@ class SachetConnector implements SourceConnector {
    * for it on every request (GEO-5).
    */
   private async fetchGeometry(identifier: string): Promise<Geometry | null> {
-    const polygonText = await fetchText(`${SACHET.POLYGON_URL}${encodeURIComponent(identifier)}`, {
-      timeoutMs: SACHET.FETCH_TIMEOUT_MS,
-      retries: SACHET.FETCH_RETRIES,
-    });
+    const polygonText = await fetchSachet({ resource: 'polygon', identifier });
     if (polygonText.isErr()) {
       logger.warn('failed to fetch SACHET geometry; storing the alert without it', {
         identifier,

@@ -44,13 +44,25 @@ const EnvSchema = z.object({
     .default('false')
     .transform((value) => value === 'true'),
 
+  /**
+   * SACHET drops connections from Render's Singapore region, so alert ingestion can fetch
+   * it through the web app's relay on Vercel Mumbai (web/src/app/api/relay/sachet). Both
+   * set: every SACHET request goes through the relay. Both unset: SACHET is fetched
+   * directly, which is what works from a machine in India.
+   */
+  SACHET_RELAY_URL: z.url().optional(),
+  SACHET_RELAY_KEY: z.string().min(32).optional(),
+
   CORS_ORIGIN: z
     .string()
     .default('http://localhost:3001')
     .transform((value) => value.split(',').map((origin) => origin.trim())),
 });
 
-const parsed = EnvSchema.safeParse(process.env);
+const parsed = EnvSchema.refine(
+  (value) => (value.SACHET_RELAY_URL === undefined) === (value.SACHET_RELAY_KEY === undefined),
+  { message: 'set both or neither', path: ['SACHET_RELAY_URL'] },
+).safeParse(process.env);
 
 if (!parsed.success) {
   // The only permitted console usage in the codebase. Key names only — never values.
