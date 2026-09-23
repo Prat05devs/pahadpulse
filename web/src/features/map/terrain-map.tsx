@@ -97,6 +97,15 @@ interface SelectedAlert {
 const DISTRICTS_SOURCE = 'pp-districts';
 const ALERTS_SOURCE = 'pp-alerts';
 const TERRAIN_SOURCE = 'pp-terrain';
+/*
+ * A SECOND source over the same tiles, for the hillshade layer.
+ *
+ * MapLibre warns when one raster-dem source feeds both `setTerrain` and a hillshade layer:
+ * the two want the DEM at different resolutions, so sharing costs rendering quality. The
+ * tiles are identical and served from the browser's HTTP cache, so this is a second handle
+ * on the same bytes, not a second download.
+ */
+const HILLSHADE_SOURCE = 'pp-hillshade-dem';
 
 /** The spellings one canonical highway ref may take in the basemap's tags. */
 function refVariants(ref: string): string[] {
@@ -149,13 +158,29 @@ export function TerrainMap({
 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [terrainOn, setTerrainOn] = useState(() => {
-    // Start with 3D terrain if we are doing the cinematic intro, so the dive looks epic.
-    if (typeof window !== 'undefined' && sessionStorage.getItem('pp_seen_intro') !== 'true') {
-      return true;
-    }
-    return false;
-  });
+  /*
+   * Starts flat, on the server and in the browser alike.
+   *
+   * This used to read `sessionStorage` in the initialiser, which a server render cannot do:
+   * the server always produced "Switch to 3D" while a first-visit browser produced
+   * "Switch to 2D", so hydration failed (React #418) and the whole page was re-rendered on
+   * every load.
+   *
+   * Relief now arrives when the cinematic intro lands, where `moveend` leaves the globe
+   * projection and turns it on. That ordering is also why MapLibre no longer warns that
+   * `calculateFogMatrix is not supported on globe projection`: terrain and the globe are
+   * never on at the same time.
+   */
+  const [terrainOn, setTerrainOn] = useState(false);
+  /*
+   * Everywhere except the dashboard stage, relief comes on as soon as the map is ready —
+   * which is what these maps have always done, since the `pp_seen_intro` key this used to
+   * test was never written by anything. The stage turns it on at the end of its intro
+   * instead (see `moveend` below), so terrain and the globe projection never overlap.
+   */
+  useEffect(() => {
+    if (!stage && ready) setTerrainOn(true);
+  }, [stage, ready]);
   const [alertsOn, setAlertsOn] = useState(true);
   const [selected, setSelected] = useState<SelectedAlert | null>(null);
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
@@ -170,9 +195,7 @@ export function TerrainMap({
   const focusDistrict = useCallback(
     (map: maplibregl.Map) => {
       if (focusSlug === undefined) return;
-      const target = districts?.features.find(
-        (feature) => feature.properties.slug === focusSlug
-      );
+      const target = districts?.features.find((feature) => feature.properties.slug === focusSlug);
       const centroid = target?.properties.centroid;
       if (centroid === null || centroid === undefined) return;
 
@@ -217,19 +240,21 @@ export function TerrainMap({
          * `bounds` asks MapLibre to compute whatever zoom actually fits, which is correct
          * at any size and needs no per-device guessing. The desktop path is untouched.
          */
-        ...(stage 
+        ...(stage
           ? { center: UTTARAKHAND_CENTER, zoom: 1 } // Start in space for cinematic dive
           : isNarrow
-          ? { bounds: UTTARAKHAND_BOUNDS, fitBoundsOptions: { padding: fitPadding() } }
-          : { center: UTTARAKHAND_CENTER, zoom: DEFAULT_VIEW.zoom }),
+            ? { bounds: UTTARAKHAND_BOUNDS, fitBoundsOptions: { padding: fitPadding() } }
+            : { center: UTTARAKHAND_CENTER, zoom: DEFAULT_VIEW.zoom }),
         // Flat and north-up on load, to match the 2D default above.
         pitch: 0,
         bearing: 0,
         // Keeps the map on Uttarakhand unless in stage mode where we fly in from space
-        maxBounds: stage ? undefined : [
-          [UTTARAKHAND_BOUNDS[0] - 1.5, UTTARAKHAND_BOUNDS[1] - 1.5],
-          [UTTARAKHAND_BOUNDS[2] + 1.5, UTTARAKHAND_BOUNDS[3] + 1.5],
-        ],
+        maxBounds: stage
+          ? undefined
+          : [
+              [UTTARAKHAND_BOUNDS[0] - 1.5, UTTARAKHAND_BOUNDS[1] - 1.5],
+              [UTTARAKHAND_BOUNDS[2] + 1.5, UTTARAKHAND_BOUNDS[3] + 1.5],
+            ],
         maxZoom: 15,
         attributionControl: false,
         cooperativeGestures: true,
@@ -268,7 +293,7 @@ export function TerrainMap({
       if (stage) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).__pp_doing_intro = true;
-        
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (typeof (map as any).setProjection === 'function') {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -286,7 +311,7 @@ export function TerrainMap({
           curve: 1.5,
           essential: true,
         });
-        
+
         map.once('moveend', () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).__pp_doing_intro = false;
@@ -320,10 +345,18 @@ export function TerrainMap({
         map.setTerrain({ source: TERRAIN_SOURCE, exaggeration: TERRAIN_EXAGGERATION });
       }
 
+      map.addSource(HILLSHADE_SOURCE, {
+        type: 'raster-dem',
+        tiles: [TERRAIN_TILES],
+        tileSize: TERRAIN_TILE_SIZE,
+        encoding: 'terrarium',
+        maxzoom: TERRAIN_MAX_ZOOM,
+      });
+
       map.addLayer({
         id: 'pp-hillshade',
         type: 'hillshade',
-        source: TERRAIN_SOURCE,
+        source: HILLSHADE_SOURCE,
         paint: {
           'hillshade-exaggeration': 0.35,
           'hillshade-shadow-color': '#3d4a52',
@@ -597,9 +630,7 @@ export function TerrainMap({
       if (typeof slug === 'string') router.push(`/districts/${slug}`);
     };
 
-    const onAlertClick = (
-      event: maplibregl.MapMouseEvent & { features?: MapGeoJSONFeature[] }
-    ) => {
+    const onAlertClick = (event: maplibregl.MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
       const properties = event.features?.[0]?.properties;
       if (properties === undefined) return;
       setSelected({
@@ -649,10 +680,7 @@ export function TerrainMap({
           'pointer-events-none select-none whitespace-nowrap text-[11px] font-semibold tracking-wide text-[#10222b] [text-shadow:0_0_3px_#fff,0_0_3px_#fff,0_0_5px_#fff]';
 
         return new maplibregl.Marker({ element, anchor: 'center' })
-          .setLngLat([
-            feature.properties.centroid?.lng ?? 0,
-            feature.properties.centroid?.lat ?? 0,
-          ])
+          .setLngLat([feature.properties.centroid?.lng ?? 0, feature.properties.centroid?.lat ?? 0])
           .addTo(map);
       });
 
@@ -672,10 +700,7 @@ export function TerrainMap({
     const map = mapRef.current;
     if (map === null || !ready || !highlightRoads) return;
 
-    const normalise: ExpressionSpecification = [
-      'upcase',
-      ['coalesce', ['get', 'ref'], ''],
-    ];
+    const normalise: ExpressionSpecification = ['upcase', ['coalesce', ['get', 'ref'], '']];
 
     // The casing follows whatever the two coloured layers show, so a selected route keeps
     // its outline and the rest of the network loses both line and casing together.
@@ -689,7 +714,15 @@ export function TerrainMap({
         'pp-road-casing',
         selectedRoadRef === null
           ? networks
-          : ['all', networks, ['in', ['upcase', ['coalesce', ['get', 'ref'], '']], ['literal', refVariants(selectedRoadRef)]]]
+          : [
+              'all',
+              networks,
+              [
+                'in',
+                ['upcase', ['coalesce', ['get', 'ref'], '']],
+                ['literal', refVariants(selectedRoadRef)],
+              ],
+            ]
       );
     }
 
@@ -699,11 +732,7 @@ export function TerrainMap({
     ] as const) {
       if (map.getLayer(layer) === undefined) continue;
 
-      const belongsToNetwork: ExpressionSpecification = [
-        '==',
-        ['slice', normalise, 0, 2],
-        network,
-      ];
+      const belongsToNetwork: ExpressionSpecification = ['==', ['slice', normalise, 0, 2], network];
 
       if (selectedRoadRef === null) {
         map.setFilter(layer, belongsToNetwork);
@@ -715,11 +744,7 @@ export function TerrainMap({
       // "NH34", "NH 34" or "NH-34". Matching an explicit variant list is exact — a prefix
       // test would light SH120 when SH12 was picked.
       const variants = refVariants(selectedRoadRef);
-      map.setFilter(layer, [
-        'all',
-        belongsToNetwork,
-        ['in', normalise, ['literal', variants]],
-      ]);
+      map.setFilter(layer, ['all', belongsToNetwork, ['in', normalise, ['literal', variants]]]);
       map.setPaintProperty(layer, 'line-opacity', 1);
     }
 
@@ -759,7 +784,12 @@ export function TerrainMap({
     }
 
     if (!bounds.isEmpty()) {
-      map.fitBounds(bounds, { padding: 80, maxZoom: 9.5, pitch: terrainOn ? 45 : 0, duration: 1200 });
+      map.fitBounds(bounds, {
+        padding: 80,
+        maxZoom: 9.5,
+        pitch: terrainOn ? 45 : 0,
+        duration: 1200,
+      });
     }
   }, [ready, fitToAlerts, alerts, terrainOn]);
 
@@ -799,7 +829,6 @@ export function TerrainMap({
     };
   }, [ready, fitPadding]);
 
-
   useEffect(() => {
     const map = mapRef.current;
     if (map === null || !ready) return;
@@ -810,7 +839,7 @@ export function TerrainMap({
     if (map.getLayer('pp-hillshade') !== undefined) {
       map.setLayoutProperty('pp-hillshade', 'visibility', terrainOn ? 'visible' : 'none');
     }
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(window as any).__pp_doing_intro) {
       if (!terrainOn) map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
@@ -822,90 +851,18 @@ export function TerrainMap({
     const map = mapRef.current;
     if (map === null || !ready) return;
 
-    for (const layer of ['pp-alert-fill', 'pp-alert-casing', 'pp-alert-outline', 'pp-alert-point']) {
+    for (const layer of [
+      'pp-alert-fill',
+      'pp-alert-casing',
+      'pp-alert-outline',
+      'pp-alert-point',
+    ]) {
       if (map.getLayer(layer) !== undefined) {
         map.setLayoutProperty(layer, 'visibility', alertsOn ? 'visible' : 'none');
       }
     }
     if (!alertsOn) setSelected(null);
   }, [alertsOn, ready]);
-
-  // Satellite dummy animation for visual flair on the main stage
-  useEffect(() => {
-    // A little visual flair for the main dashboard: a satellite marker slowly orbiting the map.
-    if (!stage || !ready) return;
-    const map = mapRef.current;
-    if (map === null) return;
-
-    const el = document.createElement('div');
-    el.className = 'text-accent drop-shadow-md pointer-events-none';
-    // Lucide Satellite icon
-    el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 9 3 5 7l4 4"/><path d="m17 11 4 4-4 4-4-4"/><path d="m8 12 4 4 6-6-4-4Z"/><path d="m16 8 3-3"/><path d="M9 21a6 6 0 0 0-6-6"/></svg>`;
-    
-    const startLng = 76.5;
-    const endLng = 81.8;
-    const startLat = 31.8;
-    const endLat = 28.2;
-    
-    // The Lucide satellite points top-right natively. 
-    // We are moving from top-left (NW) to bottom-right (SE).
-    // Rotating it 90 degrees makes it point bottom-right along the path!
-    el.style.transform = `rotate(90deg)`;
-
-    const satellite = new maplibregl.Marker({ element: el })
-      .setLngLat([startLng, startLat])
-      .addTo(map);
-
-    const sourceId = 'pp-orbit-path';
-    if (!map.getSource(sourceId)) {
-      map.addSource(sourceId, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              [startLng, startLat],
-              [endLng, endLat]
-            ]
-          }
-        }
-      });
-      map.addLayer({
-        id: 'pp-orbit-line',
-        type: 'line',
-        source: sourceId,
-        paint: {
-          'line-color': '#e11d48', // matches typical accent
-          'line-width': 1.5,
-          'line-dasharray': [4, 4],
-          'line-opacity': 0.4
-        }
-      }, 'pp-district-boundaries-thick'); // Draw below district boundaries if possible
-    }
-
-    let animationId: number;
-    const startTime = performance.now();
-    const duration = 40000; // 40 seconds across the state
-
-    const animate = (time: number) => {
-      const progress = ((time - startTime) % duration) / duration;
-      const currentLng = startLng + (endLng - startLng) * progress;
-      const currentLat = startLat + (endLat - startLat) * progress;
-      satellite.setLngLat([currentLng, currentLat]);
-      animationId = requestAnimationFrame(animate);
-    };
-
-    animationId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(animationId);
-      satellite.remove();
-      // We do not remove the orbit line layer/source so it persists nicely
-      // or to prevent errors if layer is already removed.
-    };
-  }, [ready, stage]);
 
   if (failed) {
     return (
@@ -915,8 +872,8 @@ export function TerrainMap({
         <div>
           <p className="font-semibold text-text-light">The map could not be displayed</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            This browser does not support WebGL. Every district and alert is still available
-            from the pages below.
+            This browser does not support WebGL. Every district and alert is still available from
+            the pages below.
           </p>
         </div>
       </div>
@@ -1005,13 +962,17 @@ export function TerrainMap({
       {selected !== null && (
         <div
           className={`absolute z-20 max-w-sm rounded-lg border border-border bg-surface/97 p-4 shadow-card-hover backdrop-blur ${
-            stage ? 'inset-x-3 bottom-[11.5rem] lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-32' : 'bottom-3 right-3'
+            stage
+              ? 'inset-x-3 bottom-[11.5rem] lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-32'
+              : 'bottom-3 right-3'
           }`}
         >
           <div className="mb-2 flex items-start justify-between gap-3">
             <span
               className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
-              style={{ backgroundColor: SEVERITY_COLORS[selected.severity] ?? SEVERITY_COLORS.unknown }}
+              style={{
+                backgroundColor: SEVERITY_COLORS[selected.severity] ?? SEVERITY_COLORS.unknown,
+              }}
             >
               {SEVERITY_LABELS[selected.severity] ?? selected.severity}
             </span>
@@ -1048,7 +1009,9 @@ export function TerrainMap({
 
       <div
         className={`absolute right-0 z-10 bg-surface/90 px-2 py-0.5 text-[10px] text-muted-foreground ${
-          stage ? 'bottom-0 rounded-tl lg:bottom-auto lg:top-0 lg:rounded-bl lg:rounded-tl-none' : 'bottom-0 rounded-tl'
+          stage
+            ? 'bottom-0 rounded-tl lg:bottom-auto lg:top-0 lg:rounded-bl lg:rounded-tl-none'
+            : 'bottom-0 rounded-tl'
         }`}
       >
         {ATTRIBUTION}

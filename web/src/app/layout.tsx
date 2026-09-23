@@ -80,8 +80,13 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
+  /*
+   * `icon` is deliberately absent: `app/favicon.ico` and `app/icon.png` are picked up by
+   * Next's file convention, and naming one here overrode both — which left the browser
+   * requesting /favicon.ico, getting a 404, and the tab falling back to a blank page icon.
+   * `logo.png` is 1250x1250, far too heavy for a tab icon anyway.
+   */
   icons: {
-    icon: '/logo.png',
     apple: '/logo.png',
   },
   manifest: '/manifest.webmanifest',
@@ -132,7 +137,17 @@ const structuredData = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
+    /*
+     * `data-scroll-behavior="smooth"` states what globals.css already sets on <html>.
+     * Without it Next warns that it can no longer disable smooth scrolling during route
+     * transitions for us, which would make a route change animate the scroll instead of
+     * jumping to the top.
+     */
+    <html
+      lang="en"
+      className={`${inter.variable} ${jakarta.variable}`}
+      data-scroll-behavior="smooth"
+    >
       <body>
         <script
           type="application/ld+json"
