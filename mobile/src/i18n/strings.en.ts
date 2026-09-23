@@ -104,6 +104,20 @@ export const en = {
   'settings.theme.system': 'System',
   'settings.theme.light': 'Light',
   'settings.theme.dark': 'Dark',
+  'settings.notifications': 'Notifications',
+  'settings.notifications.alerts': 'New alert notifications',
+  'settings.notifications.alerts.subtitle':
+    'Be told when a new public warning is published for Uttarakhand',
+  'settings.notifications.on': 'On',
+  'settings.notifications.off': 'Off',
+  'settings.notifications.working': 'Working…',
+  'settings.notifications.blocked': 'Blocked in system settings',
+  'settings.notifications.blockedTitle': 'Notifications are blocked',
+  'settings.notifications.blockedBody':
+    'Android has blocked notifications for Pahad Pulse. Allow them in system settings to be told about new warnings.',
+  'settings.notifications.openSettings': 'Open settings',
+  'settings.notifications.note':
+    'These mirror warnings published by SACHET / NDMA. Delivery cannot be guaranteed — a phone that is switched off or out of coverage will miss one. In an emergency, follow official channels and your district administration.',
   'settings.yourData': 'Your data',
   'settings.followed': 'Followed districts',
   'settings.followed.subtitle': 'Stored on this device only',

@@ -6,6 +6,7 @@ import { Card, Divider, HStack, Pressable, Text, VStack } from '@/components/ato
 import { Chip, ListRow, SectionHeader } from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { env } from '@/config/env';
+import { useAlertNotifications } from '@/features/notifications';
 import { useT, type TranslationKey } from '@/i18n';
 import { usePreferencesStore, type Language, type ThemeMode } from '@/stores';
 import { useTheme } from '@/theme';
@@ -39,6 +40,8 @@ export function SettingsScreen() {
   const savedDistricts = usePreferencesStore((s) => s.savedDistricts);
   const reset = usePreferencesStore((s) => s.reset);
 
+  const notifications = useAlertNotifications();
+
   const version = Constants.expoConfig?.version ?? '0.1.0';
 
   /**
@@ -51,6 +54,32 @@ export function SettingsScreen() {
   const dismiss = () => {
     if (router.canGoBack()) router.back();
     else router.replace('/');
+  };
+
+  /**
+   * One row rather than a switch: the OS permission can be denied outside the app, and a
+   * switch that silently springs back is worse than a row that explains why.
+   */
+  const toggleNotifications = () => {
+    if (notifications.busy) return;
+    if (notifications.enabled) {
+      void notifications.disable();
+      return;
+    }
+    void notifications.enable().then((granted) => {
+      if (granted) return;
+      Alert.alert(
+        t('settings.notifications.blockedTitle'),
+        t('settings.notifications.blockedBody'),
+        [
+          { text: t('settings.reset.cancel'), style: 'cancel' },
+          {
+            text: t('settings.notifications.openSettings'),
+            onPress: () => void Linking.openSettings(),
+          },
+        ]
+      );
+    });
   };
 
   const confirmReset = () => {
@@ -112,6 +141,39 @@ export function SettingsScreen() {
               />
             ))}
           </HStack>
+        </Card>
+      </VStack>
+
+      <VStack gap="sm">
+        <SectionHeader title={t('settings.notifications')} />
+        <Card padding="md">
+          <ListRow
+            title={t('settings.notifications.alerts')}
+            subtitle={
+              notifications.permission === 'denied'
+                ? t('settings.notifications.blocked')
+                : t('settings.notifications.alerts.subtitle')
+            }
+            icon={notifications.enabled ? 'notifications' : 'notifications-off-outline'}
+            value={
+              notifications.busy
+                ? t('settings.notifications.working')
+                : notifications.enabled
+                  ? t('settings.notifications.on')
+                  : t('settings.notifications.off')
+            }
+            showChevron={false}
+            onPress={toggleNotifications}
+          />
+          <Divider />
+          {/*
+           * Said next to the switch, not buried in a policy page. This mirrors warnings
+           * published by SACHET/NDMA and cannot promise delivery — a phone that is off or
+           * out of coverage misses one, and the state's own channels remain authoritative.
+           */}
+          <Text variant="footnote" color="textMuted" style={{ marginTop: theme.spacing.sm }}>
+            {t('settings.notifications.note')}
+          </Text>
         </Card>
       </VStack>
 

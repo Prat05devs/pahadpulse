@@ -8,11 +8,11 @@ and [guidelines/mobile/11-build-and-release.md](../guidelines/mobile/11-build-an
 
 ## Environments
 
-| Env | URL | Branch / tag | Database | Secrets |
-|---|---|---|---|---|
-| local | `http://localhost:3000` | any | Docker | `.env` (from `<vault>`) |
-| staging | `<url>` | `main` (auto) | `<anonymised copy>` | `<store>` |
-| production | `<url>` | tag `v*` (approval) | `<prod>` | `<store>` |
+| Env        | URL                     | Branch / tag        | Database            | Secrets                 |
+| ---------- | ----------------------- | ------------------- | ------------------- | ----------------------- |
+| local      | `http://localhost:3000` | any                 | Docker              | `.env` (from `<vault>`) |
+| staging    | `<url>`                 | `main` (auto)       | `<anonymised copy>` | `<store>`               |
+| production | `<url>`                 | tag `v*` (approval) | `<prod>`            | `<store>`               |
 
 ## Local setup
 
@@ -68,14 +68,14 @@ GitHub Actions workflow. Render bills each cron job separately, and the Actions 
 replaced them stopped silently when the GitHub account was locked for billing. That left the
 data frozen from 17 Sep 2026 until this change.
 
-| Job | Every | Source key |
-| --- | --- | --- |
-| Alerts (SACHET) | 15 min | `sachet-ndma` |
-| Disaster events (GDACS) | 30 min | `gdacs` |
-| Earthquakes (USGS) | 1 h | `usgs-earthquakes` |
-| Weather (Open-Meteo) | 1 h | `open-meteo` |
-| Air quality (Open-Meteo CAMS) | 1 h | `open-meteo-air-quality` |
-| Observation rollup and 90-day prune | 24 h | none (`npm run db:rollup`) |
+| Job                                 | Every  | Source key                 |
+| ----------------------------------- | ------ | -------------------------- |
+| Alerts (SACHET)                     | 15 min | `sachet-ndma`              |
+| Disaster events (GDACS)             | 30 min | `gdacs`                    |
+| Earthquakes (USGS)                  | 1 h    | `usgs-earthquakes`         |
+| Weather (Open-Meteo)                | 1 h    | `open-meteo`               |
+| Air quality (Open-Meteo CAMS)       | 1 h    | `open-meteo-air-quality`   |
+| Observation rollup and 90-day prune | 24 h   | none (`npm run db:rollup`) |
 
 Jobs are intervals, not clock times. A job is due once its interval has passed since its last
 run from any trigger, the CLI included. On boot, the scheduler reads the run log, so a server
@@ -115,6 +115,24 @@ any request without the shared key.
 
 Leave both unset on a machine in India: the CLI then fetches SACHET directly.
 
+**Alert notifications.** The API announces new warnings to devices that asked for them, via
+Expo's push service — a scheduler job every 5 minutes, after the alert ingestion jobs. Devices
+register their own push token at `POST /api/devices`; no account exists and none is needed.
+
+Rules worth knowing before changing any of it:
+
+- A warning is announced at most once. `alerts.notified_at` records it, and the upsert that
+  revises a warning deliberately leaves the column alone.
+- Only warnings issued in the last 3 hours are sent. A server that slept announces what is
+  current, not everything it missed; the rest are marked announced without being sent.
+- DS-6 applies: a source flagged `may_redistribute = false` (IMD today) never reaches a lock
+  screen, exactly as it never reaches the API.
+- A push token Expo reports as `DeviceNotRegistered` is disabled, not deleted.
+
+Credentials are an EAS matter, not a code one: Android needs FCM configured for the project and
+iOS an APNs key. Set `EXPO_ACCESS_TOKEN` on the API to stop anyone who learns a token sending
+notifications that appear to come from this app.
+
 **Weekly manual step.** The reference refresh (`openstreetmap` boundaries and villages,
 `openstreetmap-roads`) is deliberately not scheduled. It holds the whole state's geometry in
 memory for over a minute, which could take down a 512 MB instance. Run it from a machine with
@@ -142,32 +160,32 @@ See [Render outbound IPs](https://render.com/docs/outbound-ip-addresses).
 The generic rollout and monitoring placeholders below remain to be filled when production
 is provisioned.
 
-| Step | How |
-|---|---|
-| Trigger | `<push tag v*>` |
+| Step       | How                                                  |
+| ---------- | ---------------------------------------------------- |
+| Trigger    | `<push tag v*>`                                      |
 | Migrations | run **before** the rollout, backward-compatible only |
-| Rollout | `<rolling, maxUnavailable 0, readiness gated>` |
-| Smoke test | `<what runs after deploy>` |
-| Rollback | redeploy the previous image tag: `<command>` |
+| Rollout    | `<rolling, maxUnavailable 0, readiness gated>`       |
+| Smoke test | `<what runs after deploy>`                           |
+| Rollback   | redeploy the previous image tag: `<command>`         |
 
 Images are tagged by git SHA and are immutable. `latest` is not deployable.
 
 ## Health
 
-| Endpoint | Checks |
-|---|---|
+| Endpoint      | Checks                                        |
+| ------------- | --------------------------------------------- |
 | `GET /health` | process alive only — **no** dependency checks |
-| `GET /ready` | DB pool ping |
+| `GET /ready`  | DB pool ping                                  |
 
 ## Monitoring
 
-| Signal | Where | Alert threshold |
-|---|---|---|
-| 5xx rate | `<tool>` | > 1% over 5 min |
-| p95 latency | `<tool>` | > 1 s over 10 min |
-| `/ready` failing | `<tool>` | any instance > 2 min |
-| DB pool saturation | `<tool>` | > 80% for 5 min |
-| Crash-free sessions (mobile) | `<Sentry>` | < 99.5% |
+| Signal                       | Where      | Alert threshold      |
+| ---------------------------- | ---------- | -------------------- |
+| 5xx rate                     | `<tool>`   | > 1% over 5 min      |
+| p95 latency                  | `<tool>`   | > 1 s over 10 min    |
+| `/ready` failing             | `<tool>`   | any instance > 2 min |
+| DB pool saturation           | `<tool>`   | > 80% for 5 min      |
+| Crash-free sessions (mobile) | `<Sentry>` | < 99.5%              |
 
 ## Runbook
 
@@ -193,11 +211,11 @@ One entry per alert: what it means, how to confirm, how to mitigate.
 
 ## On call
 
-| | |
-|---|---|
-| Rotation | `<who / schedule>` |
-| Escalation | `<path>` |
-| Paging | `<tool>` |
+|            |                    |
+| ---------- | ------------------ |
+| Rotation   | `<who / schedule>` |
+| Escalation | `<path>`           |
+| Paging     | `<tool>`           |
 
 ## Postgres backups and recovery
 

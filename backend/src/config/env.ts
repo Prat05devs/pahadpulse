@@ -53,6 +53,13 @@ const EnvSchema = z.object({
   SACHET_RELAY_URL: z.url().optional(),
   SACHET_RELAY_KEY: z.string().min(32).optional(),
 
+  /**
+   * Expo's push API accepts unauthenticated requests, but an access token is what stops
+   * anyone who learns a token from sending notifications that appear to come from this app.
+   * Optional so local and test runs need no secret.
+   */
+  EXPO_ACCESS_TOKEN: z.string().min(1).optional(),
+
   CORS_ORIGIN: z
     .string()
     .default('http://localhost:3001')

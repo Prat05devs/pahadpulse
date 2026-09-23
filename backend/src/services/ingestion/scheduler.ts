@@ -1,8 +1,9 @@
-import { INGESTION_SCHEDULE } from '../../config/constants.js';
+import { INGESTION_SCHEDULE, PUSH } from '../../config/constants.js';
 import { SourceRepository } from '../../repositories/source.repository.js';
 import { RunStatus } from '../../types/dataset.js';
 import { describeError } from '../../utils/describe-error.js';
 import createLogger from '../../utils/logger.js';
+import { dispatchNewAlerts } from '../notification.service.js';
 import { rollupObservations } from '../observation-rollup.service.js';
 import { runSource } from './runner.js';
 
@@ -59,6 +60,8 @@ export const SCHEDULED_JOBS: readonly ScheduledJob[] = [
   },
   // Keeps `observations` under the database's free-tier ceiling.
   { name: 'observation-rollup', intervalMs: INGESTION_SCHEDULE.ROLLUP_MS, sourceKey: null },
+  // Tells the devices that asked about warnings the alert jobs above just stored.
+  { name: 'alert-notifications', intervalMs: PUSH.DISPATCH_MS, sourceKey: null },
 ];
 
 /** `last_run_at` is a naive UTC string from the driver, as elsewhere in the repository. */
@@ -109,6 +112,10 @@ export function dueJobs(
 }
 
 async function runJob(job: ScheduledJob): Promise<void> {
+  if (job.name === 'alert-notifications') {
+    await dispatchNewAlerts();
+    return;
+  }
   if (job.sourceKey === null) {
     await rollupObservations();
     return;

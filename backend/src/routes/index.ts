@@ -3,6 +3,7 @@ import { Router } from 'express';
 import alertRouter, { areaAlertsRouter } from './alerts.route.js';
 import areaRouter from './areas.route.js';
 import indicatorRouter, { areaIndicatorsRouter } from './indicators.route.js';
+import deviceRouter from './devices.route.js';
 import connectivityRouter, { areaConnectivityRouter } from './connectivity.route.js';
 import mapRouter from './map.route.js';
 import projectRouter from './projects.route.js';
@@ -30,6 +31,7 @@ apiRouter.use('/tourism', tourismRouter);
 apiRouter.use('/business', businessRouter);
 apiRouter.use('/connectivity', connectivityRouter);
 apiRouter.use('/seismic', seismicRouter);
+apiRouter.use('/devices', deviceRouter);
 // Batch reads for the state-wide pages. Not under `/areas` — see weather.route.ts.
 apiRouter.use('/weather', stateWeatherRouter);
 apiRouter.use('/air-quality', stateAirRouter);

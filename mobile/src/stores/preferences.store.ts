@@ -27,11 +27,20 @@ type PreferencesState = {
   savedDistricts: string[];
   /** Set once the intro has been dismissed, so it is never shown twice. */
   hasSeenIntro: boolean;
+  /**
+   * Whether this device asked to be told about new public warnings.
+   *
+   * The server holds the push token; this is the reader's choice, which has to survive a
+   * launch before any network call is made — otherwise the switch flickers off on every
+   * cold start while registration is in flight.
+   */
+  notificationsEnabled: boolean;
 
   setLanguage: (language: Language) => void;
   setThemeMode: (mode: ThemeMode) => void;
   toggleSavedDistrict: (slug: string) => void;
   markIntroSeen: () => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
   reset: () => void;
 };
 
@@ -46,6 +55,7 @@ const INITIAL = {
   themeMode: 'system' as ThemeMode,
   savedDistricts: [] as string[],
   hasSeenIntro: false,
+  notificationsEnabled: false,
 };
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -66,6 +76,8 @@ export const usePreferencesStore = create<PreferencesState>()(
 
       markIntroSeen: () => set({ hasSeenIntro: true }),
 
+      setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
+
       reset: () => set(INITIAL),
     }),
     {
@@ -81,6 +93,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         themeMode: state.themeMode,
         savedDistricts: state.savedDistricts,
         hasSeenIntro: state.hasSeenIntro,
+        notificationsEnabled: state.notificationsEnabled,
       }),
     }
   )

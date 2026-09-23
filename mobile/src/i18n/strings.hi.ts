@@ -105,6 +105,20 @@ export const hi: Record<keyof typeof en, string> = {
   'settings.theme.system': 'सिस्टम',
   'settings.theme.light': 'हल्का',
   'settings.theme.dark': 'गहरा',
+  'settings.notifications': 'सूचनाएँ',
+  'settings.notifications.alerts': 'नई चेतावनी की सूचना',
+  'settings.notifications.alerts.subtitle':
+    'उत्तराखंड के लिए नई सार्वजनिक चेतावनी प्रकाशित होते ही जानकारी पाएँ',
+  'settings.notifications.on': 'चालू',
+  'settings.notifications.off': 'बंद',
+  'settings.notifications.working': 'हो रहा है…',
+  'settings.notifications.blocked': 'सिस्टम सेटिंग्स में बंद है',
+  'settings.notifications.blockedTitle': 'सूचनाएँ बंद हैं',
+  'settings.notifications.blockedBody':
+    'फ़ोन ने पहाड़ पल्स की सूचनाएँ रोक रखी हैं। नई चेतावनियों की जानकारी पाने के लिए सिस्टम सेटिंग्स में इन्हें अनुमति दें।',
+  'settings.notifications.openSettings': 'सेटिंग्स खोलें',
+  'settings.notifications.note':
+    'ये सूचनाएँ सचेत / एनडीएमए द्वारा प्रकाशित चेतावनियों को ही दोहराती हैं। इनका पहुँचना निश्चित नहीं है — बंद फ़ोन या नेटवर्क से बाहर होने पर सूचना छूट सकती है। आपात स्थिति में आधिकारिक माध्यमों और अपने ज़िला प्रशासन का पालन करें।',
   'settings.yourData': 'आपका डेटा',
   'settings.followed': 'फ़ॉलो किए ज़िले',
   'settings.followed.subtitle': 'सिर्फ़ इसी फ़ोन में सहेजा जाता है',

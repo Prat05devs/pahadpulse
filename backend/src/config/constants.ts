@@ -61,6 +61,25 @@ export const FRESHNESS_GRACE = { STALE_AFTER: 1, EXPIRED_AFTER: 3 } as const;
 export const INGESTION_RUN_TIMEOUT_SECONDS = 30 * 60;
 
 /**
+ * Push notifications for new alerts (services/notification.service.ts).
+ *
+ * The window is what stops a server that was asleep, or a deploy after an outage, from
+ * announcing everything it missed at once. Anything older than this is recorded as
+ * announced without being sent — a three-hour nowcast from yesterday is not news.
+ */
+export const PUSH = {
+  EXPO_URL: 'https://exp.host/--/api/v2/push/send',
+  /** Expo accepts up to 100 messages per request. */
+  BATCH_SIZE: 100,
+  ALERT_WINDOW_HOURS: 3,
+  /** A ceiling on one pass, so a burst of warnings cannot become an unbounded send. */
+  MAX_ALERTS_PER_RUN: 5,
+  TIMEOUT_MS: 15_000,
+  /** How often the scheduler looks for warnings nobody has been told about. */
+  DISPATCH_MS: 5 * 60 * 1000,
+} as const;
+
+/**
  * The in-process ingestion scheduler (services/ingestion/scheduler.ts).
  *
  * Intervals, not clock times: a job is due when this long has passed since its last run,
