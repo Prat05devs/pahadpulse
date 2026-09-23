@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, Modal, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBusinessScenarios, useBusinessComparison } from '../hooks';
+import { outcomeOf, readMetric } from '../outcome';
 import {
   Text,
   Card,
@@ -24,6 +25,12 @@ const METRIC_KEYS: Record<string, TranslationKey> = {
   agriculture: 'compare.metric.agriculture',
   safety: 'compare.metric.safety',
 };
+
+const CONFIDENCE_KEYS = {
+  low: 'compare.confidence.low',
+  medium: 'compare.confidence.medium',
+  high: 'compare.confidence.high',
+} as const satisfies Record<string, TranslationKey>;
 
 /** A metric the API added that this build has no label for is shown by its key, not hidden. */
 function metricLabel(t: Translate, key: string): string {
@@ -158,18 +165,53 @@ function NativeSelect({
   );
 }
 
+/**
+ * One metric's row.
+ *
+ * `available: false` renders as "Not scored", never as a bar. The API fills an unmeasured
+ * metric with a neutral 50 so the weighted index can still be computed, and this screen
+ * used to draw that 50 as though roads or dairy output had been measured for the district.
+ * Showing a number we never measured, in a product whose whole claim is provenance, is the
+ * one mistake this screen must not make.
+ */
 function ScoreBar({
   label,
   score,
   weight,
   isWinner,
+  available = true,
 }: {
   label: string;
   score: number;
   weight: number;
   isWinner: boolean;
+  available?: boolean;
 }) {
   const theme = useTheme();
+  const t = useT();
+
+  if (!available) {
+    return (
+      <VStack gap="xs" style={{ marginVertical: theme.spacing.xs }}>
+        <HStack justify="space-between" align="center">
+          <Text variant="caption" color="textMuted">
+            {label}
+          </Text>
+          <Text variant="caption" color="textMuted">
+            {t('compare.notScored')}
+          </Text>
+        </HStack>
+        <View
+          style={{
+            height: 6,
+            backgroundColor: theme.colors.surfaceMuted,
+            borderRadius: theme.radius.pill,
+          }}
+        />
+      </VStack>
+    );
+  }
+
   return (
     <VStack gap="xs" style={{ marginVertical: theme.spacing.xs }}>
       <HStack justify="space-between" align="center">
@@ -249,6 +291,13 @@ export function BusinessComparisonScreen({
    */
   const stackDistrictCards = width < 400 || fontScale >= 1.3;
   const ResultRow = stackDistrictCards ? VStack : HStack;
+
+  /*
+   * Three outcomes, not two: a district, a tie, or no recommendation at all — see
+   * `outcomeOf`, which is where the reasoning and its tests live.
+   */
+  const outcome = report ? outcomeOf(report) : null;
+  const hasRecommendation = outcome?.kind === 'district';
 
   const selectedScenarioId = scenarioId || scenarios?.[0]?.id || '';
 
@@ -421,34 +470,60 @@ export function BusinessComparisonScreen({
           <VStack gap="lg" style={{ marginTop: theme.spacing.md }}>
             <Card
               padding="lg"
-              tone={report.winner === 'tie' ? 'muted' : 'surface'}
+              tone={hasRecommendation ? 'surface' : 'muted'}
               style={
-                report.winner !== 'tie'
-                  ? { borderColor: theme.colors.primary, borderWidth: 1 }
-                  : {}
+                hasRecommendation ? { borderColor: theme.colors.primary, borderWidth: 1 } : {}
               }
             >
               <VStack gap="md">
                 <HStack align="center" gap="sm">
                   <Icon
-                    name={report.winner === 'tie' ? 'scale' : 'trophy'}
+                    name={
+                      hasRecommendation
+                        ? 'trophy'
+                        : outcome?.kind === 'insufficient'
+                          ? 'alert-circle'
+                          : 'scale'
+                    }
                     size={24}
-                    tone={report.winner === 'tie' ? 'textMuted' : 'primary'}
+                    tone={hasRecommendation ? 'primary' : 'textMuted'}
                   />
-                  <Text variant="title" color={report.winner === 'tie' ? 'text' : 'primary'}>
-                    {report.winner === 'tie'
-                      ? t('compare.tie')
-                      : t('compare.recommended', {
-                          name:
-                            report.winner === report.districtA.slug
-                              ? report.districtA.name
-                              : report.districtB.name,
-                        })}
+                  {/*
+                   * `insufficient` is a third outcome, not a district.
+                   *
+                   * This used to test only for `tie`, so when the API reported that the
+                   * evidence was too thin to recommend either district, the slug comparison
+                   * below fell through and the screen named district B as recommended — a
+                   * recommendation the API had explicitly declined to make.
+                   */}
+                  <Text variant="title" color={hasRecommendation ? 'primary' : 'text'}>
+                    {outcome?.kind === 'insufficient'
+                      ? t('compare.insufficient')
+                      : outcome?.kind === 'tie'
+                        ? t('compare.tie')
+                        : t('compare.recommended', { name: outcome?.name ?? '' })}
                   </Text>
                 </HStack>
                 <Text variant="body" color="textMuted">
                   {report.verdict}
                 </Text>
+                {report.evidence ? (
+                  <VStack gap="xs">
+                    <Text variant="footnote" color="textMuted">
+                      {t(CONFIDENCE_KEYS[report.evidence.confidence])} ·{' '}
+                      {t('compare.coverage', { pct: String(report.evidence.coveragePct) })}
+                    </Text>
+                    {report.evidence.missingMetrics.length > 0 ? (
+                      <Text variant="footnote" color="textMuted">
+                        {t('compare.notScoredList', {
+                          metrics: report.evidence.missingMetrics
+                            .map((key) => metricLabel(t, key))
+                            .join(', '),
+                        })}
+                      </Text>
+                    ) : null}
+                  </VStack>
+                ) : null}
               </VStack>
             </Card>
 
@@ -490,7 +565,10 @@ export function BusinessComparisonScreen({
                                 key as keyof typeof report.scenario.weights
                               ];
                             if (weight === 0) return null;
-                            const score = dist.metrics[key as keyof typeof dist.metrics] || 0;
+                            const { available, score } = readMetric(
+                              dist,
+                              key as keyof typeof dist.metrics
+                            );
                             return (
                               <ScoreBar
                                 key={key}
@@ -498,6 +576,7 @@ export function BusinessComparisonScreen({
                                 score={score}
                                 weight={weight}
                                 isWinner={isWinner}
+                                available={available}
                               />
                             );
                           })}

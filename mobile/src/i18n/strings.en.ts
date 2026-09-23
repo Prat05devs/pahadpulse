@@ -396,6 +396,13 @@ export const en = {
   'compare.failed': 'Failed to load comparison.',
   'compare.tie': 'It’s a tie!',
   'compare.recommended': '{name} is recommended',
+  'compare.insufficient': 'Not enough evidence to recommend',
+  'compare.notScored': 'Not scored',
+  'compare.confidence.low': 'Low confidence',
+  'compare.confidence.medium': 'Medium confidence',
+  'compare.confidence.high': 'High confidence',
+  'compare.coverage': '{pct}% of this business type’s factors are backed by measured data.',
+  'compare.notScoredList': 'Not scored: {metrics}',
   'compare.closeChoices': 'Close {label} choices',
 
   /* ── Small labels (shown uppercase in English) ──────────────────── */

@@ -396,6 +396,13 @@ export const hi: Record<keyof typeof en, string> = {
   'compare.failed': 'तुलना लोड नहीं हो सकी।',
   'compare.tie': 'दोनों बराबर!',
   'compare.recommended': '{name} बेहतर रहेगा',
+  'compare.insufficient': 'सिफ़ारिश के लिए पर्याप्त प्रमाण नहीं',
+  'compare.notScored': 'आकलन नहीं',
+  'compare.confidence.low': 'कम विश्वसनीयता',
+  'compare.confidence.medium': 'मध्यम विश्वसनीयता',
+  'compare.confidence.high': 'उच्च विश्वसनीयता',
+  'compare.coverage': 'इस कारोबार के {pct}% कारकों के पीछे मापे गए आँकड़े हैं।',
+  'compare.notScoredList': 'आकलन नहीं: {metrics}',
   'compare.closeChoices': '{label} के विकल्प बंद करें',
 
   /* ── Small labels (shown uppercase in English) ──────────────────── */
