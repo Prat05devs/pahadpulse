@@ -150,6 +150,18 @@ export const en = {
   'credits.licence.bsd': 'BSD-3-Clause',
   'credits.licence.govIndia': 'Government of India',
   'credits.licence.nonCommercial': 'Free for non-commercial use',
+  'credits.disclaimer.title': 'An independent platform',
+  'credits.disclaimer.body':
+    'Pahad Pulse is not a government application. It is not affiliated with, endorsed by, or operated by the Government of Uttarakhand, the Government of India or any of their departments. Government information shown here remains the property of the department that published it, and every figure links to that department below.',
+  'credits.official.title': 'Official sources',
+  'credits.official.subtitle': 'Every dataset, and the department that publishes it',
+  'credits.official.loading': 'Loading the source registry…',
+  'credits.official.failed': 'The source registry could not be loaded.',
+  'credits.official.openHint': 'Opens the publisher’s own website',
+  'credits.official.updated': 'Last checked {date}',
+  'credits.contact.title': 'Contact',
+  'credits.contact.body': 'Questions, corrections and data requests:',
+  'credits.contact.email': 'admin@wtsolutions.cc',
 
   /* ── Today ──────────────────────────────────────────────────────── */
   'today.brand': 'PAHAD PULSE',

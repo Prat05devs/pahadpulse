@@ -23,6 +23,8 @@ describe('the dictionaries', () => {
         'alertDetail.dateTimeRelative',
         'alertDetail.meta',
         'alerts.card.areasMore',
+        // An email address is an address, not a phrase.
+        'credits.contact.email',
         'credits.licence.bsd',
         'credits.licence.odbl',
         'settings.api',

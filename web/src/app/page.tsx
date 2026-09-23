@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
 import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
@@ -149,7 +150,16 @@ export default async function HomePage() {
 
         <footer className="border-t border-border">
           <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-muted-foreground sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-            <p>Official sources are shown alongside every published figure.</p>
+            {/* The disclaimer is on the page a reader lands on, not only in the policy
+                pages: Pahad Pulse presents government information, and whose platform this
+                is not has to be answerable without hunting for it. */}
+            <p>
+              Official sources are shown alongside every published figure —{' '}
+              <Link href="/sources" className="font-medium text-accent hover:underline">
+                see all data sources
+              </Link>
+              . Pahad Pulse is an independent platform, not a Government of Uttarakhand application.
+            </p>
             <p>Proudly making Uttarakhand’s public data useful for everyone.</p>
           </div>
         </footer>

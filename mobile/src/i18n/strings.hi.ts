@@ -150,6 +150,18 @@ export const hi: Record<keyof typeof en, string> = {
   'credits.licence.bsd': 'BSD-3-Clause',
   'credits.licence.govIndia': 'भारत सरकार',
   'credits.licence.nonCommercial': 'ग़ैर-व्यावसायिक उपयोग के लिए मुफ़्त',
+  'credits.disclaimer.title': 'एक स्वतंत्र मंच',
+  'credits.disclaimer.body':
+    'पहाड़ पल्स कोई सरकारी ऐप नहीं है। यह उत्तराखंड सरकार, भारत सरकार या उनके किसी विभाग से संबद्ध, अनुमोदित या संचालित नहीं है। यहाँ दिखाई गई सरकारी जानकारी उसे प्रकाशित करने वाले विभाग की ही है, और हर आँकड़ा नीचे उसी विभाग से जुड़ा है।',
+  'credits.official.title': 'आधिकारिक स्रोत',
+  'credits.official.subtitle': 'हर डेटासेट, और उसे प्रकाशित करने वाला विभाग',
+  'credits.official.loading': 'स्रोत सूची लोड हो रही है…',
+  'credits.official.failed': 'स्रोत सूची लोड नहीं हो सकी।',
+  'credits.official.openHint': 'प्रकाशक की अपनी वेबसाइट खोलता है',
+  'credits.official.updated': 'अंतिम जाँच {date}',
+  'credits.contact.title': 'संपर्क',
+  'credits.contact.body': 'सवाल, सुधार और डेटा संबंधी अनुरोध:',
+  'credits.contact.email': 'admin@wtsolutions.cc',
 
   /* ── Today ──────────────────────────────────────────────────────── */
   'today.brand': 'पहाड़ पल्स',
