@@ -182,6 +182,8 @@ export function TerrainMap({
     if (!stage && ready) setTerrainOn(true);
   }, [stage, ready]);
   const [alertsOn, setAlertsOn] = useState(true);
+  /** Collapsed by default; see the attribution block at the end of this component. */
+  const [attributionOpen, setAttributionOpen] = useState(false);
   const [selected, setSelected] = useState<SelectedAlert | null>(null);
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
 
@@ -1007,14 +1009,50 @@ export function TerrainMap({
         </div>
       )}
 
+      {/*
+       * Attribution, collapsed to a button.
+       *
+       * It cannot simply be deleted: the basemap is OpenStreetMap data under ODbL and the
+       * relief is Mapzen/AWS terrain, and both require the credit to be shown — datasets.md
+       * records "attribution string must appear on every map surface" as a condition of use,
+       * not a preference. Collapsing it to a control that opens on click or keyboard focus
+       * is what map libraries themselves do on small screens, and keeps the credit one
+       * action away instead of across the bottom of the dashboard.
+       */}
       <div
-        className={`absolute right-0 z-10 bg-surface/90 px-2 py-0.5 text-[10px] text-muted-foreground ${
-          stage
-            ? 'bottom-0 rounded-tl lg:bottom-auto lg:top-0 lg:rounded-bl lg:rounded-tl-none'
-            : 'bottom-0 rounded-tl'
+        className={`absolute right-0 z-10 ${
+          stage ? 'bottom-0 lg:bottom-auto lg:top-0' : 'bottom-0'
         }`}
       >
-        {ATTRIBUTION}
+        {attributionOpen ? (
+          <button
+            type="button"
+            onClick={() => {
+              setAttributionOpen(false);
+            }}
+            aria-expanded={true}
+            className={`bg-surface/90 px-2 py-0.5 text-[10px] text-muted-foreground ${
+              stage ? 'rounded-tl lg:rounded-bl lg:rounded-tl-none' : 'rounded-tl'
+            }`}
+          >
+            {ATTRIBUTION}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setAttributionOpen(true);
+            }}
+            aria-expanded={false}
+            aria-label="Map data sources and attribution"
+            title={ATTRIBUTION}
+            className={`flex size-5 items-center justify-center bg-surface/90 text-[10px] font-semibold text-muted-foreground ${
+              stage ? 'rounded-tl lg:rounded-bl lg:rounded-tl-none' : 'rounded-tl'
+            }`}
+          >
+            i
+          </button>
+        )}
       </div>
 
       {usesPlaceholder && (
