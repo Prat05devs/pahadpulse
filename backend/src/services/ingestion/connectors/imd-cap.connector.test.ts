@@ -30,6 +30,7 @@ const mockAlertRepo: jest.Mocked<IAlertRepository> = {
   findById: jest.fn(),
   listActive: jest.fn(),
   listActiveForArea: jest.fn(),
+  listRecent: jest.fn(),
   countActive: jest.fn(),
 };
 

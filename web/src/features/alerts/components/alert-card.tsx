@@ -7,6 +7,15 @@ interface AlertCardProps {
   alert: Alert;
   /** Position in the list, for the entrance stagger. */
   index?: number;
+  /**
+   * Whether to mark the alert as lapsed.
+   *
+   * Passed in rather than computed from `new Date()` here: this is a client component, so
+   * comparing against the browser clock made the server's HTML and the browser's first
+   * render disagree around an expiry moment — a hydration mismatch (React #418), which
+   * costs the whole tree a re-render. The server decides, once, and says so.
+   */
+  expired?: boolean;
 }
 
 /**
@@ -35,6 +44,16 @@ const TYPE_ICONS: Record<string, string> = {
   disaster: '🚨',
 };
 
+/**
+ * The API sends UTC as `YYYY-MM-DD HH:mm:ss`, with no zone marker. `new Date(...)` reads
+ * that as LOCAL time, so the same string became 05:30 apart on the server (UTC) and in an
+ * Indian browser (IST): every alert time was displayed wrong, and the two renders differed,
+ * which is a hydration mismatch. Appending `Z` states what the API already means.
+ */
+function parseUtc(value: string): Date {
+  return new Date(`${value.replace(' ', 'T')}Z`);
+}
+
 function formatWhen(date: Date): string {
   return date.toLocaleString('en-IN', {
     day: 'numeric',
@@ -45,13 +64,13 @@ function formatWhen(date: Date): string {
   });
 }
 
-export function AlertCard({ alert, index = 0 }: AlertCardProps) {
+export function AlertCard({ alert, index = 0, expired = false }: AlertCardProps) {
   const severity = SEVERITY[alert.severity] ?? SEVERITY.unknown;
   const icon = TYPE_ICONS[alert.type] ?? '⚠️';
 
-  const issuedDate = new Date(alert.issuedAt);
-  const expiresDate = alert.expiresAt === null ? null : new Date(alert.expiresAt);
-  const isExpired = expiresDate !== null && expiresDate <= new Date();
+  const issuedDate = parseUtc(alert.issuedAt);
+  const expiresDate = alert.expiresAt === null ? null : parseUtc(alert.expiresAt);
+  const isExpired = expired;
 
   return (
     <article

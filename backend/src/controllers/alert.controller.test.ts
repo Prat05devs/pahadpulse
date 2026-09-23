@@ -24,6 +24,7 @@ const mockAlertRepo: jest.Mocked<IAlertRepository> = {
   findById: jest.fn(),
   listActive: jest.fn(),
   listActiveForArea: jest.fn(),
+  listRecent: jest.fn(),
   countActive: jest.fn(),
 };
 const mockAreaRepo: jest.Mocked<IAreaRepository> = {
@@ -187,6 +188,34 @@ describe('listActive', () => {
       NOW,
     );
     expect(result._unsafeUnwrapErr().code).toBe(ERRORS.AREA_NOT_FOUND.code);
+  });
+});
+
+describe('listRecent', () => {
+  it('passes the window and limit through, and keeps the order the repository returned', async () => {
+    mockAlertRepo.listRecent.mockResolvedValue(
+      ok([alert({ id: 2, issuedAt: '2026-09-03 09:00:00' }), alert({ id: 1 })]),
+    );
+    mockSourceRepo.findByIds.mockResolvedValue(
+      ok(new Map([[1, imdSource({ mayRedistribute: true })]])),
+    );
+
+    const result = await controller.listRecent(48, 20, NOW);
+
+    expect(mockAlertRepo.listRecent).toHaveBeenCalledWith(48, 20);
+    expect(result._unsafeUnwrap().map((item) => item.id)).toEqual([2, 1]);
+  });
+
+  /** DS-6 applies to a lapsed warning exactly as it does to one in force. */
+  it('drops alerts from a source that may not be redistributed', async () => {
+    mockAlertRepo.listRecent.mockResolvedValue(ok([alert()]));
+    mockSourceRepo.findByIds.mockResolvedValue(
+      ok(new Map([[1, imdSource({ mayRedistribute: false })]])),
+    );
+
+    const result = await controller.listRecent(48, 20, NOW);
+
+    expect(result._unsafeUnwrap()).toHaveLength(0);
   });
 });
 

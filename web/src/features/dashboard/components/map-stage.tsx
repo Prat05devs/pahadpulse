@@ -14,6 +14,13 @@ interface MapStageProps {
   counters: LiveCountersData;
   overview: StateOverview;
   mapError: string | null;
+  /**
+   * How many warnings lapsed in the last 48 hours. Shown only when nothing is in force:
+   * "0" alone reads as a broken feed, and on a quiet day it is the true answer — this
+   * says the feed is working and what it recently carried. Null when unknown, which is
+   * NOT zero and must not be worded as one.
+   */
+  recentAlertCount: number | null;
 }
 
 /**
@@ -94,7 +101,14 @@ function year(figure: { vintage: string | null }): string | null {
  * `pointer-events-none` on the overlay wrappers with `pointer-events-auto` on the cards
  * themselves keeps the map draggable in the gaps between them.
  */
-export function MapStage({ districts, alerts, counters, overview, mapError }: MapStageProps) {
+export function MapStage({
+  districts,
+  alerts,
+  counters,
+  overview,
+  mapError,
+  recentAlertCount,
+}: MapStageProps) {
   const alertCount = counters.activeAlerts;
 
   return (
@@ -188,6 +202,14 @@ export function MapStage({ districts, alerts, counters, overview, mapError }: Ma
               ? 'No warnings currently in force across the state.'
               : `Warning${alertCount === 1 ? '' : 's'} in force. Shaded areas on the map show the districts affected.`}
           </p>
+          {alertCount === 0 && recentAlertCount !== null && recentAlertCount > 0 && (
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              <Link href="/alerts" className="font-medium text-accent hover:underline">
+                {recentAlertCount} lapsed in the last 48 hours
+              </Link>{' '}
+              — recently expired, not in force.
+            </p>
+          )}
         </article>
 
         <article

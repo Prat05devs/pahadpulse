@@ -93,6 +93,22 @@ export async function getById(
   return ok(visible);
 }
 
+/**
+ * Warnings that have lapsed in the last `hours`, newest first.
+ *
+ * Same provenance filter as the active list: DS-6 does not stop applying because a warning
+ * has expired, so a source we may not redistribute is dropped here too.
+ */
+export async function listRecent(
+  hours: number,
+  limit: number,
+  now?: Date,
+): Promise<Result<AlertOut[], RequestError>> {
+  const alerts = await AlertRepository.listRecent(hours, limit);
+  if (alerts.isErr()) return err(alerts.error);
+  return withProvenance(alerts.value, now);
+}
+
 export interface AlertSummary {
   activeCount: number;
   bySeverity: Record<string, number>;

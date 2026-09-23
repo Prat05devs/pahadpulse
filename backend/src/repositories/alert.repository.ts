@@ -105,6 +105,7 @@ export interface IAlertRepository {
     cursor: number,
     limit: number,
   ): Promise<Result<Paginated<Alert>, RequestError>>;
+  listRecent(hours: number, limit: number): Promise<Result<Alert[], RequestError>>;
   countActive(): Promise<Result<number, RequestError>>;
 }
 
@@ -216,9 +217,10 @@ class AlertRepositoryImpl implements IAlertRepository {
 
   async findById(id: number): Promise<Result<Alert, RequestError>> {
     try {
-      const { rows } = await db.query<AlertWithAreasRow>(`${ALERT_SELECT} WHERE a.id = $1 LIMIT 1`, [
-        id,
-      ]);
+      const { rows } = await db.query<AlertWithAreasRow>(
+        `${ALERT_SELECT} WHERE a.id = $1 LIMIT 1`,
+        [id],
+      );
       const row = rows[0];
       if (row === undefined) return err(ERRORS.ALERT_NOT_FOUND);
       return ok(toAlert(row));
@@ -277,9 +279,7 @@ class AlertRepositoryImpl implements IAlertRepository {
         const allowed = (Object.keys(SEVERITY_RANK) as AlertSeverity[]).filter(
           (severity) => SEVERITY_RANK[severity] >= minRank,
         );
-        conditions.push(
-          `a.severity IN (${allowed.map((severity) => next(severity)).join(', ')})`,
-        );
+        conditions.push(`a.severity IN (${allowed.map((severity) => next(severity)).join(', ')})`);
       }
 
       const { rows } = await db.query<AlertWithAreasRow>(
@@ -303,6 +303,32 @@ class AlertRepositoryImpl implements IAlertRepository {
     limit: number,
   ): Promise<Result<Paginated<Alert>, RequestError>> {
     return this.listActive(cursor, limit, { areaId });
+  }
+
+  /**
+   * Warnings issued in the last `hours` that are no longer in force, newest first.
+   *
+   * Deliberately excludes anything still active: those belong to `listActive`, and an
+   * alert that appeared in both lists would be read as two warnings. Ordered by
+   * `issued_at` rather than by id, because "latest" to a reader means when the authority
+   * issued it, not the order we happened to store it in.
+   */
+  async listRecent(hours: number, limit: number): Promise<Result<Alert[], RequestError>> {
+    try {
+      const { rows } = await db.query<AlertWithAreasRow>(
+        `${ALERT_SELECT}
+          WHERE a.issued_at > (now() AT TIME ZONE 'utc') - ($1 * INTERVAL '1 hour')
+            AND NOT (a.status = 'active'
+                     AND (a.expires_at IS NULL OR a.expires_at > (now() AT TIME ZONE 'utc')))
+          ORDER BY a.issued_at DESC
+          LIMIT $2`,
+        [hours, limit],
+      );
+      return ok(rows.map(toAlert));
+    } catch (error) {
+      logger.error('listRecent failed', { hours, limit, error: describeError(error) });
+      return err(ERRORS.DATABASE_ERROR);
+    }
   }
 
   async countActive(): Promise<Result<number, RequestError>> {

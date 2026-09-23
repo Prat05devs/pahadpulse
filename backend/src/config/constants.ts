@@ -88,6 +88,16 @@ export const CACHE_TTL_INDICATOR_SERIES = 6 * 60 * 60; // 6h — trend and ranki
 /** The demo source's registry key (indicators.md-equivalent §8 decision, recorded in code). */
 export const DEMO_SOURCE_KEY = 'pahad-pulse-demo-data';
 
+/**
+ * The window the alerts page's "Recently expired" section looks back over.
+ *
+ * SACHET's nowcasts last three hours, so on a quiet day every warning in the feed has
+ * lapsed and an active-only page is empty — which reads as broken rather than as calm.
+ * 48 hours is two nights of weather: long enough that the section is rarely empty, short
+ * enough that nothing in it is mistaken for current.
+ */
+export const RECENT_ALERTS = { DEFAULT_WINDOW_HOURS: 48, MAX_WINDOW_HOURS: 168 } as const;
+
 /** Alerts change fast during an incident; short enough to be current, long enough to
  *  survive a front-page traffic spike (alerts.md §5). */
 export const CACHE_TTL_ALERTS = 60;

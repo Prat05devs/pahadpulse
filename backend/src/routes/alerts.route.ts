@@ -1,7 +1,7 @@
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import { z } from 'zod';
 
-import { CACHE_TTL_ALERTS, PAGINATION } from '../config/constants.js';
+import { CACHE_TTL_ALERTS, PAGINATION, RECENT_ALERTS } from '../config/constants.js';
 import * as alertController from '../controllers/alert.controller.js';
 import { cacheMiddleware } from '../middleware/cache.middleware.js';
 import { validateRequest } from '../middleware/validate-request.middleware.js';
@@ -19,6 +19,20 @@ const SCHEMA = {
     type: z.enum(AlertType).optional(),
     minSeverity: z.enum(AlertSeverity).optional(),
     cursor: z.coerce.number().int().positive().default(Number.MAX_SAFE_INTEGER),
+    limit: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(PAGINATION.MAX_LIMIT)
+      .default(PAGINATION.DEFAULT_LIMIT),
+  }),
+  RECENT_QUERY: z.object({
+    hours: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(RECENT_ALERTS.MAX_WINDOW_HOURS)
+      .default(RECENT_ALERTS.DEFAULT_WINDOW_HOURS),
     limit: z.coerce
       .number()
       .int()
@@ -57,6 +71,29 @@ alertRouter.get(
     result.match(
       (data) => {
         res.json(successResponse(data, 'Active alerts fetched successfully'));
+      },
+      (error) => {
+        next(error);
+      },
+    );
+  },
+);
+
+/**
+ * Warnings that have already lapsed, for the "recently expired" section of the alerts page.
+ * Separate from `/active` rather than a flag on it: nothing that reads this endpoint may
+ * ever mistake its contents for warnings in force.
+ */
+alertRouter.get(
+  '/recent',
+  cacheMiddleware(CACHE_TTL_ALERTS),
+  validateRequest({ query: SCHEMA.RECENT_QUERY }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { hours, limit } = req.validated.query as z.infer<typeof SCHEMA.RECENT_QUERY>;
+    const result = await alertController.listRecent(hours, limit);
+    result.match(
+      (data) => {
+        res.json(successResponse(data, 'Recent alerts fetched successfully'));
       },
       (error) => {
         next(error);

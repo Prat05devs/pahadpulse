@@ -2,7 +2,7 @@ import React from 'react';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { buildPageMetadata } from '@/lib/seo';
 import { AlertCard } from '@/features/alerts/components';
-import { fetchActiveAlerts } from '@/features/alerts/services';
+import { fetchActiveAlerts, fetchRecentAlerts } from '@/features/alerts/services';
 import { TerrainMap, fetchAlertFeatures } from '@/features/map';
 import { fetchRecentSeismic } from '@/features/seismic/services';
 import { SeismicPanel } from '@/features/seismic/components/seismic-panel';
@@ -22,15 +22,19 @@ export const metadata = buildPageMetadata({
 // Fetch at request time so deploy-time failures and expired alerts are not cached as pages.
 export const dynamic = 'force-dynamic';
 
+/** Two nights of weather — long enough to rarely be empty, short enough to stay relevant. */
+const RECENT_WINDOW_HOURS = 48;
+
 export default async function AlertsPage() {
   let alerts = null;
   let alertFeatures = null;
   let error = null;
 
-  const [listResult, mapResult, seismicResult] = await Promise.allSettled([
+  const [listResult, mapResult, seismicResult, recentResult] = await Promise.allSettled([
     fetchActiveAlerts(undefined, 50),
     fetchAlertFeatures(),
     fetchRecentSeismic(10),
+    fetchRecentAlerts(RECENT_WINDOW_HOURS, 20),
   ]);
 
   if (listResult.status === 'fulfilled') {
@@ -47,6 +51,15 @@ export default async function AlertsPage() {
   // Observed events, kept structurally separate from the warnings above — see the section
   // heading. Its failure never affects the alerts, which are the safety-critical half.
   const seismic = seismicResult.status === 'fulfilled' ? seismicResult.value : null;
+
+  /*
+   * Warnings that have already lapsed, newest first. SACHET's nowcasts last three hours, so
+   * on a quiet day the active list is empty and the page read as broken. This section says
+   * what the state has recently been warned about — and is kept below the active list,
+   * separately headed and visibly greyed, because a lapsed warning must never be mistaken
+   * for one in force.
+   */
+  const recent = recentResult.status === 'fulfilled' ? recentResult.value : null;
 
   const mappedCount = alertFeatures?.features.length ?? 0;
   // Any feature drawn at district precision changes what the map is allowed to claim.
@@ -159,6 +172,29 @@ export default async function AlertsPage() {
                 ))}
               </div>
             </div>
+          )}
+
+          {recent !== null && recent.length > 0 && (
+            <section className="mt-8" aria-labelledby="recent-alerts-heading">
+              <h2
+                id="recent-alerts-heading"
+                className="text-sm font-semibold uppercase tracking-wide text-text-light/70"
+              >
+                Recently expired &middot; last {RECENT_WINDOW_HOURS} hours
+              </h2>
+              <p className="mt-1 text-sm leading-relaxed text-text-light/60">
+                These warnings have <strong>lapsed</strong> and are shown for context only. They are
+                not in force. Newest first.
+              </p>
+
+              {/* Greyed as a block, so no single card can be mistaken for the live list
+                  above even at a glance across the room. */}
+              <div className="mt-3 space-y-3 opacity-75 grayscale-[0.35]">
+                {recent.map((alert, index) => (
+                  <AlertCard key={alert.id} alert={alert} index={index} expired />
+                ))}
+              </div>
+            </section>
           )}
 
           {/* Below the warnings, and visually separated from them. An earthquake that has

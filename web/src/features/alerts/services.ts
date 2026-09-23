@@ -34,6 +34,16 @@ export async function fetchAreaAlerts(slug: string, cursor?: number, limit: numb
   return apiClient.get(`/areas/${slug}/alerts${query}`, ActiveAlertsSchema);
 }
 
+/**
+ * Warnings that have lapsed in the last `hours`, newest first.
+ *
+ * A separate call from `fetchActiveAlerts` because it answers a different question, and
+ * because a failure here must never be able to empty the list of warnings in force.
+ */
+export async function fetchRecentAlerts(hours: number = 48, limit: number = 20) {
+  return apiClient.get(`/alerts/recent?hours=${hours}&limit=${limit}`, ActiveAlertsSchema);
+}
+
 export async function fetchAlertSummary() {
   return apiClient.get('/alerts/summary', AlertSummarySchema);
 }

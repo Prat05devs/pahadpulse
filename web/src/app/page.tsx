@@ -3,6 +3,7 @@ import { AlertCircle } from 'lucide-react';
 import { buildPageMetadata } from '@/lib/seo';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
+import { fetchRecentAlerts } from '@/features/alerts/services';
 import {
   DistrictOverviewGrid,
   LiveCounters,
@@ -47,12 +48,18 @@ export default async function HomePage() {
   let alertFeatures = null;
   let mapError: string | null = null;
 
-  const [dashboardResult, imdStatusResult, mapResult] = await Promise.allSettled([
-    Promise.all([fetchLiveCounters(), fetchStateOverview(), fetchAllDistricts()]),
-    fetchImdCapLiveStatus(),
-    // Settled independently: the map failing must not take the dashboard's figures with it.
-    Promise.all([fetchDistrictFeatures(), fetchAlertFeatures()]),
-  ]);
+  const [dashboardResult, imdStatusResult, mapResult, recentAlertsResult] =
+    await Promise.allSettled([
+      Promise.all([fetchLiveCounters(), fetchStateOverview(), fetchAllDistricts()]),
+      fetchImdCapLiveStatus(),
+      // Settled independently: the map failing must not take the dashboard's figures with it.
+      Promise.all([fetchDistrictFeatures(), fetchAlertFeatures()]),
+      // Context for a quiet day, never a substitute for the live count above it.
+      fetchRecentAlerts(48, 20),
+    ]);
+
+  const recentAlertCount =
+    recentAlertsResult.status === 'fulfilled' ? recentAlertsResult.value.length : null;
 
   if (mapResult.status === 'fulfilled') {
     [districtFeatures, alertFeatures] = mapResult.value;
@@ -112,6 +119,7 @@ export default async function HomePage() {
                 counters={counters}
                 overview={overview}
                 mapError={mapError}
+                recentAlertCount={recentAlertCount}
               />
 
               {/* Everything below scrolls under the map. The floating cards are a summary,
