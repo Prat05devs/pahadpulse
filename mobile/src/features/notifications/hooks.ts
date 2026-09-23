@@ -79,7 +79,9 @@ export function useAlertNotifications() {
   useEffect(() => {
     if (!enabled) return;
     void (async () => {
-      const token = await obtainToken();
+      // Never prompts: this runs on every launch, and a reader who revoked the permission
+      // must not be asked again by the app simply starting.
+      const token = await obtainToken({ askPermission: false });
       if (token === null) return;
       await registerDevice({
         token,

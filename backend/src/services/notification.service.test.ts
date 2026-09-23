@@ -145,6 +145,22 @@ describe('dispatchNewAlerts', () => {
     const result = await dispatchNewAlerts();
 
     expect(result._unsafeUnwrap().delivered).toBe(0);
-    expect(mockRepo.disableTokens).toHaveBeenCalledWith([]);
+    // The warning is NOT recorded as announced: the next pass must try again.
+    expect(mockRepo.markNotified).toHaveBeenCalledWith([]);
+  });
+
+  /**
+   * The opposite case, and the reason the two are told apart: Expo accepted the request and
+   * rejected one token. Re-sending would duplicate the notification on every phone that did
+   * receive it, so the warning counts as announced.
+   */
+  it('records the warning as announced when the push service answered, whatever the tickets said', async () => {
+    fetchMock.mockReturnValue(
+      expoReplies([{ status: 'error', details: { error: 'MessageRateExceeded' } }]),
+    );
+
+    await dispatchNewAlerts();
+
+    expect(mockRepo.markNotified).toHaveBeenCalledWith([1]);
   });
 });

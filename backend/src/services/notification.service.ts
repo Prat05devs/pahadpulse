@@ -92,7 +92,7 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
  */
 async function sendBatch(
   messages: { to: string; title: string; body: string; data: Record<string, unknown> }[],
-): Promise<{ delivered: number; deadTokens: string[] }> {
+): Promise<{ delivered: number; deadTokens: string[]; reached: boolean }> {
   const headers: Record<string, string> = {
     accept: 'application/json',
     'content-type': 'application/json',
@@ -111,12 +111,12 @@ async function sendBatch(
     });
   } catch (error) {
     logger.warn('push transport failed', { error: describeError(error) });
-    return { delivered: 0, deadTokens: [] };
+    return { delivered: 0, deadTokens: [], reached: false };
   }
 
   if (!response.ok) {
     logger.warn('push rejected', { status: response.status });
-    return { delivered: 0, deadTokens: [] };
+    return { delivered: 0, deadTokens: [], reached: false };
   }
 
   let payload: ExpoResponse;
@@ -124,7 +124,7 @@ async function sendBatch(
     payload = (await response.json()) as ExpoResponse;
   } catch (error) {
     logger.warn('push response was not JSON', { error: describeError(error) });
-    return { delivered: 0, deadTokens: [] };
+    return { delivered: 0, deadTokens: [], reached: false };
   }
 
   const tickets = payload.data ?? [];
@@ -144,7 +144,7 @@ async function sendBatch(
     logger.warn('push ticket failed', { error: ticket.details?.error, message: ticket.message });
   });
 
-  return { delivered, deadTokens };
+  return { delivered, deadTokens, reached: true };
 }
 
 /**
@@ -185,6 +185,16 @@ export async function dispatchNewAlerts(): Promise<Result<DispatchReport, Reques
 
   let delivered = 0;
   const deadTokens: string[] = [];
+  /**
+   * Which warnings actually reached the push service.
+   *
+   * Only these are recorded as announced. A warning whose every batch failed at the
+   * transport — Expo down, no network out of the free instance — is left alone, so the next
+   * pass tries again rather than losing it; the 3-hour window is what stops that retrying
+   * forever. A warning that reached Expo is marked whatever the individual tickets said,
+   * because re-sending it would duplicate the notification on every phone that did get it.
+   */
+  const announced: number[] = [];
 
   for (const alert of pending.value) {
     const messages = devices.value.map((device: DeviceTokenRow) => ({
@@ -193,19 +203,22 @@ export async function dispatchNewAlerts(): Promise<Result<DispatchReport, Reques
       data: { alertId: alert.id, url: `/alerts/${alert.id}` },
     }));
 
+    let reached = false;
     for (const batch of chunk(messages, PUSH.BATCH_SIZE)) {
       const result = await sendBatch(batch);
       delivered += result.delivered;
       deadTokens.push(...result.deadTokens);
+      reached = reached || result.reached;
     }
+    if (reached) announced.push(alert.id);
   }
 
   const disabled = await DeviceRepository.disableTokens(deadTokens);
-  const marked = await DeviceRepository.markNotified(pending.value.map((alert) => alert.id));
+  const marked = await DeviceRepository.markNotified(announced);
   if (marked.isErr()) return err(marked.error);
 
   const report: DispatchReport = {
-    alerts: pending.value.length,
+    alerts: announced.length,
     delivered,
     tokensDisabled: disabled.isOk() ? disabled.value : 0,
     settled: settled.value,
