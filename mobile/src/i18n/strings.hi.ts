@@ -131,7 +131,6 @@ export const hi: Record<keyof typeof en, string> = {
   'settings.reset.confirm': 'रीसेट करें',
   'settings.about': 'ऐप के बारे में',
   'settings.version': 'वर्ज़न',
-  'settings.api': 'API',
   'settings.webPortal': 'वेब पोर्टल',
   'settings.support': 'सहायता',
   'settings.support.subtitle': 'मदद, सुधार और सुगम्यता पर आपकी राय',

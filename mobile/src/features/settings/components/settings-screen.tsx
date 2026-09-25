@@ -203,12 +203,6 @@ export function SettingsScreen() {
           <ListRow title={t('settings.version')} value={version} showChevron={false} />
           <Divider />
           <ListRow
-            title={t('settings.api')}
-            value={env.apiUrl.replace(/^https?:\/\//, '')}
-            showChevron={false}
-          />
-          <Divider />
-          <ListRow
             title={t('settings.webPortal')}
             value={env.webUrl.replace(/^https?:\/\//, '')}
             showChevron={false}

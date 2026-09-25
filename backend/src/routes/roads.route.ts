@@ -25,9 +25,9 @@ roadRouter.get(
       },
       (error) => {
         next(error);
-      }
+      },
     );
-  }
+  },
 );
 
 export default roadRouter;

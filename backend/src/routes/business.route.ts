@@ -4,7 +4,7 @@ import * as businessController from '../controllers/business.controller.js';
 const businessRouter = Router();
 
 businessRouter.get('/scenarios', businessController.getScenarios);
+businessRouter.get('/schemes', businessController.getSchemes);
 businessRouter.get('/compare', businessController.compareDistricts);
 
 export default businessRouter;
-

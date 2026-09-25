@@ -49,7 +49,10 @@ class ProjectRepositoryImpl implements IProjectRepository {
       [rows.map((row) => row.id)],
     );
 
-    const byProject = new Map<number, Array<{ slug: string; name: LocalisedText; isPrimary: boolean }>>();
+    const byProject = new Map<
+      number,
+      Array<{ slug: string; name: LocalisedText; isPrimary: boolean }>
+    >();
     for (const area of areaRows) {
       const list = byProject.get(area.project_id) ?? [];
       list.push({

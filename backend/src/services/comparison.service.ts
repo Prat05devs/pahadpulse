@@ -76,9 +76,7 @@ function normalise(input: ScoreInput, slug: string, raw: number): number | null 
   // per-capita figure, and falling back to the raw count would silently rank population.
   if (population === undefined || population <= 0) return null;
 
-  return input.normalisation === 'per_1000_people'
-    ? (raw / population) * 1000
-    : raw / population;
+  return input.normalisation === 'per_1000_people' ? (raw / population) * 1000 : raw / population;
 }
 
 /**
@@ -95,9 +93,7 @@ function positionScores(values: ReadonlyArray<[string, number]>, higherIsBetter:
   const max = Math.max(...numbers);
   const spread = max - min;
 
-  const ranked = [...values].sort((a, b) =>
-    higherIsBetter ? b[1] - a[1] : a[1] - b[1],
-  );
+  const ranked = [...values].sort((a, b) => (higherIsBetter ? b[1] - a[1] : a[1] - b[1]));
   const rankBySlug = new Map(ranked.map(([slug], index) => [slug, index + 1]));
 
   const scoreBySlug = new Map<string, number>();
@@ -172,8 +168,7 @@ export function scoreTheme(
     return { theme, score: null, basedOn: 0, indicators: [] };
   }
 
-  const mean =
-    indicators.reduce((total, entry) => total + entry.score, 0) / indicators.length;
+  const mean = indicators.reduce((total, entry) => total + entry.score, 0) / indicators.length;
 
   return {
     theme,

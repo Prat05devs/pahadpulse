@@ -106,8 +106,9 @@ describe('parseOverpassRelations', () => {
     // This is the actual detector the connector uses to fail over to the next mirror —
     // a busy mirror answers HTTP 200, so the status code cannot be trusted.
     expect(
-      parseOverpassRelations('<html><body><p>Error: runtime error: too busy</p></body></html>')
-        .isErr(),
+      parseOverpassRelations(
+        '<html><body><p>Error: runtime error: too busy</p></body></html>',
+      ).isErr(),
     ).toBe(true);
   });
 

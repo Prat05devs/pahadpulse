@@ -11,7 +11,7 @@ export interface AreaRow {
   code: string;
   slug: string;
   name_en: string;
-  name_hi: string;
+  name_hi: string | null;
   parent_id: number | null;
   division: Division | null;
   headquarters_en: string | null;

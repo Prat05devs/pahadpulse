@@ -27,7 +27,6 @@ describe('the dictionaries', () => {
         'credits.contact.email',
         'credits.licence.bsd',
         'credits.licence.odbl',
-        'settings.api',
       ].sort()
     );
   });

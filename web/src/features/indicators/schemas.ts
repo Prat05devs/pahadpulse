@@ -15,6 +15,9 @@ export const IndicatorSchema = z.object({
 
 export type Indicator = z.infer<typeof IndicatorSchema>;
 
+/** The complete catalogue returned by `GET /indicators`. */
+export const IndicatorListSchema = z.array(IndicatorSchema);
+
 /**
  * Matches the API contract exactly, verified against a live response.
  *

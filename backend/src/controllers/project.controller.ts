@@ -44,8 +44,7 @@ function summarise(projects: ProjectOut[]): AreaProjects['summary'] {
     total: projects.length,
     active: projects.filter((project) => isActiveProject(project.status)).length,
     operational: projects.filter((project) => project.status === 'operational').length,
-    underConstruction: projects.filter((project) => project.status === 'under_construction')
-      .length,
+    underConstruction: projects.filter((project) => project.status === 'under_construction').length,
     // Null rather than 0 when nothing published a figure: a zero here would read as "no
     // investment", when it means "no cost was published".
     disclosedCapitalCr: withCost === 0 ? null : Number(disclosed.toFixed(2)),

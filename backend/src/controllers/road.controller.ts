@@ -23,14 +23,14 @@ export interface RoadNetworkSummary {
  * whose terms change stops being served here without a code change.
  */
 export async function listRoadNetwork(
-  now?: Date
+  now?: Date,
 ): Promise<Result<RoadNetworkSummary, RequestError>> {
   const routes = await RoadRepository.listRoutes();
   if (routes.isErr()) return err(routes.error);
 
   const stamped = await attachProvenance(
     routes.value.map((route) => ({ ...route, vintage: route.vintage })),
-    now
+    now,
   );
   if (stamped.isErr()) return err(stamped.error);
 

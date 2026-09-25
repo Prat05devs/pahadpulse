@@ -203,9 +203,7 @@ class IndicatorRepositoryImpl implements IIndicatorRepository {
    * others — so taking a single MAX(vintage) across the state would silently drop every
    * district still on the older one.
    */
-  async latestValuesForAllAreas(
-    scope: string,
-  ): Promise<Result<StatewideValueRow[], RequestError>> {
+  async latestValuesForAllAreas(scope: string): Promise<Result<StatewideValueRow[], RequestError>> {
     try {
       const { rows } = await db.query<StatewideValueRow>(
         `SELECT DISTINCT ON (v.indicator_key, a.slug)

@@ -46,9 +46,7 @@ export interface ISeismicRepository {
 }
 
 class SeismicRepositoryImpl implements ISeismicRepository {
-  async upsertMany(
-    inputs: readonly UpsertSeismicInput[],
-  ): Promise<Result<number, RequestError>> {
+  async upsertMany(inputs: readonly UpsertSeismicInput[]): Promise<Result<number, RequestError>> {
     if (inputs.length === 0) return ok(0);
 
     try {

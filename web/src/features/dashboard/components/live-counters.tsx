@@ -1,105 +1,185 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle, Route, Signal, Users, type LucideIcon } from 'lucide-react';
+import Link from 'next/link';
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  BadgeIndianRupee,
+  Landmark,
+  MountainSnow,
+  Route,
+  Signal,
+  type LucideIcon,
+} from 'lucide-react';
+
+import { formatCrore } from '@/features/governance/format';
 import type { LiveCounters } from '../types';
 
 interface LiveCountersProps {
   data: LiveCounters;
   loading?: boolean;
-  /**
-   * `grid` spreads the four counters across the page. `rail` stacks them in a column beside
-   * the map, where they read as a running tally of what the map is showing rather than as a
-   * separate section — which is why the rail variant drops the section heading.
-   */
-  orientation?: 'grid' | 'rail';
 }
 
 interface Counter {
   label: string;
-  value: string | number;
-  unit: string;
+  value: string;
+  period: string;
+  context: string;
+  href: string;
+  linkLabel: string;
+  badge: string;
   icon: LucideIcon;
   tone: string;
   iconTone: string;
 }
 
-export function LiveCounters({ data, loading, orientation = 'grid' }: LiveCountersProps) {
-  const isRail = orientation === 'rail';
+function quarter(value: string | null): string {
+  if (value === null) return 'Quarter unavailable';
+  const [year, month] = value.split('-').map(Number);
+  if (year === undefined || month === undefined || Number.isNaN(year) || Number.isNaN(month)) {
+    return value;
+  }
+  return `Q${Math.floor((month - 1) / 3) + 1} ${year}`;
+}
+
+export function LiveCounters({ data, loading }: LiveCountersProps) {
   const counters: Counter[] = [
     {
-      label: 'Tourists in state',
-      value: data.touristsInState.toLocaleString('en-IN'),
-      unit: 'people today',
-      icon: Users,
+      label: 'Pilgrim arrivals',
+      value:
+        data.pilgrimArrivals.value === null
+          ? '—'
+          : data.pilgrimArrivals.value.toLocaleString('en-IN'),
+      period:
+        data.pilgrimArrivals.year === null
+          ? 'Completed year unavailable'
+          : `${data.pilgrimArrivals.year} annual total`,
+      context:
+        data.pilgrimArrivals.destinationCount === 0
+          ? 'Published destination counts'
+          : `Across ${data.pilgrimArrivals.destinationCount} reporting destinations · not people currently in the state`,
+      href: '/tourism',
+      linkLabel: 'Tourism history',
+      badge: 'Annual',
+      icon: MountainSnow,
       tone: 'bg-info-soft',
       iconTone: 'text-info',
     },
     {
-      label: 'Active alerts',
-      value: data.activeAlerts,
-      unit: 'across the state',
+      label: 'Active public alerts',
+      value: data.activeAlerts === null ? '—' : data.activeAlerts.toLocaleString('en-IN'),
+      period: 'Current feed',
+      context:
+        data.activeAlerts === null
+          ? 'The live count is temporarily unavailable'
+          : data.activeAlerts === 0
+            ? 'No warnings currently in force across the state'
+            : `${data.activeAlerts} warning${data.activeAlerts === 1 ? '' : 's'} currently in force`,
+      href: '/alerts',
+      linkLabel: 'Open alerts',
+      badge: 'Live',
       icon: AlertTriangle,
       tone: 'bg-danger-soft',
       iconTone: 'text-danger',
     },
     {
-      label: 'Closed roads',
-      value: data.closedRoads,
-      unit: 'reported segments',
+      label: 'Road closure coverage',
+      value: 'Not tracked',
+      period: 'No verified live feed',
+      context: 'The platform maps highway references but does not invent a closure count',
+      href: '/roads',
+      linkLabel: 'Road network',
+      badge: 'Coverage gap',
       icon: Route,
       tone: 'bg-warning-soft',
       iconTone: 'text-warning',
     },
     {
-      label: 'Connectivity',
-      value: `${data.connectivityPercentage}%`,
-      unit: 'areas online',
+      label: 'Mobile download',
+      value:
+        data.connectivity.mobileDownloadMbps === null
+          ? '—'
+          : `${data.connectivity.mobileDownloadMbps.toLocaleString('en-IN', { maximumFractionDigits: 1 })} Mbps`,
+      period: quarter(data.connectivity.quarterStart),
+      context:
+        data.connectivity.districtsMeasured === 0
+          ? 'No district measurements available'
+          : `Test-weighted state average · ${data.connectivity.districtsMeasured} districts measured`,
+      href: '/connectivity',
+      linkLabel: 'Compare speeds',
+      badge: 'Quarterly',
       icon: Signal,
+      tone: 'bg-success-soft',
+      iconTone: 'text-success',
+    },
+    {
+      label: 'State budget estimate',
+      value: data.budget.total === null ? '—' : formatCrore(data.budget.total),
+      period:
+        data.budget.fiscalYear === null
+          ? 'Financial year unavailable'
+          : `FY ${data.budget.fiscalYear}`,
+      context:
+        data.budget.yearsAvailable === 0
+          ? 'Official budget data unavailable'
+          : `${data.budget.yearsAvailable}-year official archive · allocation, not actual spending`,
+      href: '/governance#budget-allocation-heading',
+      linkLabel: 'Explore budget',
+      badge: 'Estimate',
+      icon: Landmark,
+      tone: 'bg-info-soft',
+      iconTone: 'text-info',
+    },
+    {
+      label: 'Startup support schemes',
+      value:
+        data.startupSchemes.verifiedCount === 0
+          ? '—'
+          : data.startupSchemes.verifiedCount.toLocaleString('en-IN'),
+      period:
+        data.startupSchemes.verifiedOn === null
+          ? 'Verification date unavailable'
+          : `Verified ${data.startupSchemes.verifiedOn}`,
+      context:
+        data.startupSchemes.verifiedCount === 0
+          ? 'Scheme directory temporarily unavailable'
+          : 'Central startup and MSME support with live-access caveats and official application routes',
+      href: '/compare#schemes',
+      linkLabel: 'Find support',
+      badge: 'Verified',
+      icon: BadgeIndianRupee,
       tone: 'bg-success-soft',
       iconTone: 'text-success',
     },
   ];
 
   return (
-    <section
-      aria-labelledby="live-overview-heading"
-      className={isRail ? 'flex h-full flex-col' : undefined}
-    >
-      <div className={`mb-4 flex items-end justify-between gap-4 ${isRail ? 'sr-only' : ''}`}>
+    <section aria-labelledby="live-overview-heading">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-            Current pulse
+            Latest published and live signals
           </p>
           <h2 id="live-overview-heading" className="mt-1 text-xl font-semibold tracking-tight">
-            Live state overview
+            State data snapshot
           </h2>
         </div>
-        <p className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex">
-          <span className="size-2 rounded-full bg-success" aria-hidden="true" />
-          Latest available data
+        <p className="max-w-lg text-xs leading-relaxed text-muted-foreground sm:text-right">
+          Every card states its period and scope. Annual totals are never presented as live occupancy.
         </p>
       </div>
 
-      <div
-        className={
-          isRail
-            ? 'grid flex-1 grid-cols-2 gap-3 lg:grid-cols-1 lg:grid-rows-4'
-            : 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'
-        }
-      >
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {counters.map((counter, index) => {
           const Icon = counter.icon;
 
           return (
-            <article
+            <Link
               key={counter.label}
-              // Staggered so the four figures land in order rather than all at once. These
-              // are the numbers an officer reads first, so they enter first and fastest.
-              className={`surface-card pp-rise overflow-hidden ${
-                isRail ? 'flex flex-col justify-center p-3.5' : 'p-5'
-              }`}
-              style={{ '--pp-delay': `${index * 60}ms` } as React.CSSProperties}
+              href={counter.href}
+              className="surface-card pp-rise group flex min-h-60 flex-col overflow-hidden p-5 transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+              style={{ '--pp-delay': `${index * 45}ms` } as React.CSSProperties}
             >
               {loading ? (
                 <div className="animate-pulse space-y-3" aria-label={`Loading ${counter.label}`}>
@@ -109,37 +189,29 @@ export function LiveCounters({ data, loading, orientation = 'grid' }: LiveCounte
                 </div>
               ) : (
                 <>
-                  <div
-                    className={`flex items-center justify-center rounded-lg ${
-                      isRail ? 'size-9' : 'size-10'
-                    } ${counter.tone} ${counter.iconTone}`}
-                  >
-                    <Icon
-                      className={isRail ? 'size-4.5' : 'size-5'}
-                      strokeWidth={1.8}
-                      aria-hidden="true"
-                    />
+                  <div className="flex items-start justify-between gap-3">
+                    <span className={`flex size-10 items-center justify-center rounded-lg ${counter.tone} ${counter.iconTone}`}>
+                      <Icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
+                    </span>
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                      {counter.badge}
+                    </span>
                   </div>
-                  <p
-                    className={`font-mono font-semibold tracking-tight tabular-nums ${
-                      isRail ? 'mt-2 text-xl' : 'mt-5 text-2xl'
-                    }`}
-                  >
+                  <p className="mt-5 font-mono text-2xl font-semibold tracking-tight tabular-nums text-text-light">
                     {counter.value}
                   </p>
-                  <p className={`mt-1 font-medium ${isRail ? 'text-[13px]' : 'text-sm'}`}>
-                    {counter.label}
+                  <h3 className="mt-1 text-sm font-semibold text-text-light">{counter.label}</h3>
+                  <p className="mt-1 text-xs font-medium text-accent">{counter.period}</p>
+                  <p className="mt-2 flex-1 text-xs leading-relaxed text-muted-foreground">
+                    {counter.context}
                   </p>
-                  <p
-                    className={`mt-0.5 text-muted-foreground ${
-                      isRail ? 'text-[11px]' : 'text-xs'
-                    }`}
-                  >
-                    {counter.unit}
-                  </p>
+                  <span className="mt-4 inline-flex min-h-11 items-center gap-1.5 border-t border-border pt-3 text-sm font-semibold text-accent">
+                    {counter.linkLabel}
+                    <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+                  </span>
                 </>
               )}
-            </article>
+            </Link>
           );
         })}
       </div>

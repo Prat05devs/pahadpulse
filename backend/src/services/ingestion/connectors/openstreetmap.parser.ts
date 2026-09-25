@@ -203,8 +203,8 @@ function editDistance(a: string, b: string, limit: number): number {
         Math.min(
           (previous[j] as number) + 1,
           (current[j - 1] as number) + 1,
-          (previous[j - 1] as number) + (a[i - 1] === b[j - 1] ? 0 : 1)
-        )
+          (previous[j - 1] as number) + (a[i - 1] === b[j - 1] ? 0 : 1),
+        ),
       );
     }
     previous = current;
@@ -236,7 +236,7 @@ function normaliseName(value: string): string {
  */
 export function matchTehsilName(
   osmName: string,
-  candidates: readonly { key: string; name: string }[]
+  candidates: readonly { key: string; name: string }[],
 ): string | null {
   const target = normaliseName(osmName);
   if (target.length === 0) return null;

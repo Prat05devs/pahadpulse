@@ -13,9 +13,9 @@ function readSslConfig(overrides: Record<string, string> = {}) {
       '--input-type=module',
       '-e',
       // `pg.Pool` is a constructor rather than mysql2's factory function, so the stub is a
-       // class. It must also carry `on`, because db.ts attaches an idle-error listener —
-       // a bare object would throw before the options could be read.
-       `import pg from 'pg';
+      // class. It must also carry `on`, because db.ts attaches an idle-error listener —
+      // a bare object would throw before the options could be read.
+      `import pg from 'pg';
        let options;
        pg.Pool = class { constructor(value) { options = value; } on() {} };
        await import('./src/database/db.ts');

@@ -39,9 +39,7 @@ export function bulkValues(rows: readonly unknown[][], startAt = 1): ValuesFragm
 
   for (const row of rows) {
     if (row.length !== width) {
-      throw new Error(
-        `bulkValues: ragged rows — expected ${width} columns, got ${row.length}`,
-      );
+      throw new Error(`bulkValues: ragged rows — expected ${width} columns, got ${row.length}`);
     }
     tuples.push(`(${row.map(() => `$${next++}`).join(', ')})`);
     params.push(...row);

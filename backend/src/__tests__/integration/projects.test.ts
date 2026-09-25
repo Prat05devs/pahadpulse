@@ -103,9 +103,8 @@ describe('GET /api/projects', () => {
       projects.filter((project) => project.status === 'under_construction').length,
     );
     expect(summary.active).toBe(
-      projects.filter(
-        (project) => project.status !== 'cancelled' && project.status !== 'stalled',
-      ).length,
+      projects.filter((project) => project.status !== 'cancelled' && project.status !== 'stalled')
+        .length,
     );
   });
 

@@ -25,6 +25,8 @@ interface OverviewItem {
   /** The year the figure describes. Null when it is derived rather than published. */
   year: string | null;
   source: string | null;
+  sourceUrl: string | null;
+  note: string | null;
 }
 
 /** The year a figure describes, for the caption under it. */
@@ -48,12 +50,14 @@ function format(figure: StateFigure, transform: (value: number) => string): stri
 export function StateOverviewCard({ data, loading }: StateOverviewCardProps) {
   const items: OverviewItem[] = [
     {
-      label: 'Population',
+      label: 'Projected population',
       value: format(data.population, (value) => (value / 1_000_000).toFixed(1)),
       unit: data.population.value === null ? '' : 'M',
       icon: Users,
       year: vintageYear(data.population),
       source: data.population.sourceLabel,
+      sourceUrl: data.population.sourceUrl,
+      note: data.population.note,
     },
     {
       label: 'Area',
@@ -62,14 +66,18 @@ export function StateOverviewCard({ data, loading }: StateOverviewCardProps) {
       icon: Mountain,
       year: vintageYear(data.areaKmSq),
       source: data.areaKmSq.sourceLabel,
+      sourceUrl: data.areaKmSq.sourceUrl,
+      note: data.areaKmSq.note,
     },
     {
-      label: 'Literacy rate',
+      label: 'Literacy rate (PLFS)',
       value: format(data.literacy, (value) => value.toFixed(2)),
       unit: data.literacy.value === null ? '' : '%',
       icon: BookOpen,
       year: vintageYear(data.literacy),
       source: data.literacy.sourceLabel,
+      sourceUrl: data.literacy.sourceUrl,
+      note: data.literacy.note,
     },
     {
       label: 'Districts',
@@ -78,6 +86,8 @@ export function StateOverviewCard({ data, loading }: StateOverviewCardProps) {
       icon: MapPinned,
       year: vintageYear(data.districts),
       source: data.districts.sourceLabel,
+      sourceUrl: data.districts.sourceUrl,
+      note: data.districts.note,
     },
     {
       label: 'Forest cover',
@@ -86,14 +96,18 @@ export function StateOverviewCard({ data, loading }: StateOverviewCardProps) {
       icon: Trees,
       year: vintageYear(data.forestCoverage),
       source: data.forestCoverage.sourceLabel,
+      sourceUrl: data.forestCoverage.sourceUrl,
+      note: data.forestCoverage.note,
     },
     {
-      label: 'Villages',
+      label: 'Villages in LGD directory',
       value: format(data.villages, (value) => value.toLocaleString('en-IN')),
       unit: '',
       icon: Warehouse,
       year: vintageYear(data.villages),
       source: data.villages.sourceLabel,
+      sourceUrl: data.villages.sourceUrl,
+      note: data.villages.note,
     },
   ];
 
@@ -159,6 +173,11 @@ export function StateOverviewCard({ data, loading }: StateOverviewCardProps) {
                     {item.year}
                   </p>
                 )}
+                {item.note !== null && (
+                  <p className="mt-2 text-[0.68rem] leading-relaxed text-muted-foreground">
+                    {item.note}
+                  </p>
+                )}
               </div>
             );
           })}
@@ -166,11 +185,27 @@ export function StateOverviewCard({ data, loading }: StateOverviewCardProps) {
       )}
 
       {/* Named in full once, rather than repeated under every tile. */}
-      <p className="border-t border-border px-5 py-3 text-[0.68rem] leading-relaxed text-muted-foreground/70 sm:px-6">
-        {[...new Set(items.map((item) => item.source).filter((s): s is string => s !== null))].join(
-          ' · '
+      <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border px-5 py-3 text-[0.68rem] leading-relaxed text-muted-foreground sm:px-6">
+        {[
+          ...new Map(
+            items.filter((item) => item.source !== null).map((item) => [item.source, item])
+          ).values(),
+        ].map((item) =>
+          item.sourceUrl === null ? (
+            <span key={item.source}>{item.source}</span>
+          ) : (
+            <a
+              key={item.source}
+              href={item.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-accent hover:underline"
+            >
+              {item.source}
+            </a>
+          )
         )}
-      </p>
+      </div>
     </section>
   );
 }

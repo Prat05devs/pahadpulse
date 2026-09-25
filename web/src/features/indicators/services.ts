@@ -1,13 +1,12 @@
-import { z } from 'zod';
 import { apiClient } from '@/lib/api';
-import { AreaIndicatorsSchema, ComparisonSchema } from './schemas';
+import { AreaIndicatorsSchema, ComparisonSchema, IndicatorListSchema } from './schemas';
 
 export async function fetchAreaIndicators(slug: string) {
   return apiClient.get(`/areas/${slug}/indicators`, AreaIndicatorsSchema);
 }
 
 export async function fetchAllIndicators() {
-  return apiClient.get('/indicators', z.array(z.any()));
+  return apiClient.get('/indicators', IndicatorListSchema);
 }
 
 export async function fetchIndicatorComparison(

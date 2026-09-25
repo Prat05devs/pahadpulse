@@ -40,22 +40,22 @@ verification.
 
 Run these in `backend/` after `npm ci`, or prefix them with `docker compose exec api`:
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | API with hot reload |
-| `npm run build` | Compile the production API |
-| `npm start` | Run the compiled API |
-| `npm run db:migrate` | Apply unapplied SQL migrations |
-| `npm run ingest` | Inspect source and connector status |
-| `npm run ingest -- --all` | Run all available connectors |
-| `npm run ingest -- sachet-ndma` | Refresh SACHET alerts |
-| `npm run ingest -- imd-cap-alerts` | Refresh IMD CAP alerts |
-| `npm run ingest -- openstreetmap` | Refresh district boundaries and village data |
-| `npm run ingest -- openstreetmap-roads` | Refresh highway routes |
-| `npm run typecheck` | Check TypeScript |
-| `npm run lint` | Check code conventions |
-| `npm test -- --runInBand` | Run tests; use a local test database |
-| `npm run verify` | Typecheck, lint, formatting checks, and tests |
+| Command                                 | Purpose                                       |
+| --------------------------------------- | --------------------------------------------- |
+| `npm run dev`                           | API with hot reload                           |
+| `npm run build`                         | Compile the production API                    |
+| `npm start`                             | Run the compiled API                          |
+| `npm run db:migrate`                    | Apply unapplied SQL migrations                |
+| `npm run ingest`                        | Inspect source and connector status           |
+| `npm run ingest -- --all`               | Run all available connectors                  |
+| `npm run ingest -- sachet-ndma`         | Refresh SACHET alerts                         |
+| `npm run ingest -- imd-cap-alerts`      | Refresh IMD CAP alerts                        |
+| `npm run ingest -- openstreetmap`       | Refresh district boundaries and village data  |
+| `npm run ingest -- openstreetmap-roads` | Refresh highway routes                        |
+| `npm run typecheck`                     | Check TypeScript                              |
+| `npm run lint`                          | Check code conventions                        |
+| `npm test -- --runInBand`               | Run tests; use a local test database          |
+| `npm run verify`                        | Typecheck, lint, formatting checks, and tests |
 
 `npm run db:seed` creates synthetic development data and refuses production. Normal setup
 uses migrations and ingestion instead. Ingestion requires upstream network access; inspect
@@ -63,22 +63,22 @@ per-source results and freshness after a run. The data.gov.in connector remains 
 
 ## Public endpoints
 
-| GET endpoint | Returns |
-| --- | --- |
-| `/health` | Process liveness |
-| `/ready` | Database readiness |
-| `/api/areas/districts` | District records and child counts |
-| `/api/areas/districts/:slug` | District detail |
-| `/api/areas/:slug/boundary` | Area boundary geometry |
-| `/api/map/layers` | Map layer registry |
-| `/api/map/districts` | District GeoJSON collection |
-| `/api/map/alerts` | Mappable active alerts |
-| `/api/roads` | Highway network, not live closures |
-| `/api/alerts/active` | Active alert records |
-| `/api/alerts/summary` | Alert summary |
-| `/api/indicators` | Indicator catalogue |
-| `/api/indicators/population/ranking` | District population ranking |
-| `/api/sources` | Public source metadata |
+| GET endpoint                         | Returns                            |
+| ------------------------------------ | ---------------------------------- |
+| `/health`                            | Process liveness                   |
+| `/ready`                             | Database readiness                 |
+| `/api/areas/districts`               | District records and child counts  |
+| `/api/areas/districts/:slug`         | District detail                    |
+| `/api/areas/:slug/boundary`          | Area boundary geometry             |
+| `/api/map/layers`                    | Map layer registry                 |
+| `/api/map/districts`                 | District GeoJSON collection        |
+| `/api/map/alerts`                    | Mappable active alerts             |
+| `/api/roads`                         | Highway network, not live closures |
+| `/api/alerts/active`                 | Active alert records               |
+| `/api/alerts/summary`                | Alert summary                      |
+| `/api/indicators`                    | Indicator catalogue                |
+| `/api/indicators/population/ranking` | District population ranking        |
+| `/api/sources`                       | Public source metadata             |
 
 API routes are mounted under `/api`; health endpoints are mounted at the application root.
 Operator ingestion HTTP endpoints remain deferred until authenticated operator accounts exist.

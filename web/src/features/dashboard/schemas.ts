@@ -2,7 +2,13 @@ import { z } from 'zod';
 
 const LocalisedTextSchema = z.object({
   en: z.string(),
-  hi: z.string(),
+  // Official directories do not always publish a Devanagari form. Keep the client output
+  // stable as a string while treating a source null as "not supplied", never fabricating a
+  // transliteration merely to satisfy presentation code.
+  hi: z
+    .string()
+    .nullable()
+    .transform((value) => value ?? ''),
 });
 
 const CentroidSchema = z

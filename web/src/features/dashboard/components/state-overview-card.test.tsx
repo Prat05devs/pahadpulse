@@ -5,7 +5,7 @@ import { StateOverviewCard } from './state-overview-card';
 import type { StateFigure, StateOverview } from '../types';
 
 function figure(value: number | null, vintage: string | null, source: string | null): StateFigure {
-  return { value, vintage, sourceLabel: source };
+  return { value, vintage, sourceLabel: source, sourceUrl: null, note: null };
 }
 
 const census = 'Office of the Registrar General & Census Commissioner, India';

@@ -214,7 +214,8 @@ class OpenStreetMapConnector implements SourceConnector {
     }
 
     const placeBody = await this.fetchPlaces();
-    if (placeBody.isErr()) return { written: 0, note: 'Villages skipped: place nodes unavailable.' };
+    if (placeBody.isErr())
+      return { written: 0, note: 'Villages skipped: place nodes unavailable.' };
 
     const places = parseOverpassPlaces(placeBody.value);
     if (places.isErr()) return { written: 0, note: 'Villages skipped: place nodes unparseable.' };

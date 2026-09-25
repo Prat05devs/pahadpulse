@@ -117,9 +117,7 @@ function toAlertAreaSummaries(value: unknown): AlertAreaSummary[] {
   const parsed = parseJsonColumn(value);
   if (!Array.isArray(parsed)) return [];
 
-  return (
-    parsed as { id: number | null; slug: string; name_en: string; name_hi: string }[]
-  )
+  return (parsed as { id: number | null; slug: string; name_en: string; name_hi: string }[])
     .filter((a) => a.id !== null)
     .map((a) => ({
       id: a.id as number,

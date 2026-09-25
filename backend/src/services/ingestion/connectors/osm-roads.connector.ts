@@ -1,7 +1,10 @@
 import { err, ok, type Result } from 'neverthrow';
 
 import { OVERPASS } from '../../../config/constants.js';
-import { RoadRepository, type UpsertRoadRouteInput } from '../../../repositories/road.repository.js';
+import {
+  RoadRepository,
+  type UpsertRoadRouteInput,
+} from '../../../repositories/road.repository.js';
 import { toDateOnly } from '../../../utils/datetime.js';
 import { ERRORS, type RequestError } from '../../../utils/errors.js';
 import { fetchText } from '../../../utils/http.js';
@@ -80,7 +83,7 @@ class OsmRoadsConnector implements SourceConnector {
    * highway" land on the right place for a route that crosses the state.
    */
   private collectStats(
-    body: string
+    body: string,
   ): Map<string, { count: number; bounds: [number, number, number, number] | null }> {
     const stats = new Map<
       string,

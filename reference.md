@@ -69,7 +69,8 @@ why there is no login anywhere in the product today.
 
 ## 3. Where the data comes from
 
-19 sources are registered. The registry is a database table, served at `/api/sources`, and it is
+20 sources are defined (including the budget source added by migration 056). The registry is a
+database table, served at `/api/sources`, and it is
 the single place a source's department, link, licence and cadence are defined — the same row
 that stamps every figure derived from it. The web page `/sources` and the app's Credits screen
 are rendered from it, so a source cannot appear in the product without appearing in the list
@@ -98,16 +99,21 @@ is collected so that the day terms are confirmed it appears, and until then no u
 No feed exists for these; each was read from a published report and cross-checked against the
 totals that report states for itself. Each row records the page it came from.
 
-| Source                        | Publisher                                          | Link                      | What it gives                                     |
-| ----------------------------- | -------------------------------------------------- | ------------------------- | ------------------------------------------------- |
-| `census-2011`                 | Registrar General & Census Commissioner, India     | censusindia.gov.in        | Population, literacy, sex ratio, all 13 districts |
-| `uk-des-ddp`                  | Directorate of Economics & Statistics, Uttarakhand | des.uk.gov.in             | Per capita income, 11 years                       |
-| `uk-des-district-reports`     | Directorate of Economics & Statistics, Uttarakhand | palayanayog.uk.gov.in     | Schools and hospital beds, 3 districts            |
-| `uk-district-composite-index` | Uttarakhand State SDG Composite Index              | palayanayog.uk.gov.in     | District SDG score and rank                       |
-| `uk-migration-commission`     | Rural Development and Migration Commission         | palayanayog.uk.gov.in     | Out-migration, 2008–2022                          |
-| `uk-tourism-capacity`         | Uttarakhand Tourism Department                     | uttarakhandtourism.gov.in | Accommodation capacity, Char Dham arrivals        |
-| `uk-dairy-federation`         | Uttarakhand Co-operative Dairy Federation          | uttarakhandmilk.com       | Dairy societies, milk production                  |
-| `forest-survey-india`         | Forest Survey of India                             | fsi.nic.in                | State forest cover                                |
+| Source                        | Publisher                                          | Link                      | What it gives                                                     |
+| ----------------------------- | -------------------------------------------------- | ------------------------- | ----------------------------------------------------------------- |
+| `census-2011`                 | Registrar General & Census Commissioner, India     | censusindia.gov.in        | Population, literacy, sex ratio, all 13 districts                 |
+| `uk-des-ddp`                  | Directorate of Economics & Statistics, Uttarakhand | des.uk.gov.in             | Per capita income, 11 years                                       |
+| `uk-des-district-reports`     | Directorate of Economics & Statistics, Uttarakhand | palayanayog.uk.gov.in     | Schools and hospital beds, 3 districts                            |
+| `uk-district-composite-index` | Uttarakhand State SDG Composite Index              | palayanayog.uk.gov.in     | District SDG score and rank                                       |
+| `uk-migration-commission`     | Rural Development and Migration Commission         | palayanayog.uk.gov.in     | Out-migration, 2008–2022                                          |
+| `uk-tourism-capacity`         | Uttarakhand Tourism Department                     | uttarakhandtourism.gov.in | Accommodation capacity, Char Dham arrivals                        |
+| `uk-dairy-federation`         | Uttarakhand Co-operative Dairy Federation          | uttarakhandmilk.com       | Dairy societies, milk production                                  |
+| `forest-survey-india`         | Forest Survey of India                             | fsi.nic.in                | State forest cover                                                |
+| `uk-budget-directorate`       | Budget Directorate, Government of Uttarakhand      | budget.uk.gov.in          | 2026-27 demand-wise estimates; display blocked pending permission |
+
+The budget table preserves revenue/capital and voted/charged components in the published unit
+(thousands of rupees). Its 31 demands sum to the source document's stated ₹1,11,703 crore total.
+They are allocations, not expenditure or outcome measures.
 
 ### 3.3 Registered, not yet ingesting
 
@@ -141,9 +147,9 @@ stored data; it records the failure, and freshness degrades on its own.
 | **API**      | Node 22/24, TypeScript ESM, Express 5, PostgreSQL 16 + PostGIS, `pg`, Zod, neverthrow, Winston, node-cache, fast-xml-parser, helmet, express-rate-limit          |
 | **Web**      | Next.js 15 (App Router), React 19, TanStack Query, Tailwind v4, MapLibre GL, Zod, Framer Motion, Lucide                                                          |
 | **Mobile**   | Expo SDK 57, React Native 0.86, React 19.2, Expo Router, TanStack Query (+ AsyncStorage persistence), Zustand, Zod, Reanimated, Noto Sans / Noto Sans Devanagari |
-| **Database** | 42 migrations, 24 tables, PostGIS geometry for boundaries and alert extents                                                                                      |
+| **Database** | 45 SQL migration files, PostgreSQL tables plus PostGIS geometry for boundaries and alert extents                                                                 |
 | **Hosting**  | Render free instance (API + ingestion), Supabase Postgres, Vercel (web, Mumbai `bom1`), cron-job.org (keep-alive ping)                                           |
-| **Quality**  | TypeScript `strict`, ESLint, Prettier, Jest (backend, 424 tests), Vitest (web, 51), Jest + Testing Library (mobile, 81)                                          |
+| **Quality**  | TypeScript `strict`, ESLint, Prettier, Jest (backend, 445 tests), Vitest (web, 61), Jest + Testing Library (mobile, 81)                                          |
 
 **Conventions that hold across all three codebases.** Errors are values, not exceptions:
 the backend returns `Result<T, RequestError>` (neverthrow) across every layer boundary, and each
@@ -156,8 +162,8 @@ feature-sliced.
 
 **Response envelope.** Every API response is `{ success, message, data, requestId, timestamp }`,
 with errors carrying `{ code, message }`. Public figures additionally carry a `provenance`
-object: source key, department (en/hi), url, attribution, licence, vintage, fetchedAt, freshness
-and whether it may be redistributed.
+object: source key, department (en/hi), url, attribution, vintage, fetchedAt, freshness and
+whether it may be redistributed. Licence and cadence remain on the linked source-registry row.
 
 ---
 
@@ -317,7 +323,21 @@ unannounced**, so the next pass retries rather than losing it. Tokens Expo repor
 disabled. The app's settings screen states plainly that delivery cannot be guaranteed and that
 official channels remain authoritative.
 
-### 6.6 Observation retention
+### 6.6 Governance and intelligence workspaces
+
+`/governance` is a public, read-only evidence workspace, not an officer login simulation. It
+combines the official demand-wise budget, district standing across full-coverage indicators,
+public warnings and the existing map. District standing is derived at read time and includes
+only indicators with one vintage for all 13 districts and a declared better direction. Ties
+share a rank. The page calls the resulting order a follow-up queue, never an official rating.
+
+`/intelligence` is the coverage and discovery layer. It inventories every catalogued indicator,
+labels evidence as comparable, contextual, partial, state-only, catalogue-only or temporarily
+unavailable, and exposes shareable URL filters. It then connects that evidence to practical
+resident, traveller, administration, research and business tools. Each upstream request settles
+independently, so a budget or ranking outage does not erase the catalogue.
+
+### 6.7 Observation retention
 
 `observations` is the only table that grows without bound: about 169 rows an hour, ~1.48 M a
 year, ~249 MB in Postgres, against a 500 MB free tier. A nightly job aggregates raw rows older
@@ -327,7 +347,7 @@ a mid-day cutoff split the boundary day and silently overwrote half of it on the
 Steady state is roughly 74 MB and flat. Hourly detail older than 90 days is lost, deliberately
 and in writing.
 
-### 6.7 Clients
+### 6.8 Clients
 
 **Web.** Server components fetch from the API with an 8-second timeout — a hang is not an error,
 and every page is dynamic, so a silent hang once took the whole site down. Pages that carry
@@ -361,6 +381,9 @@ Recorded here because a reviewer will find them anyway, and they are tracked in 
 
 - **IMD redistribution terms are unconfirmed** — its alerts are ingested but cannot be shown.
   This is the blocking question for the alerts module, not a paperwork item.
+- **Budget Directorate reproduction permission is not yet recorded.** Its website policy asks
+  for prior permission; the budget workspace must not launch publicly until that is confirmed
+  and reflected in the source registry.
 - **data.gov.in API key not obtained**, which gates several indicator sets.
 - **Several statistics are transcribed by hand** from PDFs and are annual at best; each shows its
   vintage, and Census figures are 15 years old and labelled as such.

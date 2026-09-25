@@ -5,12 +5,7 @@ export const PROJECTS_TABLE = 'development_projects';
 export const PROJECT_AREAS_TABLE = 'development_project_areas';
 
 export type ProjectStatus =
-  | 'announced'
-  | 'approved'
-  | 'under_construction'
-  | 'operational'
-  | 'stalled'
-  | 'cancelled';
+  'announced' | 'approved' | 'under_construction' | 'operational' | 'stalled' | 'cancelled';
 
 export type ProjectSector =
   | 'connectivity'

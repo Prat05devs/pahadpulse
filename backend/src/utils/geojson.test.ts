@@ -276,5 +276,3 @@ describe('parseCapPolygon', () => {
     expect(parseCapPolygon('30.7,79.0 30.8,79.1').isErr()).toBe(true);
   });
 });
-
-

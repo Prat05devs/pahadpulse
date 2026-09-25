@@ -10,17 +10,31 @@ describe('dashboard overview components', () => {
     render(
       <LiveCounters
         data={{
-          touristsInState: 12500,
+          pilgrimArrivals: { value: 12500, year: 2025, destinationCount: 5 },
           activeAlerts: 3,
-          closedRoads: 8,
-          connectivityPercentage: 87,
+          connectivity: {
+            mobileDownloadMbps: 150.6,
+            districtsMeasured: 13,
+            quarterStart: '2026-04-01',
+          },
+          budget: { total: 1_117_032_100, fiscalYear: '2026-27', yearsAvailable: 19 },
+          indicatorCatalogue: { indicatorCount: 29, categoryCount: 10 },
+          startupSchemes: { verifiedCount: 70, verifiedOn: '2026-07-22' },
         }}
       />
     );
 
-    expect(screen.getByRole('heading', { name: 'Live state overview' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'State data snapshot' })).toBeInTheDocument();
     expect(screen.getByText('12,500')).toBeInTheDocument();
-    expect(screen.getByText('87%')).toBeInTheDocument();
+    expect(screen.getByText('150.6 Mbps')).toBeInTheDocument();
+    expect(screen.getByText(/not people currently in the state/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Pilgrim arrivals/i })).toHaveAttribute(
+      'href',
+      '/tourism'
+    );
+    expect(screen.getByRole('link', { name: /Road closure coverage/i })).toHaveTextContent(
+      'Not tracked'
+    );
   });
 
   it('uses links for dashboard navigation cards', () => {
@@ -30,6 +44,10 @@ describe('dashboard overview components', () => {
     expect(screen.getByRole('link', { name: /District details/i })).toHaveAttribute(
       'href',
       '/districts'
+    );
+    expect(screen.getByRole('link', { name: /Governance & budget/i })).toHaveAttribute(
+      'href',
+      '/governance'
     );
   });
 

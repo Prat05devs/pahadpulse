@@ -4,6 +4,31 @@
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
     "@typescript-eslint/no-explicit-any": "error",
-    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "pg",
+            "message": "The web app must read data through the backend API, never PostgreSQL directly."
+          },
+          {
+            "name": "postgres",
+            "message": "The web app must read data through the backend API, never PostgreSQL directly."
+          },
+          {
+            "name": "@supabase/supabase-js",
+            "message": "The web app must read data through the backend API, never Supabase directly."
+          }
+        ],
+        "patterns": [
+          {
+            "group": ["@supabase/*"],
+            "message": "The web app must read data through the backend API, never Supabase directly."
+          }
+        ]
+      }
+    ]
   }
 }

@@ -11,11 +11,7 @@ import { ERRORS, type RequestError } from '../../../utils/errors.js';
 import { fetchText } from '../../../utils/http.js';
 import createLogger from '../../../utils/logger.js';
 import type { ConnectorContext, ConnectorOutcome, SourceConnector } from '../connector.js';
-import {
-  localToUtc,
-  parseOpenMeteoResponse,
-  type OpenMeteoResponse,
-} from './open-meteo.parser.js';
+import { localToUtc, parseOpenMeteoResponse, type OpenMeteoResponse } from './open-meteo.parser.js';
 
 const logger = createLogger('@open-meteo.connector');
 

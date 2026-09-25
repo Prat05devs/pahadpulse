@@ -87,7 +87,9 @@ describe('GET /api/sources', () => {
     const res = await request(app).get('/api/sources');
     for (const source of res.body.data as { metadataStatus: string; licence: string }[]) {
       if (source.metadataStatus === 'verified') {
-        expect(source.licence).toMatch(/Creative Commons|public domain/i);
+        expect(source.licence).toMatch(
+          /Creative Commons|public domain|Government Open Data Licence/i,
+        );
       }
     }
   });

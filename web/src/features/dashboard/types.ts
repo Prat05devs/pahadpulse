@@ -1,10 +1,30 @@
 import { z } from 'zod';
 
 export const LiveCountersSchema = z.object({
-  touristsInState: z.number(),
-  activeAlerts: z.number(),
-  closedRoads: z.number(),
-  connectivityPercentage: z.number(),
+  pilgrimArrivals: z.object({
+    value: z.number().nullable(),
+    year: z.number().nullable(),
+    destinationCount: z.number(),
+  }),
+  activeAlerts: z.number().nullable(),
+  connectivity: z.object({
+    mobileDownloadMbps: z.number().nullable(),
+    districtsMeasured: z.number(),
+    quarterStart: z.string().nullable(),
+  }),
+  budget: z.object({
+    total: z.number().nullable(),
+    fiscalYear: z.string().nullable(),
+    yearsAvailable: z.number(),
+  }),
+  indicatorCatalogue: z.object({
+    indicatorCount: z.number(),
+    categoryCount: z.number(),
+  }),
+  startupSchemes: z.object({
+    verifiedCount: z.number(),
+    verifiedOn: z.string().nullable(),
+  }),
 });
 
 export type LiveCounters = z.infer<typeof LiveCountersSchema>;
@@ -39,6 +59,9 @@ export const StateFigureSchema = z.object({
   /** `YYYY-MM-DD` — what the figure describes, not when it was fetched. */
   vintage: z.string().nullable(),
   sourceLabel: z.string().nullable(),
+  sourceUrl: z.string().nullable(),
+  /** Plain-language measurement boundary, e.g. projection or sample survey. */
+  note: z.string().nullable(),
 });
 
 export type StateFigure = z.infer<typeof StateFigureSchema>;

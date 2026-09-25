@@ -16,6 +16,11 @@ module.exports = defineConfig([
         {
           patterns: [
             {
+              group: ['pg', 'postgres', '@supabase/*'],
+              message:
+                'The mobile app must read data through the backend API, never the database directly.',
+            },
+            {
               // Features talk to each other through their public surface only. Reaching into
               // another feature's components is what turns a slice into a tangle.
               group: ['@/features/*/components/*', '@/features/*/components'],

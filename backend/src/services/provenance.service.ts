@@ -71,8 +71,11 @@ export async function attachProvenance<T extends HasProvenance>(
  */
 export function publiclyDisplayable<T extends { provenance: Provenance | null }>(
   items: readonly T[],
-): T[] {
-  return items.filter((item) => item.provenance !== null && item.provenance.mayRedistribute);
+): (T & { provenance: Provenance })[] {
+  return items.filter(
+    (item): item is T & { provenance: Provenance } =>
+      item.provenance !== null && item.provenance.mayRedistribute,
+  );
 }
 
 /** True when a value is stale enough that the UI must say so rather than imply currency. */

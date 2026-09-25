@@ -130,7 +130,6 @@ export const en = {
   'settings.reset.confirm': 'Reset',
   'settings.about': 'About',
   'settings.version': 'Version',
-  'settings.api': 'API',
   'settings.webPortal': 'Web portal',
   'settings.support': 'Support',
   'settings.support.subtitle': 'Help, corrections and accessibility feedback',

@@ -19,23 +19,23 @@ field, not a footnote.**
 
 ## Who uses it
 
-| Role               | What they do                                                                                                       | Where       |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------ | ----------- |
-| Visitor            | Browses everything — dashboards, maps, alerts, comparison. No account required.                                    | public web  |
-| Registered citizen | A visitor who verified a mobile number to unlock alert subscriptions and saved districts. Sees no additional data. | public web  |
-| Officer            | Authorised government user of the governance dashboard. Post-v1.                                                   | web, `/gov` |
-| Operator           | BasicTech staff who register data sources and monitor ingestion health.                                            | web, `/ops` |
+| Role               | What they do                                                                                                       | Where              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------ | ------------------ |
+| Visitor            | Browses everything — dashboards, maps, alerts, comparison. No account required.                                    | public web         |
+| Registered citizen | A visitor who verified a mobile number to unlock alert subscriptions and saved districts. Sees no additional data. | public web         |
+| Officer            | Uses the public governance evidence today; authenticated workflows remain post-v1.                                 | web, `/governance` |
+| Operator           | BasicTech staff who register data sources and monitor ingestion health.                                            | web, `/ops`        |
 
 There is **no content-authoring role.** Nobody edits a population figure by hand; it arrives
 from a source or it does not exist.
 
 ## Stack
 
-| Layer   | Stack                                                                    | Location   |
-| ------- | ------------------------------------------------------------------------ | ---------- |
-| API     | Express 5 · TypeScript ESM · PostgreSQL 16 · neverthrow · Zod                  | `backend/` |
-| Web     | Next.js 15 App Router · React 19 · TanStack Query · Tailwind v4 · shadcn | `web/`     |
-| Mobile  | Expo SDK 57 · React Native 0.86 · React 19.2 · Expo Router · TanStack Query · Zustand · Zod | `mobile/`  |
+| Layer   | Stack                                                                                        | Location      |
+| ------- | -------------------------------------------------------------------------------------------- | ------------- |
+| API     | Express 5 · TypeScript ESM · PostgreSQL 16 · neverthrow · Zod                                | `backend/`    |
+| Web     | Next.js 15 App Router · React 19 · TanStack Query · Tailwind v4 · shadcn                     | `web/`        |
+| Mobile  | Expo SDK 57 · React Native 0.86 · React 19.2 · Expo Router · TanStack Query · Zustand · Zod  | `mobile/`     |
 | Hosting | Render Singapore free plan (API, which also runs ingestion), Supabase Postgres, Vercel (web) | `render.yaml` |
 
 Deviations from `guidelines/common/13-approved-libraries.md`, each needing a logged decision in
@@ -107,6 +107,7 @@ package alongside `lucide-react`; their versions must remain aligned.
 | `roads`      | road network, closures, live traffic                         | `modules/roads.md`      |
 | `tourism`    | tourist flow, Char Dham, carrying capacity                   | `modules/tourism.md`    |
 | `migration`  | Palayan Ayog survey rounds, district out-migration           | `modules/migration.md`  |
+| `governance` | budget allocations and derived district evidence             | `modules/governance.md` |
 
 ### Dependencies between modules
 
@@ -121,6 +122,7 @@ flowchart TD
   roads[roads]
   tourism[tourism]
   migration[migration]
+  governance[governance]
 
   indicators --> geography
   indicators --> datasets
@@ -135,6 +137,10 @@ flowchart TD
   tourism --> datasets
   migration --> geography
   migration --> datasets
+  governance --> geography
+  governance --> datasets
+  governance --> indicators
+  governance --> alerts
 ```
 
 No cycles. `geography` and `datasets` are the spine: every domain module joins its rows to a
@@ -144,25 +150,26 @@ can be built first and in parallel.
 `alerts` is the only domain module that depends on `accounts`, and only for subscriptions —
 alert _content_ is fully public and readable with no account.
 
-| Module       | Depends on                    | Depended on by     |
-| ------------ | ----------------------------- | ------------------ |
-| `geography`  | —                             | all domain modules |
-| `datasets`   | —                             | all domain modules |
-| `accounts`   | —                             | alerts             |
-| `indicators` | geography, datasets           | —                  |
-| `alerts`     | geography, datasets, accounts | —                  |
-| `hydromet`   | geography, datasets           | —                  |
-| `roads`      | geography, datasets           | —                  |
-| `tourism`    | geography, datasets           | —                  |
-| `migration`  | geography, datasets           | —                  |
+| Module       | Depends on                              | Depended on by     |
+| ------------ | --------------------------------------- | ------------------ |
+| `geography`  | —                                       | all domain modules |
+| `datasets`   | —                                       | all domain modules |
+| `accounts`   | —                                       | alerts             |
+| `indicators` | geography, datasets                     | —                  |
+| `alerts`     | geography, datasets, accounts           | —                  |
+| `hydromet`   | geography, datasets                     | —                  |
+| `roads`      | geography, datasets                     | —                  |
+| `tourism`    | geography, datasets                     | —                  |
+| `migration`  | geography, datasets                     | —                  |
+| `governance` | geography, datasets, indicators, alerts | —                  |
 
 ### Deferred — documented, not built
 
-| Part                                        | Why deferred                                                                                                                                            | Reserved range |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| `governance` (officer dashboard + AI layer) | out of v1 scope. Lives in this repo as a `/gov` route group when built; `accounts` already carries the officer role so nothing blocks it.               | `95xxx`        |
+| Part                               | Why deferred                                                                                                                                           | Reserved range |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
+| Authenticated governance workflows | intervention notes, assignments, and non-public evidence require real officer authorisation; the public read-only workspace is built at `/governance`. | `95xxx`        |
 
-`governance` has no module doc yet. Write one from `_TEMPLATE.md` when work starts.
+The public governance evidence workspace is documented in `modules/governance.md`.
 
 `migration` was on this list and is now built at district scope — the Palayan Ayog reports
 arrived as PDFs and were transcribed. Village-scope migration and ghost villages remain out
@@ -252,7 +259,7 @@ revising a warning must revise ours, not add a second contradictory one.
 | Observation | A time-stamped measurement from a station — rainfall, river level, temperature. Distinct from an indicator: high-frequency, not comparable across districts by definition. |
 | Alert       | A time-bounded warning from an authority, with a severity and an affected area. Expires.                                                                                   |
 | Char Dham   | The four pilgrimage sites — Kedarnath, Badrinath, Gangotri, Yamunotri. Drives the tourism module's peak load.                                                              |
-| Palayan     | Out-migration from hill villages. The `migration` module.                                                                                                                 |
+| Palayan     | Out-migration from hill villages. The `migration` module.                                                                                                                  |
 
 ---
 
@@ -299,7 +306,7 @@ Things that shape decisions across every module.
 | `80xxx` | roads                                      |
 | `85xxx` | tourism                                    |
 | `90xxx` | datasets (upstream and ingestion failures) |
-| `95xxx` | _reserved_ — governance                    |
+| `95xxx` | governance — reserved for future workflows |
 
 ## Links
 

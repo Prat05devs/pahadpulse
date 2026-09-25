@@ -258,7 +258,6 @@ class OpenMeteoAirConnector implements SourceConnector {
 
     return rows;
   }
-
 }
 
 export const openMeteoAirConnector: SourceConnector = new OpenMeteoAirConnector();

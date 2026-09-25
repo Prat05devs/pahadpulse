@@ -10,6 +10,7 @@ import { ComparisonTable } from '@/features/indicators/components/comparison-tab
 import { DistrictPicker } from '@/features/indicators/components/district-picker';
 import { BusinessComparisonScreen } from '@/features/business/components/business-comparison-screen';
 import { QueryProvider } from '@/components/providers/query-provider';
+import { BusinessSchemeDirectory } from '@/features/business/components/business-scheme-directory';
 
 export const metadata = buildPageMetadata({
   title: 'Compare Uttarakhand Districts & Business Potential',
@@ -23,8 +24,7 @@ export const metadata = buildPageMetadata({
   ],
 });
 
-/** An hour. Every figure here is Census 2011 or a published state statistic; they change
- *  by migration, never between requests. */
+/** An hour. Figures and scheme status change through versioned source refreshes. */
 export const revalidate = 3600;
 
 const DistrictListSchema = z.array(DistrictSummarySchema);
@@ -152,6 +152,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
 
                 <QueryProvider>
                   <BusinessComparisonScreen districts={districts} />
+                  <BusinessSchemeDirectory />
                 </QueryProvider>
               </div>
             </>

@@ -249,9 +249,9 @@ describe('findDistrictsInText', () => {
   });
 
   it('finds districts named in Hindi', () => {
-    expect(findDistrictsInText('देहरादून और चमोली में भारी वर्षा', districts).sort((a, b) => a - b)).toEqual(
-      [4, 6],
-    );
+    expect(
+      findDistrictsInText('देहरादून और चमोली में भारी वर्षा', districts).sort((a, b) => a - b),
+    ).toEqual([4, 6]);
   });
 
   it('matches a Garhwal district written without its suffix', () => {

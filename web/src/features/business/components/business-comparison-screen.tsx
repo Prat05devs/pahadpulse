@@ -15,6 +15,8 @@ import {
   Users,
   Shield,
   Trees,
+  ArrowUpRight,
+  BadgeIndianRupee,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { type BusinessWeights } from '../schemas';
@@ -300,6 +302,39 @@ export function BusinessComparisonScreen({
                     {report.evidence.missingMetrics.map((key) => METRIC_LABELS[key]).join(', ')}.
                   </p>
                 ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {report.recommendedSchemes && report.recommendedSchemes.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BadgeIndianRupee className="size-5 text-emerald-700" aria-hidden="true" />
+                  Support matched to {report.scenario.name}
+                </CardTitle>
+                <p className="mt-1 text-sm text-slate-500">
+                  Programme relevance is based on sector and support type; eligibility still requires official review.
+                </p>
+              </CardHeader>
+              <CardContent className="grid gap-3 md:grid-cols-2">
+                {report.recommendedSchemes.map((scheme) => (
+                  <a
+                    key={scheme.slug}
+                    href={scheme.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group min-h-24 rounded-lg border border-slate-200 p-4 hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                  >
+                    <span className="flex items-start justify-between gap-3">
+                      <span className="font-semibold text-slate-900">{scheme.name}</span>
+                      <ArrowUpRight className="size-4 shrink-0 text-emerald-700" aria-hidden="true" />
+                    </span>
+                    <span className="mt-1 block text-xs capitalize text-slate-500">
+                      {scheme.status.replace(/-/g, ' ')} · {scheme.access}
+                    </span>
+                  </a>
+                ))}
               </CardContent>
             </Card>
           ) : null}

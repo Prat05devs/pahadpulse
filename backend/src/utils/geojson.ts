@@ -65,7 +65,10 @@ export function assembleRings(ways: readonly LineString[]): Position[][] {
     let current = pool.shift() as LineString;
     let extended = true;
 
-    while (extended && !samePoint(current[0] as Position, current[current.length - 1] as Position)) {
+    while (
+      extended &&
+      !samePoint(current[0] as Position, current[current.length - 1] as Position)
+    ) {
       extended = false;
       const head = current[0] as Position;
       const tail = current[current.length - 1] as Position;
@@ -272,7 +275,3 @@ export function parseCapPolygon(raw: string): Result<PolygonGeometry, RequestErr
 
   return ok({ type: 'Polygon', coordinates: [positions] });
 }
-
-
-
-

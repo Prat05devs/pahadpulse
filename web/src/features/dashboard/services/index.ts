@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { apiClient } from '@/lib/api';
+import { fetchStateNetwork } from '@/features/connectivity/services';
+import { fetchDepartmentBudget } from '@/features/governance/services';
 import { AreaIndicatorsSchema } from '@/features/indicators/schemas';
+import { fetchAllIndicators } from '@/features/indicators/services';
+import { fetchPilgrimArrivals } from '@/features/tourism/services';
+import { fetchBusinessSchemes } from '@/features/business/services';
 import type {
   DistrictSummary,
   ImdCapLiveStatus,
@@ -23,34 +28,56 @@ export async function fetchImdCapLiveStatus(): Promise<ImdCapLiveStatus> {
   return apiClient.get('/sources/imd-cap-alerts/live', ImdCapLiveStatusSchema);
 }
 
-const PilgrimArrivalsResponseSchema = z.object({
-  totals: z.array(z.object({
-    year: z.number(),
-    visitors: z.number(),
-  }))
-});
-
 export async function fetchLiveCounters(): Promise<LiveCounters> {
-  const [alerts, tourismData] = await Promise.all([
-    apiClient.get('/alerts/summary', AlertSummarySchema),
-    apiClient.get('/tourism/pilgrim-arrivals', PilgrimArrivalsResponseSchema).catch(() => null)
+  const [alerts, tourism, network, budget, indicators, schemes] = await Promise.all([
+    apiClient.get('/alerts/summary', AlertSummarySchema).catch(() => null),
+    fetchPilgrimArrivals().catch(() => null),
+    fetchStateNetwork().catch(() => null),
+    fetchDepartmentBudget().catch(() => null),
+    fetchAllIndicators().catch(() => null),
+    fetchBusinessSchemes({ limit: 1 }).catch(() => null),
   ]);
 
-  const closedRoads = 0; // TODO: fetch from roads API when available
-
-  let touristsInState = 0;
-  if (tourismData && tourismData.totals.length > 0) {
-    const recordYear = tourismData.totals.find(t => t.year === 2025);
-    touristsInState = recordYear?.visitors ?? tourismData.totals[tourismData.totals.length - 1].visitors;
-  }
-
-  const connectivityPercentage = 0; // TODO: fetch from connectivity API when available
+  // The latest year can be an in-progress pilgrimage season. The homepage must not turn a
+  // partial annual total into a claim about how many people are physically in the state now.
+  const currentYear = new Date().getUTCFullYear();
+  const completedTourismYear = tourism?.totals
+    .filter((entry) => entry.year < currentYear)
+    .sort((a, b) => b.year - a.year)[0];
+  const destinationCount =
+    completedTourismYear === undefined
+      ? 0
+      : (tourism?.destinations.filter((destination) =>
+          destination.years.some((entry) => entry.year === completedTourismYear.year)
+        ).length ?? 0);
+  const mobile = network?.spread.find((entry) => entry.kind === 'mobile');
+  const categories = new Set((indicators ?? []).map((indicator) => indicator.category));
 
   return {
-    touristsInState,
-    activeAlerts: alerts.activeCount,
-    closedRoads,
-    connectivityPercentage,
+    pilgrimArrivals: {
+      value: completedTourismYear?.visitors ?? null,
+      year: completedTourismYear?.year ?? null,
+      destinationCount,
+    },
+    activeAlerts: alerts?.activeCount ?? null,
+    connectivity: {
+      mobileDownloadMbps: mobile?.stateAverageMbps ?? null,
+      districtsMeasured: mobile?.districtsMeasured ?? 0,
+      quarterStart: network?.quarterStart ?? null,
+    },
+    budget: {
+      total: budget?.summary?.totalExpenditure ?? null,
+      fiscalYear: budget?.fiscalYear ?? null,
+      yearsAvailable: budget?.history.length ?? 0,
+    },
+    indicatorCatalogue: {
+      indicatorCount: indicators?.length ?? 0,
+      categoryCount: categories.size,
+    },
+    startupSchemes: {
+      verifiedCount: schemes?.total ?? 0,
+      verifiedOn: schemes?.verifiedOn ?? null,
+    },
   };
 }
 
@@ -77,29 +104,41 @@ export async function fetchStateOverview(): Promise<StateOverview> {
 
   const byKey = new Map((indicators?.values ?? []).map((entry) => [entry.indicator.key, entry]));
 
-  const figure = (key: string): StateFigure => {
+  const figure = (key: string, note: string | null = null): StateFigure => {
     const entry = byKey.get(key);
-    if (entry === undefined) return { value: null, vintage: null, sourceLabel: null };
+    if (entry === undefined) {
+      return { value: null, vintage: null, sourceLabel: null, sourceUrl: null, note };
+    }
     return {
       value: entry.value,
       vintage: entry.vintage,
       sourceLabel: entry.provenance?.department?.en ?? entry.provenance?.sourceKey ?? null,
+      sourceUrl: entry.provenance?.url ?? null,
+      note,
     };
   };
 
   return {
-    population: figure('state_population'),
+    population: figure(
+      'state_population_projection',
+      'Official projection based on Census 2011—not a new Census headcount.'
+    ),
     areaKmSq: figure('state_area_sq_km'),
-    literacy: figure('state_literacy_rate'),
+    literacy: figure('state_literacy_plfs', 'PLFS sample-survey estimate for people aged 7+.'),
     // Counted, not stored: the district list is the authority on how many districts there
     // are, so a second copy of "13" could only ever disagree with it.
     districts: {
       value: districts.length,
       vintage: null,
       sourceLabel: 'Pahad Pulse geography module',
+      sourceUrl: null,
+      note: 'Counted from the current district directory.',
     },
     forestCoverage: figure('state_forest_cover_pct'),
-    villages: figure('state_villages'),
+    villages: figure(
+      'state_administrative_villages',
+      'Unique village codes in the current LGD directory; map-boundary coverage is separate.'
+    ),
   };
 }
 

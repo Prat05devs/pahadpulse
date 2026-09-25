@@ -3,15 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Menu as MenuIconData,
-  X as CloseIconData,
-} from 'lucide';
+import { Menu as MenuIconData, X as CloseIconData } from 'lucide';
 import {
   AlertTriangle,
   BarChart3,
   Building2,
   CloudRain,
+  Database,
   Gauge,
   GitCompareArrows,
   HardDriveDownload,
@@ -79,6 +77,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: 'Help & legal',
     items: [
+      { label: 'Data Sources', href: '/sources', icon: Database },
       { label: 'Support', href: '/support', icon: LifeBuoy },
       { label: 'Privacy', href: '/privacy', icon: ShieldCheck },
     ],
@@ -104,8 +103,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isPeeking, setIsPeeking] = useState(false);
   const showLabels = isPeeking;
 
-
-
   useEffect(() => {
     setIsMenuOpen(false);
   }, [pathname]);
@@ -126,9 +123,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 text-text-light backdrop-blur lg:hidden">
         <Link href="/" className="flex min-h-11 items-center gap-3 rounded-md px-1">
           <span className="flex size-9 items-center justify-center overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="Pahad Pulse logo" className="size-full object-contain" />
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Pahad Pulse logo" className="size-full object-contain" />
+          </span>
           <span>
             <span className="block font-display text-lg font-bold leading-none">Pahad Pulse</span>
             <span className="mt-1 block text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">
@@ -167,12 +164,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           hover. Without it, moving the pointer over the navigation would resize the map and
           shuffle every card beside it — the exact jitter that makes hover-to-expand feel
           broken. The spacer tracks the PREFERENCE, the rail tracks the hover. */}
-      <div
-        aria-hidden="true"
-        className={clsx(
-          'hidden lg:block lg:w-[4.75rem] lg:shrink-0'
-        )}
-      />
+      <div aria-hidden="true" className={clsx('hidden lg:block lg:w-[4.75rem] lg:shrink-0')} />
 
       <aside
         onMouseEnter={() => {
@@ -223,7 +215,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <img src="/logo.png" alt="Pahad Pulse logo" className="size-full object-contain" />
             </span>
             <span className={clsx(!showLabels && 'lg:hidden')}>
-              <span className="block font-display text-lg font-extrabold leading-none tracking-tight text-white">Pahad Pulse</span>
+              <span className="block font-display text-lg font-extrabold leading-none tracking-tight text-white">
+                Pahad Pulse
+              </span>
               <span className="mt-1 block text-[0.6rem] font-medium uppercase tracking-[0.2em] text-white/50">
                 Uttarakhand Intelligence
               </span>
@@ -278,9 +272,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       <Icon
                         className={clsx(
                           'size-[1.125rem] shrink-0 transition-colors duration-150',
-                          isActive
-                            ? 'text-accent'
-                            : 'text-white/45 group-hover:text-white/75'
+                          isActive ? 'text-accent' : 'text-white/45 group-hover:text-white/75'
                         )}
                         strokeWidth={1.8}
                         aria-hidden="true"

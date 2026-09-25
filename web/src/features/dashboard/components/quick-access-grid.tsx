@@ -9,8 +9,12 @@ import {
   GitCompareArrows,
   MapPinned,
   Mountain,
+  RadioTower,
+  Landmark,
+  Database,
   Route,
   Briefcase,
+  BadgeIndianRupee,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -41,10 +45,10 @@ const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
     description: 'Benchmark areas side by side',
   },
   {
-    label: 'Tourism live',
+    label: 'Tourism history',
     href: '/tourism',
     icon: Mountain,
-    description: 'Char Dham and visitor load',
+    description: 'Published annual Char Dham and pilgrimage arrivals',
   },
   {
     label: 'Weather & rivers',
@@ -59,10 +63,34 @@ const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
     description: 'Find profitable locations for ventures',
   },
   {
-    label: 'Roads & traffic',
+    label: 'Startup schemes',
+    href: '/compare#schemes',
+    icon: BadgeIndianRupee,
+    description: 'Verified finance, grants, guarantees and official application routes',
+  },
+  {
+    label: 'Road network',
     href: '/roads',
     icon: Route,
-    description: 'Closures and route conditions',
+    description: 'Mapped highway references and coverage limits',
+  },
+  {
+    label: 'Connectivity',
+    href: '/connectivity',
+    icon: RadioTower,
+    description: 'Quarterly mobile and fixed-broadband measurements',
+  },
+  {
+    label: 'Governance & budget',
+    href: '/governance',
+    icon: Landmark,
+    description: 'Budget history, allocations and district evidence',
+  },
+  {
+    label: 'Intelligence catalogue',
+    href: '/intelligence',
+    icon: Database,
+    description: 'Browse public indicators by audience, sector and scope',
   },
 ];
 

@@ -4,6 +4,8 @@ import {
   type BusinessScenario,
   type BusinessWeights,
 } from '../models/business-scenarios.js';
+import type { BusinessScheme } from '../models/business-scheme.model.js';
+import { recommendBusinessSchemes } from './business-scheme.service.js';
 
 type MetricKey = keyof BusinessWeights;
 type Confidence = 'low' | 'medium' | 'high';
@@ -75,6 +77,7 @@ export interface ComparisonReport {
     missingMetrics: MetricKey[];
     note: string;
   };
+  recommendedSchemes: BusinessScheme[];
 }
 
 interface AreaRow {
@@ -672,6 +675,7 @@ export class BusinessService {
         ),
         note: 'Scores are relative positions among Uttarakhand’s 13 districts. Missing evidence is excluded rather than converted into a zero or a neutral score.',
       },
+      recommendedSchemes: recommendBusinessSchemes(scenario.category),
     };
   }
 }

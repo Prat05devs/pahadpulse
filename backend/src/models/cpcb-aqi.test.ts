@@ -103,7 +103,7 @@ describe('computeNationalAqi', () => {
     expect(byMetric.get(Metric.Ozone)).toBe(8);
   });
 
-  it('returns null below CPCB\'s three-pollutant minimum', () => {
+  it("returns null below CPCB's three-pollutant minimum", () => {
     expect(computeNationalAqi({ [Metric.Pm25]: 75 })).toBeNull();
     expect(computeNationalAqi({ [Metric.Pm25]: 75, [Metric.Pm10]: 120 })).toBeNull();
   });
@@ -154,7 +154,7 @@ describe('withAdequateCoverage', () => {
     expect(computeNationalAqi(eligible)).toBeNull();
   });
 
-  it('applies CPCB\'s 16-of-24 rule and the 6-of-8 rule for CO and ozone', () => {
+  it("applies CPCB's 16-of-24 rule and the 6-of-8 rule for CO and ozone", () => {
     const eligible = withAdequateCoverage([
       { metric: Metric.Pm25, average: 75, sampleCount: 16 },
       { metric: Metric.Pm10, average: 120, sampleCount: 15 },

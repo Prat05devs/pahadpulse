@@ -16,11 +16,7 @@ import { SourceRepository } from '../repositories/source.repository.js';
 import { Metric, StationType } from '../types/hydromet.js';
 import { toIsoUtc } from '../utils/datetime.js';
 import { ERRORS, type RequestError } from '../utils/errors.js';
-import {
-  AVERAGING_HOURS,
-  computeNationalAqi,
-  withAdequateCoverage,
-} from '../models/cpcb-aqi.js';
+import { AVERAGING_HOURS, computeNationalAqi, withAdequateCoverage } from '../models/cpcb-aqi.js';
 
 /** The pollutants the air quality panel reads. */
 const AIR_METRICS: readonly Metric[] = [
@@ -119,7 +115,10 @@ export async function getAreaWeather(
   // normally share a timestamp; the max is taken anyway rather than assumed, because a
   // partially failed run legitimately leaves them a step apart.
   const observedAt =
-    [...byMetric.values()].map((observation) => observation.observedAt).sort().at(-1) ?? null;
+    [...byMetric.values()]
+      .map((observation) => observation.observedAt)
+      .sort()
+      .at(-1) ?? null;
 
   const forecast = await buildForecast(area.value.id);
   if (forecast.isErr()) return err(forecast.error);
@@ -260,7 +259,10 @@ export async function getAllDistrictWeather(
 
     const weatherCode = byMetric.get(Metric.WeatherCode);
     const observedAt =
-      [...byMetric.values()].map((observation) => observation.observedAt).sort().at(-1) ?? null;
+      [...byMetric.values()]
+        .map((observation) => observation.observedAt)
+        .sort()
+        .at(-1) ?? null;
 
     entries.push({
       areaSlug,
@@ -331,7 +333,10 @@ export async function getAllDistrictAirQuality(
     stations.value.map((entry) => entry.station.id),
     AQI_WINDOWS,
   );
-  const averagesByStation = new Map<number, Array<{ metric: Metric; average: number; sampleCount: number }>>();
+  const averagesByStation = new Map<
+    number,
+    Array<{ metric: Metric; average: number; sampleCount: number }>
+  >();
   if (averageRows.isOk()) {
     for (const row of averageRows.value) {
       const list = averagesByStation.get(row.station_id) ?? [];
@@ -353,7 +358,10 @@ export async function getAllDistrictAirQuality(
 
     const aqi = byMetric.get(Metric.UsAqi);
     const observedAt =
-      [...byMetric.values()].map((observation) => observation.observedAt).sort().at(-1) ?? null;
+      [...byMetric.values()]
+        .map((observation) => observation.observedAt)
+        .sort()
+        .at(-1) ?? null;
 
     entries.push({
       areaSlug,
@@ -427,10 +435,7 @@ export async function getAreaAirQuality(
 
   if (byMetric.size === 0) return err(ERRORS.AIR_QUALITY_NOT_AVAILABLE);
 
-  const sources = await SourceRepository.findByIds(
-    [airSourceId ?? station.value.sourceId],
-    now,
-  );
+  const sources = await SourceRepository.findByIds([airSourceId ?? station.value.sourceId], now);
   if (sources.isErr()) return err(sources.error);
 
   const source = sources.value.get(airSourceId ?? station.value.sourceId);
@@ -468,7 +473,10 @@ export async function getAreaAirQuality(
       );
 
   const observedAt =
-    [...byMetric.values()].map((observation) => observation.observedAt).sort().at(-1) ?? null;
+    [...byMetric.values()]
+      .map((observation) => observation.observedAt)
+      .sort()
+      .at(-1) ?? null;
   const resolvedSourceId = airSourceId ?? station.value.sourceId;
 
   return ok({

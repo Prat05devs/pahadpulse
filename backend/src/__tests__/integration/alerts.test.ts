@@ -124,7 +124,7 @@ describe('GET /api/alerts/:id', () => {
 });
 
 describe('GET /api/areas/:slug/alerts', () => {
-  maybe('returns only that district\'s publishable alerts', async () => {
+  maybe("returns only that district's publishable alerts", async () => {
     const res = await request(app).get('/api/areas/dehradun/alerts');
     expect(res.status).toBe(200);
     expectPublishableAlerts(res.body);

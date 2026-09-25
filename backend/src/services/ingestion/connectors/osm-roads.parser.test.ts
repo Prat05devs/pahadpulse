@@ -42,7 +42,7 @@ describe('parseRoadRefs', () => {
     'ignores non-highway ref %s',
     (raw) => {
       expect(parseRoadRefs(raw)).toEqual([]);
-    }
+    },
   );
 
   it('treats a leading-zero variant as the same highway', () => {

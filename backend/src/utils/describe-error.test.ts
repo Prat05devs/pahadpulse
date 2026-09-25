@@ -8,9 +8,9 @@ describe('describeError', () => {
     // `stack` are non-enumerable, so a production failure records nothing about itself.
     expect(JSON.stringify({ error: new Error('boom') })).toBe('{"error":{}}');
 
-    const serialised = JSON.parse(
-      JSON.stringify({ error: describeError(new Error('boom')) }),
-    ) as { error: { message: string; name: string; stack: string } };
+    const serialised = JSON.parse(JSON.stringify({ error: describeError(new Error('boom')) })) as {
+      error: { message: string; name: string; stack: string };
+    };
 
     expect(serialised.error.message).toBe('boom');
     expect(serialised.error.name).toBe('Error');

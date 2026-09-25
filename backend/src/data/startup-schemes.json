@@ -1,0 +1,2315 @@
+{
+  "verified_on": "2026-07-22",
+  "source": "https://www.startupindia.gov.in/content/dam/startupindia/homebanners/Startup-Schemes-Playbook-June-2026.pdf",
+  "count": 69,
+  "schemes": [
+    {
+      "id": 1,
+      "group": "startup-specific",
+      "slug": "startup-india-seed-fund-scheme",
+      "name": "Startup India Seed Fund Scheme",
+      "acronym": "SISFS",
+      "owner": "DPIIT, Ministry of Commerce and Industry",
+      "sector": ["sector-agnostic", "technology-enabled"],
+      "stage": ["proof of concept", "prototype", "seed", "market entry"],
+      "support": ["grant", "debt", "convertible debt"],
+      "access": "through approved incubators",
+      "status": "closed-new-applications",
+      "summary": "Early-stage capital routed through approved incubators for proof of concept, prototypes, product trials, market entry and commercialisation.",
+      "eligibility": [
+        "DPIIT-recognised startup",
+        "Incorporated no more than 2 years before application",
+        "Technology used in the core product, service, business model, distribution model or methodology",
+        "Commercially viable and scalable idea",
+        "No more than ₹10 lakh of prior monetary support under other Central or State schemes, excluding specified non-cash support"
+      ],
+      "benefits": [
+        "Grant up to ₹20 lakh for proof-of-concept validation, prototype development or product trials",
+        "Up to ₹50 lakh for market entry, commercialisation or scaling through debt, convertible debentures or debt-linked instruments"
+      ],
+      "apply": [
+        "Create or update the Startup India profile and DPIIT recognition",
+        "Apply on the SISFS portal and select suitable approved incubators",
+        "Complete incubator evaluation, due diligence and milestone agreement",
+        "Use funds only for the approved milestones and reporting plan"
+      ],
+      "url": "https://seedfund.startupindia.gov.in/",
+      "availability": "The startup application deadline was 31 May 2026. New applications are closed; approved disbursals continue."
+    },
+    {
+      "id": 2,
+      "group": "startup-specific",
+      "slug": "fund-of-funds-for-startups",
+      "name": "Fund of Funds for Startups",
+      "acronym": "FFS",
+      "owner": "DPIIT; implemented by SIDBI",
+      "sector": ["sector-agnostic"],
+      "stage": ["growth", "scaling"],
+      "support": ["equity"],
+      "access": "through SEBI-registered AIFs",
+      "status": "active-indirect",
+      "summary": "A ₹10,000 crore government fund-of-funds that commits capital to SEBI-registered Alternative Investment Funds, which invest in startups.",
+      "eligibility": [
+        "Startups do not apply to SIDBI for direct funding",
+        "Startup should generally meet the investee criteria of a participating AIF",
+        "DPIIT recognition is the programme-level startup criterion stated by Startup India",
+        "AIFs, not startups, submit the formal scheme application to SIDBI"
+      ],
+      "benefits": [
+        "Equity or equity-linked investment from participating AIFs",
+        "The startup-level ticket, valuation and terms are decided by the relevant AIF",
+        "Wider access to professionally managed domestic venture capital"
+      ],
+      "apply": [
+        "Review SIDBI’s participating/selected AIF ecosystem",
+        "Shortlist funds whose thesis matches your sector, stage and ticket size",
+        "Approach the fund with a pitch deck, data room and investment proposal",
+        "Negotiate investment directly with the AIF; this is not a government grant"
+      ],
+      "url": "https://www.sidbivcf.in/en/funds/ffs",
+      "availability": "Active as an investment programme. Startup access is indirect and depends on each participating AIF’s pipeline."
+    },
+    {
+      "id": 3,
+      "group": "startup-specific",
+      "slug": "startup-india-fund-of-funds-2",
+      "name": "Startup India Fund of Funds 2.0",
+      "acronym": "FoF 2.0",
+      "owner": "DPIIT; implemented by SIDBI and other selected agencies",
+      "sector": ["deep tech", "manufacturing", "sector-agnostic"],
+      "stage": ["early growth", "growth", "scaling"],
+      "support": ["equity"],
+      "access": "through SEBI-registered AIFs",
+      "status": "active-indirect",
+      "summary": "A second ₹10,000 crore fund-of-funds launched in 2026, with emphasis on deep tech, innovative manufacturing, early-growth startups and smaller venture funds.",
+      "eligibility": [
+        "Startups receive capital only from AIFs supported under FoF 2.0",
+        "DPIIT recognition is required at the startup level",
+        "Formal applicants to the scheme are eligible SEBI-registered Category I or II AIFs",
+        "Startup must independently satisfy the chosen AIF’s investment mandate and due diligence"
+      ],
+      "benefits": [
+        "Equity or equity-linked investment through supported AIFs",
+        "No standard startup ticket; amount and terms vary by fund",
+        "Priority windows for deep tech, manufacturing, smaller AIFs and broader sector/stage-agnostic investing"
+      ],
+      "apply": [
+        "Monitor SIDBI and other implementing-agency announcements for selected AIFs",
+        "Map your startup to the relevant fund thesis",
+        "Approach the AIF with fundraising materials and a due-diligence data room",
+        "Complete the AIF’s commercial investment process"
+      ],
+      "url": "https://www.startupindia.gov.in/content/dam/startupindia/Startup-India-Fund-of-Funds-2.0-Scheme.pdf",
+      "availability": "In force from 13 April 2026. Startup access is indirect through supported AIFs."
+    },
+    {
+      "id": 4,
+      "group": "startup-specific",
+      "slug": "credit-guarantee-scheme-for-startups",
+      "name": "Credit Guarantee Scheme for Startups",
+      "acronym": "CGSS",
+      "owner": "DPIIT; operated by NCGTC",
+      "sector": ["sector-agnostic"],
+      "stage": ["seed", "growth", "scaling"],
+      "support": ["loan", "credit guarantee"],
+      "access": "through member lenders",
+      "status": "standing-open",
+      "summary": "Government guarantee cover reduces lender risk on eligible debt extended to DPIIT-recognised startups.",
+      "eligibility": [
+        "DPIIT-recognised startup",
+        "Not in default to a lending or investing institution",
+        "Not classified as an NPA under RBI guidelines",
+        "Eligibility must be certified by a participating member institution",
+        "The underlying loan must meet the current CGSS framework"
+      ],
+      "benefits": [
+        "Guarantee cover up to ₹20 crore or the outstanding eligible credit, whichever is lower",
+        "Supports transaction-based and umbrella-based cover",
+        "Can improve access to collateral-light or collateral-free startup debt; the guarantee protects the lender, not the borrower from repayment"
+      ],
+      "apply": [
+        "Prepare a lender-ready business plan, financial model, repayment case and DPIIT certificate",
+        "Apply through Jan Samarth or a participating bank/NBFC/AIF",
+        "Ask the lender to structure the facility under CGSS",
+        "Complete credit appraisal and lender documentation"
+      ],
+      "url": "https://www.startupindia.gov.in/content/sih/en/credit-guarantee-scheme-for-startups.html",
+      "availability": "Standing scheme. Loan approval remains a commercial decision of the member institution."
+    },
+    {
+      "id": 5,
+      "group": "startup-specific",
+      "slug": "startup-intellectual-property-protection",
+      "name": "Scheme for Facilitating Startups Intellectual Property Protection",
+      "acronym": "SIPP",
+      "owner": "DPIIT / Office of CGPDTM",
+      "sector": ["sector-agnostic", "intellectual property"],
+      "stage": ["any stage"],
+      "support": ["fee support", "IP facilitation"],
+      "access": "direct via empanelled facilitator",
+      "status": "verify-current-extension",
+      "summary": "Provides empanelled IP facilitators and government-paid facilitator fees for patents, trademarks and designs.",
+      "eligibility": [
+        "DPIIT-recognised startup",
+        "Self-declaration that no other government scheme paid the facilitator, patent-agent or trademark-agent fee for the same application",
+        "The IP filing must follow the applicable patent, trademark or design rules"
+      ],
+      "benefits": [
+        "Facilitator assistance for drafting, filing, examination responses, hearings, opposition and final disposal",
+        "Facilitator professional fees are paid or reimbursed by CGPDTM",
+        "Startup generally bears statutory government filing fees"
+      ],
+      "apply": [
+        "Choose a facilitator from the current IP India list",
+        "Agree on the filing strategy and prepare technical/brand/design materials",
+        "File the application through the official IP system with SIPP documentation",
+        "Track prosecution and respond to examination requirements with the facilitator"
+      ],
+      "url": "https://ipindia.gov.in/page-content/startups-intellectual-property-protection-sipp",
+      "availability": "The official SIPP page remains live and publishes facilitator/reimbursement material. Confirm the latest extension notification before relying on fee coverage."
+    },
+    {
+      "id": 6,
+      "group": "startup-specific",
+      "slug": "gem-startup-runway",
+      "name": "GeM Startup Runway",
+      "acronym": "—",
+      "owner": "Government e-Marketplace / Department of Commerce",
+      "sector": ["sector-agnostic", "government procurement"],
+      "stage": ["market access", "growth"],
+      "support": ["market access", "procurement relaxation"],
+      "access": "direct on GeM",
+      "status": "standing-open",
+      "summary": "A dedicated route for startups to list innovative products and services and sell to government buyers.",
+      "eligibility": [
+        "Register as a seller or service provider on GeM",
+        "DPIIT recognition is required for startup-specific relaxations",
+        "Product or service must fit an existing GeM category or qualify as an innovative offering",
+        "Comply with category, quality, tax and fulfilment requirements applicable to the bid or listing"
+      ],
+      "benefits": [
+        "Access to ministries, departments, PSUs and other public buyers",
+        "Relaxations may include prior-turnover, prior-experience and EMD requirements",
+        "Dedicated visibility for innovative offerings",
+        "Ability to propose products where a standard category is unavailable, subject to GeM approval"
+      ],
+      "apply": [
+        "Complete entity, tax, bank and GeM seller registration",
+        "Map the offering to a category or Startup Runway route",
+        "Upload product/service specifications and required certifications",
+        "Participate in bids/reverse auctions or accept direct-order opportunities as permitted"
+      ],
+      "url": "https://gem.gov.in/Startup_Runway",
+      "availability": "Standing marketplace route. Individual tenders and categories have their own live conditions."
+    },
+    {
+      "id": 7,
+      "group": "startup-specific",
+      "slug": "nidhi-seed-support-program",
+      "name": "NIDHI Seed Support Program",
+      "acronym": "NIDHI-SSP",
+      "owner": "Department of Science and Technology",
+      "sector": ["technology", "sector-agnostic"],
+      "stage": ["seed", "post-incubation"],
+      "support": ["seed support", "mentoring"],
+      "access": "through NIDHI STEP/TBI",
+      "status": "periodic-incubator-calls",
+      "summary": "Seed support for deserving incubatee startups, routed through eligible NIDHI STEPs and Technology Business Incubators.",
+      "eligibility": [
+        "DPIIT-recognised startup",
+        "At least 3 months’ residency at the participating STEP/TBI",
+        "At least 51% shareholding by Indian promoters",
+        "Must satisfy the incubator’s call, due-diligence and committee requirements"
+      ],
+      "benefits": [
+        "Support for product development, testing, trials and test marketing",
+        "Mentoring, professional consultancy and IPR support",
+        "Structure and amount are decided under the current incubator call and Seed Support Management Committee"
+      ],
+      "apply": [
+        "Identify a listed participating NIDHI STEP/TBI",
+        "Join or maintain the required incubation residency",
+        "Apply when that incubator announces a seed-support call",
+        "Present to the incubator committee and agree to milestones/instrument terms"
+      ],
+      "url": "https://nidhi.dst.gov.in/nidhissp/",
+      "availability": "Programme is active through participating incubators; startup application windows are local and periodic."
+    },
+    {
+      "id": 8,
+      "group": "startup-specific",
+      "slug": "nidhi-prayas-2",
+      "name": "NIDHI PRAYAS 2.0",
+      "acronym": "PRAYAS 2.0",
+      "owner": "Department of Science and Technology",
+      "sector": ["technology", "deep tech", "sector-agnostic"],
+      "stage": ["idea", "proof of concept", "prototype"],
+      "support": ["grant", "prototyping", "incubation"],
+      "access": "through PRAYAS Centres",
+      "status": "periodic-incubator-calls",
+      "summary": "Pre-incubation prototyping support for technology and deep-tech innovators through PRAYAS and Advanced PRAYAS Centres.",
+      "eligibility": [
+        "Individual Indian innovator or DPIIT-recognised startup",
+        "For a startup: incorporated in India and no more than 5 years old",
+        "For a startup: annual turnover must not have exceeded ₹1 crore in any financial year",
+        "Technology-led prototype proposal within current guidelines"
+      ],
+      "benefits": [
+        "Up to ₹20 lakh prototype grant through a PRAYAS Centre",
+        "Up to ₹40 lakh for advanced/deep-tech prototypes through an Advanced PRAYAS Centre",
+        "Workspace, equipment access and mentoring through the implementing centre"
+      ],
+      "apply": [
+        "Identify the appropriate PRAYAS Centre for the technology domain",
+        "Apply to the centre’s live innovator/startup call with prototype plan, milestones and budget",
+        "Undergo technical and commercial screening",
+        "Execute milestones and submit utilisation/progress evidence"
+      ],
+      "url": "https://nidhi-prayas.org/",
+      "availability": "PRAYAS 2.0 guidelines were current in 2026; beneficiary calls are issued by participating centres."
+    },
+    {
+      "id": 9,
+      "group": "startup-specific",
+      "slug": "research-development-innovation-scheme",
+      "name": "Research, Development and Innovation Scheme",
+      "acronym": "RDI",
+      "owner": "Department of Science and Technology / ANRF",
+      "sector": ["deep tech", "strategic technology", "research intensive"],
+      "stage": ["growth", "scaling"],
+      "support": ["debt", "convertible debt", "equity"],
+      "access": "through second-level fund managers",
+      "status": "active-indirect",
+      "summary": "A ₹1 lakh crore financing scheme intended to catalyse private-sector R&D in strategic and high-impact technologies.",
+      "eligibility": [
+        "DPIIT-recognised or other eligible private company pursuing R&D-intensive technology",
+        "Must qualify under a participating Second Level Fund Manager such as an AIF, DFI, NBFC or Focused Research Organisation",
+        "Project must meet the RDI scheme and selected fund manager’s technical, financial and strategic criteria"
+      ],
+      "benefits": [
+        "Debt or optionally convertible debt generally calculated up to 50% of project cost",
+        "Equity/equity-linked financing generally calculated up to 50% of the relevant funding round",
+        "Long-horizon capital for R&D-heavy projects"
+      ],
+      "apply": [
+        "Review current ANRF RDI implementation guidelines",
+        "Identify an approved Second Level Fund Manager, such as a notified TDB route",
+        "Register and submit project, technology, IP, budget and commercialisation information",
+        "Complete technical appraisal, financial due diligence and milestone contracting"
+      ],
+      "url": "https://rdifund.anrf.gov.in/",
+      "availability": "Active implementation framework in 2026. Startups apply through participating second-level fund managers."
+    },
+    {
+      "id": 10,
+      "group": "startup-specific",
+      "slug": "national-quantum-mission-startup-support",
+      "name": "National Quantum Mission Startup Support",
+      "acronym": "NQM",
+      "owner": "Department of Science and Technology",
+      "sector": [
+        "quantum computing",
+        "quantum communication",
+        "quantum sensing",
+        "quantum materials"
+      ],
+      "stage": ["R&D", "prototype", "scaling"],
+      "support": ["grant", "incubation", "research infrastructure"],
+      "access": "through thematic hubs and calls",
+      "status": "periodic-calls",
+      "summary": "Mission-backed support for quantum R&D, prototypes, products and commercialisation through four thematic hubs.",
+      "eligibility": [
+        "Quantum-technology startup, preferably DPIIT-recognised",
+        "Indian ownership/control requirements may apply under each call",
+        "Proposal must fit a thematic hub: computing, communication, sensing/metrology, or materials/devices",
+        "Must satisfy the call’s novelty, feasibility, impact, team and fund-use criteria"
+      ],
+      "benefits": [
+        "Seed/prototype or scale-up support routed through NQM hubs",
+        "Research infrastructure, technical networks and industry-academia collaboration",
+        "No universal ticket size; each call/hub publishes its own support terms"
+      ],
+      "apply": [
+        "Choose the thematic hub matching the technology",
+        "Monitor DST/NQM and hub call pages",
+        "Submit the technical proposal, TRL evidence, work plan, budget, IP position and commercialisation case",
+        "Complete expert evaluation and hub contracting"
+      ],
+      "url": "https://www.psa.gov.in/mission/national-quantum-mission/26",
+      "availability": "Mission is active; startup support is call-based through the relevant thematic hub."
+    },
+    {
+      "id": 11,
+      "group": "startup-specific",
+      "slug": "prism",
+      "name": "Promoting Innovations in Individuals, Start-ups and MSMEs",
+      "acronym": "PRISM",
+      "owner": "Department of Scientific and Industrial Research",
+      "sector": ["science and technology", "MSME technology"],
+      "stage": ["idea", "prototype", "commercialisation"],
+      "support": ["grant", "mentoring"],
+      "access": "direct or through TOCIC",
+      "status": "periodic-calls",
+      "summary": "Supports Indian innovators in moving from idea to working prototype, patenting and commercialisation.",
+      "eligibility": [
+        "Indian citizen with an innovative idea, or eligible public-funded organisation/innovation-promoting entity",
+        "Phase II generally requires a demonstrated proof of concept or prior supported innovation",
+        "Project must be a product/process/technology innovation rather than routine business expansion",
+        "Applicant must meet the current DSIR category and cost-sharing rules"
+      ],
+      "benefits": [
+        "Phase I Category I: up to ₹2 lakh or 90% of project cost",
+        "Phase I Category II: up to ₹20 lakh or 90% of project cost",
+        "Phase II: up to ₹50 lakh or 50% of project cost",
+        "PRISM R&D proposal: up to ₹50 lakh, limited to 50% of cost"
+      ],
+      "apply": [
+        "Select the correct PRISM phase/category",
+        "Prepare problem statement, novelty search, technical plan, prototype milestones, budget and commercial path",
+        "Submit through DSIR/identified outreach centre when a call is open",
+        "Complete PASC evaluation and milestone reporting"
+      ],
+      "url": "https://www.dsir.gov.in/offerings/schemes-and-services/details/promoting-innovations-in-individuals-start-ups-and-msmes-prism-kjMwITMtQWa",
+      "availability": "Official scheme page is current; use the active DSIR call or outreach-centre instructions."
+    },
+    {
+      "id": 12,
+      "group": "startup-specific",
+      "slug": "biotechnology-ignition-grant",
+      "name": "Biotechnology Ignition Grant",
+      "acronym": "BIG",
+      "owner": "BIRAC, Department of Biotechnology",
+      "sector": ["biotechnology", "healthtech", "medtech", "agritech biotech"],
+      "stage": ["idea", "proof of concept"],
+      "support": ["grant", "mentoring", "incubation"],
+      "access": "direct call; incubation required",
+      "status": "periodic-calls",
+      "summary": "BIRAC’s flagship early-stage biotech programme for converting a scientific idea into proof of concept.",
+      "eligibility": [
+        "Individual entrepreneur or eligible startup",
+        "Must be incubated in an incubator; it need not be BIRAC-supported",
+        "Proposal must be biotech or life-science led and capable of translation into a product/technology",
+        "Meet the current Indian ownership, entity-age, conflict and prior-funding conditions in the BIG call"
+      ],
+      "benefits": [
+        "Grant-in-aid up to ₹50 lakh for up to 18 months",
+        "Technical, IP, legal, regulatory and business mentoring",
+        "Investor, industry and peer-network access"
+      ],
+      "apply": [
+        "Register on the BIRAC portal",
+        "Apply during a national BIG call, typically issued at least twice yearly",
+        "Choose/confirm an eligible incubator and BIG partner",
+        "Submit technical proposal, milestones, budget, team credentials and commercialisation case",
+        "Complete expert review, presentation and contracting"
+      ],
+      "url": "https://birac.nic.in/big.php",
+      "availability": "Periodic national calls, typically around January and July; confirm the live deadline."
+    },
+    {
+      "id": 13,
+      "group": "startup-specific",
+      "slug": "biotechnology-innovation-fund-ace",
+      "name": "Biotechnology Innovation Fund – Accelerating Entrepreneurs",
+      "acronym": "AcE",
+      "owner": "BIRAC, Department of Biotechnology",
+      "sector": ["biotechnology", "life sciences", "medtech", "agritech", "bio-IT"],
+      "stage": ["growth", "scaling"],
+      "support": ["equity"],
+      "access": "through AcE daughter AIFs",
+      "status": "active-indirect",
+      "summary": "A biotech fund-of-funds that invests in SEBI-registered AIFs, which then invest in biotech and allied startups.",
+      "eligibility": [
+        "Startup/SME in biotech, healthcare, life sciences, pharma, biopharma, medtech, diagnostics, industrial biotech, agritech, bio-IT or allied areas",
+        "Must meet the selected AcE daughter fund’s thesis and diligence",
+        "Formal scheme applicants are eligible Category I/II AIFs"
+      ],
+      "benefits": [
+        "Startup ticket up to ₹7 crore, with possible follow-on up to ₹3.5 crore under programme parameters",
+        "Equity capital plus fund-manager support",
+        "BIRAC commitment to a daughter fund is capped under the AcE guidelines"
+      ],
+      "apply": [
+        "Review BIRAC’s AcE fund-partner information",
+        "Identify a daughter fund whose sector/stage fits",
+        "Approach the fund with investment materials",
+        "Complete commercial due diligence and negotiate equity terms"
+      ],
+      "url": "https://birac.nic.in/aceFund.php",
+      "availability": "Active as a fund-routed opportunity; availability depends on participating AIFs."
+    },
+    {
+      "id": 14,
+      "group": "startup-specific",
+      "slug": "birac-incubator-seed-fund",
+      "name": "BIRAC Incubator SEED Fund",
+      "acronym": "SEED",
+      "owner": "BIRAC, Department of Biotechnology",
+      "sector": ["biotechnology", "medtech", "life sciences"],
+      "stage": ["seed"],
+      "support": ["equity", "equity-linked seed support"],
+      "access": "through participating incubators",
+      "status": "periodic-incubator-calls",
+      "summary": "Early-stage equity or equity-linked support for biotech startups through selected BIRAC incubators.",
+      "eligibility": [
+        "Biotech, medtech or life-sciences startup",
+        "Must apply through a participating incubator",
+        "Must pass incubator investment screening, valuation and due diligence",
+        "Use must match early product/company development objectives"
+      ],
+      "benefits": [
+        "Up to ₹30 lakh per startup as equity or equity-linked support",
+        "Incubator mentoring and investment readiness",
+        "Bridge toward angel, VC or commercial debt"
+      ],
+      "apply": [
+        "Find a SEED Fund partner on BIRAC’s programme page",
+        "Apply to the partner’s live startup call",
+        "Submit pitch, cap table, financials, technical milestones and proposed use of funds",
+        "Complete investment committee process and instrument documentation"
+      ],
+      "url": "https://www.birac.nic.in/seedFundNew.php",
+      "availability": "Applications are routed through participating incubators and their individual calls."
+    },
+    {
+      "id": 15,
+      "group": "startup-specific",
+      "slug": "birac-leap-fund",
+      "name": "LEAP Fund – Launching Entrepreneurial Driven Affordable Products",
+      "acronym": "LEAP",
+      "owner": "BIRAC, Department of Biotechnology",
+      "sector": ["biotechnology", "medtech", "life sciences"],
+      "stage": ["pilot", "commercialisation"],
+      "support": ["equity", "equity-linked investment"],
+      "access": "through BioNEST fund partners",
+      "status": "periodic-incubator-calls",
+      "summary": "Commercialisation capital for biotech startups that have moved beyond the smaller SEED Fund ticket.",
+      "eligibility": [
+        "Biotech, medtech or life-sciences startup",
+        "Funding need generally above ₹30 lakh",
+        "Must qualify through a participating BioNEST/LEAP fund partner",
+        "Product/technology should be ready for pilot or commercialisation and capable of attracting venture capital"
+      ],
+      "benefits": [
+        "More than ₹30 lakh and up to ₹1 crore per startup",
+        "Equity or equity-linked investment",
+        "Commercialisation, pilot and fundraising support from the partner incubator"
+      ],
+      "apply": [
+        "Identify the relevant LEAP fund partner",
+        "Apply during that partner’s funding window",
+        "Provide pilot evidence, regulatory/IP position, commercial plan, cap table and valuation case",
+        "Complete investment committee and transaction documentation"
+      ],
+      "url": "https://birac.nic.in/leapFundNew.php",
+      "availability": "Partner-routed; calls and sector focus vary by BioNEST/LEAP partner."
+    },
+    {
+      "id": 16,
+      "group": "startup-specific",
+      "slug": "sparsh-social-innovation",
+      "name": "SPARSH – Social Innovation Programme for Products Affordable and Relevant to Social Health",
+      "acronym": "SPARSH",
+      "owner": "BIRAC / Department of Biotechnology",
+      "sector": ["public health", "social innovation", "biotechnology"],
+      "stage": ["idea", "validation"],
+      "support": ["grant", "immersion", "mentoring"],
+      "access": "direct thematic calls",
+      "status": "periodic-calls",
+      "summary": "Supports affordable biotech and health solutions for underserved communities through product-development and immersion components.",
+      "eligibility": [
+        "For startup category: Indian biotech startup generally less than 3 years old",
+        "Eligible LLP generally less than 3 years old",
+        "Academic scientists and researchers may qualify under call-specific categories",
+        "Proposal must address the announced social-health theme"
+      ],
+      "benefits": [
+        "Grant-in-aid up to ₹50 lakh for up to 18 months under the product-development component",
+        "Social-innovation immersion, community need discovery and mentoring",
+        "Call-specific technical and ecosystem support"
+      ],
+      "apply": [
+        "Monitor BIRAC’s call-for-proposals page for the thematic Letter of Intent",
+        "Submit the LoI online",
+        "If shortlisted, develop the full proposal, milestones and budget",
+        "Complete technical review and agreement"
+      ],
+      "url": "https://www.birac.nic.in/",
+      "availability": "Calls are thematic and generally announced periodically; check the current BIRAC CFP page."
+    },
+    {
+      "id": 17,
+      "group": "startup-specific",
+      "slug": "agrisure",
+      "name": "AgriSURE – Agri Fund for Startups and Rural Enterprises",
+      "acronym": "AgriSURE",
+      "owner": "Ministry of Agriculture and Farmers Welfare / NABVENTURES",
+      "sector": ["agriculture", "rural enterprise", "agritech"],
+      "stage": ["growth", "scaling"],
+      "support": ["equity", "debt", "fund of funds"],
+      "access": "direct or through AIFs",
+      "status": "active-investment",
+      "summary": "A ₹750 crore blended investment fund for high-impact agriculture and rural ventures, with direct and fund-of-funds routes.",
+      "eligibility": [
+        "Startup working in agriculture, allied sectors or rural development",
+        "Must satisfy NABVENTURES investment merit, governance and diligence",
+        "AIF applicants must be SEBI-registered and invest in eligible agri/rural ventures",
+        "Technology, value-chain impact and scalability are central selection considerations"
+      ],
+      "benefits": [
+        "Fund-of-funds corpus of ₹450 crore and direct investment corpus of ₹300 crore",
+        "Startup ticket up to ₹25 crore, subject to investment merit",
+        "Potential incubation, mentoring and ecosystem access"
+      ],
+      "apply": [
+        "Review AgriSURE’s investment thesis",
+        "Submit an investment approach to NABVENTURES or an eligible supported fund",
+        "Provide pitch deck, audited/management financials, cap table, impact case and data room",
+        "Complete investment committee diligence and negotiate terms"
+      ],
+      "url": "https://nabventures.in/agrisure.aspx",
+      "availability": "Active investment programme; not a universal grant and no automatic entitlement."
+    },
+    {
+      "id": 18,
+      "group": "startup-specific",
+      "slug": "rkv-rafter-innovation-agri-entrepreneurship",
+      "name": "Innovation and Agri-Entrepreneurship Programme under RKVY",
+      "acronym": "RKVY-RAFTAAR",
+      "owner": "Ministry of Agriculture and Farmers Welfare",
+      "sector": ["agriculture", "allied sectors", "agritech"],
+      "stage": ["idea", "pre-seed", "seed"],
+      "support": ["grant", "incubation", "mentoring"],
+      "access": "through R-ABIs",
+      "status": "periodic-incubator-calls",
+      "summary": "Agri-startup incubation and grant support through RKVY-RAFTAAR agribusiness incubators.",
+      "eligibility": [
+        "DPIIT-recognised startup for startup funding route",
+        "Agriculture or allied-sector innovation",
+        "Must apply through the relevant R-ABI cohort and satisfy its programme criteria",
+        "Pre-seed applicants may be at ideation/validation; seed applicants need a more developed venture and milestone plan"
+      ],
+      "benefits": [
+        "Pre-seed support up to ₹5 lakh",
+        "Seed-stage support up to ₹25 lakh",
+        "Incubation, mentoring and sector connections"
+      ],
+      "apply": [
+        "Review open cohorts on the Agri Startup portal",
+        "Choose an R-ABI matching the sector/geography",
+        "Submit venture details, innovation, team, budget and milestones",
+        "Attend selection bootcamp/pitch if shortlisted",
+        "Complete incubation and milestone-based grant process"
+      ],
+      "url": "https://agristartup.gov.in/",
+      "availability": "Periodic calls through R-ABIs; confirm the active cohort and deadline."
+    },
+    {
+      "id": 19,
+      "group": "startup-specific",
+      "slug": "samridh",
+      "name": "Startup Accelerators of MeitY for Product Innovation, Development and Growth",
+      "acronym": "SAMRIDH",
+      "owner": "Ministry of Electronics and Information Technology",
+      "sector": ["software", "IT products", "digital technology"],
+      "stage": ["growth", "scaling"],
+      "support": ["investment", "acceleration"],
+      "access": "through selected accelerators",
+      "status": "periodic-accelerator-cohorts",
+      "summary": "Supports IT-product startups through selected accelerators, combining acceleration services and matched investment.",
+      "eligibility": [
+        "IT-based startup selected by a SAMRIDH-supported accelerator",
+        "Startup must meet the accelerator cohort’s product, traction and scale-readiness criteria",
+        "Formal scheme applicants for accelerator support are eligible not-for-profit accelerators",
+        "Private matching investment is part of the startup funding model"
+      ],
+      "benefits": [
+        "Government-side investment up to ₹40 lakh, with average target around ₹30 lakh per startup per cohort",
+        "Equal matching private investment up to ₹40 lakh, subject to valuation/stage",
+        "Customer, investor, internationalisation and product-growth support"
+      ],
+      "apply": [
+        "Review the MeitY Startup Hub list of SAMRIDH accelerators",
+        "Apply to an accelerator’s live cohort",
+        "Complete product, traction and investment screening",
+        "Agree valuation/instrument and acceleration milestones"
+      ],
+      "url": "https://msh.meity.gov.in/schemes/samridh",
+      "availability": "Startup access is through selected accelerators and their periodic cohorts."
+    },
+    {
+      "id": 20,
+      "group": "startup-specific",
+      "slug": "genesis",
+      "name": "Gen-Next Support for Innovative Startups",
+      "acronym": "GENESIS",
+      "owner": "Ministry of Electronics and Information Technology",
+      "sector": ["technology", "Tier II and Tier III cities", "deep tech"],
+      "stage": ["idea", "pilot", "scaling"],
+      "support": ["grant", "pilot funding", "investment", "capacity building"],
+      "access": "through implementing agencies",
+      "status": "standing-ia-applications",
+      "summary": "Builds startup capacity in Tier-II and Tier-III cities through implementing agencies that provide funding, infrastructure and mentoring.",
+      "eligibility": [
+        "Startup support is routed through a GENESIS Implementing Agency",
+        "Technology startup located in or serving the targeted Tier-II/Tier-III ecosystem",
+        "Must satisfy the IA’s programme and call criteria",
+        "For deep-tech support, the proposal must meet the relevant technology and milestone bar"
+      ],
+      "benefits": [
+        "Startup/pilot funding from about ₹10 lakh for early-stage ventures up to ₹1 crore for deep-tech startups",
+        "Mentors, innovation infrastructure and ecosystem access",
+        "Capacity-building support in smaller cities"
+      ],
+      "apply": [
+        "Use the MeitY Startup Hub GENESIS page to identify participating IAs and opportunities",
+        "Apply to the appropriate IA/startup call",
+        "Submit innovation, team, location, milestone and budget information",
+        "Complete IA evaluation and programme onboarding"
+      ],
+      "url": "https://msh.meity.gov.in/schemes/genesis",
+      "availability": "Implementing-agency applications are accepted throughout the year; startup opportunities are routed through those agencies."
+    },
+    {
+      "id": 21,
+      "group": "startup-specific",
+      "slug": "stpi-next-generation-incubation-scheme",
+      "name": "STPI Next Generation Incubation Scheme",
+      "acronym": "NGIS",
+      "owner": "MeitY / Software Technology Parks of India",
+      "sector": ["software products", "digital technology", "Tier II and Tier III cities"],
+      "stage": ["idea", "seed", "scaling"],
+      "support": ["seed funding", "incubation", "mentoring"],
+      "access": "direct portal calls",
+      "status": "periodic-calls",
+      "summary": "Incubation, funding and mentoring for software-product and technology startups, with a focus on Tier-II/III cities.",
+      "eligibility": [
+        "Indian technology/software-product startup or eligible innovator",
+        "DPIIT recognition is encouraged",
+        "Individuals, researchers, LLPs or partnerships may be required to incorporate as a private limited company if selected",
+        "Must fit the current location/challenge call"
+      ],
+      "benefits": [
+        "Seed/risk funding up to ₹25 lakh for selected startups",
+        "Incubation infrastructure, labs, testing and equipment",
+        "Mentoring, industry connections, marketing and product-lifecycle guidance"
+      ],
+      "apply": [
+        "Register on the STPI Startup Portal",
+        "Select an open NGIS/centre challenge",
+        "Submit venture, product, technology, team, market and funding plan",
+        "Pitch to the selection panel and complete incubation terms"
+      ],
+      "url": "https://startup.stpi.in/",
+      "availability": "Periodic challenge and centre-specific calls."
+    },
+    {
+      "id": 22,
+      "group": "startup-specific",
+      "slug": "chips-to-startup",
+      "name": "Chips to Startup Programme",
+      "acronym": "C2S",
+      "owner": "Ministry of Electronics and Information Technology",
+      "sector": ["semiconductor", "VLSI", "embedded systems", "chip design"],
+      "stage": ["R&D", "prototype"],
+      "support": ["grant", "tools", "fabrication support", "training"],
+      "access": "through project calls and academic collaboration",
+      "status": "periodic-calls",
+      "summary": "Builds semiconductor design capability through training, chip-development projects, tools and fabrication/prototyping support.",
+      "eligibility": [
+        "Primary applicants are eligible academic institutions and R&D organisations",
+        "Startups and MSMEs participate through academia-industry projects, challenges, hackathons or RFPs",
+        "Proposal must relate to ASIC, SoC, FPGA, IP core, embedded-system or semiconductor-system development",
+        "Meet the specific C2S call and consortium requirements"
+      ],
+      "benefits": [
+        "Financial and technical support for approved chip-design projects",
+        "Access to EDA tools, IP repositories, MPW/fabrication, prototyping and post-design support",
+        "Training and ecosystem collaboration"
+      ],
+      "apply": [
+        "Monitor the C2S portal for an applicable call",
+        "Form the required academic/industry consortium where necessary",
+        "Submit the prescribed technical proposal, work packages, fabrication plan, team and budget",
+        "Complete technical evaluation and project agreement"
+      ],
+      "url": "https://www.c2s.gov.in/",
+      "availability": "Call-based; many startup routes require an academic or R&D collaboration."
+    },
+    {
+      "id": 23,
+      "group": "startup-specific",
+      "slug": "idex",
+      "name": "Innovations for Defence Excellence",
+      "acronym": "iDEX",
+      "owner": "Ministry of Defence / Defence Innovation Organisation",
+      "sector": ["defence", "aerospace", "dual use technology"],
+      "stage": ["prototype", "pilot", "procurement"],
+      "support": ["grant", "incubation", "test access"],
+      "access": "direct challenge application",
+      "status": "periodic-challenges",
+      "summary": "Challenge-led grants and user support for indigenous defence and aerospace solutions.",
+      "eligibility": [
+        "DPIIT-recognised startup, eligible MSME/company, or individual innovator depending on challenge",
+        "Must address a published defence problem statement or open challenge",
+        "Indian entity/ownership conditions apply under the challenge",
+        "Must accept milestone, IP, security, testing and user-evaluation conditions"
+      ],
+      "benefits": [
+        "Grant/support generally ranging from ₹1.5 crore to ₹10 crore depending on iDEX challenge route",
+        "Partner-incubator mentoring and infrastructure",
+        "Defence user interaction, trials and potential procurement pathway"
+      ],
+      "apply": [
+        "Create an account on iDEX",
+        "Choose a live DISC, Open Challenge, iDEX Prime or other published route",
+        "Submit the proposed solution, TRL, team, budget, milestones and IP position",
+        "Pitch and complete technical/user evaluation",
+        "Contract with DIO and execute milestones"
+      ],
+      "url": "https://idex.gov.in/challenges",
+      "availability": "Periodic live challenges; eligibility and grant ceiling vary by route."
+    },
+    {
+      "id": 24,
+      "group": "startup-specific",
+      "slug": "aditi-idex",
+      "name": "Acing Development of Innovative Technologies with iDEX",
+      "acronym": "ADITI",
+      "owner": "Ministry of Defence / Defence Innovation Organisation",
+      "sector": ["critical defence technology", "deep tech", "aerospace"],
+      "stage": ["advanced prototype", "pilot"],
+      "support": ["grant", "incubation", "user access"],
+      "access": "direct challenge application",
+      "status": "periodic-challenges",
+      "summary": "Large-ticket iDEX sub-scheme for strategically critical defence technologies requiring substantial R&D.",
+      "eligibility": [
+        "DPIIT-recognised startup, eligible Indian company or individual innovator under the challenge",
+        "Must address an ADITI challenge in a critical technology area",
+        "Indian ownership/control and security conditions apply",
+        "Strong advanced-R&D capability, milestones and co-funding plan are expected"
+      ],
+      "benefits": [
+        "Grant up to 50% of product-development budget, capped at ₹25 crore per project",
+        "Partner-incubator support and defence-user engagement",
+        "Path toward trials and acquisition if successfully developed"
+      ],
+      "apply": [
+        "Monitor ADITI challenges on iDEX",
+        "Submit technical architecture, maturity, budget, co-funding, IP and security plan",
+        "Pass expert and user evaluation",
+        "Execute the DIO agreement and milestone reviews"
+      ],
+      "url": "https://idex.gov.in/",
+      "availability": "Periodic ADITI challenges; not continuously open for arbitrary proposals."
+    },
+    {
+      "id": 25,
+      "group": "startup-specific",
+      "slug": "technology-development-fund-drdo",
+      "name": "Technology Development Fund",
+      "acronym": "TDF",
+      "owner": "DRDO, Ministry of Defence",
+      "sector": ["defence", "aerospace", "dual use technology"],
+      "stage": ["prototype", "product", "trials"],
+      "support": ["grant"],
+      "access": "direct project application",
+      "status": "periodic-projects",
+      "summary": "Funds Indian industry and startups to develop defence technologies against published requirements.",
+      "eligibility": [
+        "Eligible Indian company, partnership, LLP, one-person company or proprietorship",
+        "For the startup route: DPIIT recognised and incubated at a Central/State-government-assisted incubator",
+        "At least 50% ownership and control by Indian citizens",
+        "Proposal must match a listed TDF requirement and meet security/technical conditions"
+      ],
+      "benefits": [
+        "Up to 90% funding for projects with cost up to ₹10 crore",
+        "Prototype development and trial support",
+        "DRDO/Service requirement linkage"
+      ],
+      "apply": [
+        "Register on the TDF portal",
+        "Select a listed project requirement",
+        "Submit technical proposal, consortium/subcontracting plan, budget, milestones and ownership documents",
+        "Undergo technical, financial and security evaluation",
+        "Execute milestone agreement"
+      ],
+      "url": "https://tdf.drdo.gov.in/",
+      "availability": "Project calls are published on the TDF portal."
+    },
+    {
+      "id": 26,
+      "group": "startup-specific",
+      "slug": "inspace-seed-fund",
+      "name": "IN-SPACe Seed Fund Scheme",
+      "acronym": "—",
+      "owner": "IN-SPACe, Department of Space",
+      "sector": ["space technology", "space applications"],
+      "stage": ["seed", "prototype"],
+      "support": ["grant", "mentoring", "training"],
+      "access": "direct opportunity calls",
+      "status": "periodic-calls",
+      "summary": "Milestone grant and mentoring for early-stage space startups moving from concept toward prototype.",
+      "eligibility": [
+        "DPIIT-recognised early-stage startup",
+        "Innovative space-sector idea/project or space-enabled solution matching the opportunity",
+        "No more than ₹50 lakh monetary support under another Central or State scheme",
+        "Meet the cohort/theme and Indian-entity conditions"
+      ],
+      "benefits": [
+        "Grant of up to ₹1 crore, released against milestones",
+        "Mentoring, training and networking",
+        "IN-SPACe ecosystem access"
+      ],
+      "apply": [
+        "Monitor IN-SPACe announcements for a relevant Seed Fund opportunity",
+        "Register and submit startup, technology, TRL, budget and milestone information",
+        "Complete screening and presentation",
+        "Execute the grant agreement and report milestones"
+      ],
+      "url": "https://www.inspace.gov.in/inspace?id=announcement_for_opportunities",
+      "availability": "Opportunities are announced from time to time; there is no universal always-open application."
+    },
+    {
+      "id": 27,
+      "group": "startup-specific",
+      "slug": "digital-communication-innovation-square",
+      "name": "Digital Communication Innovation Square",
+      "acronym": "DCIS",
+      "owner": "Department of Telecommunications",
+      "sector": ["telecom", "ICT", "digital communications"],
+      "stage": ["prototype", "pilot", "commercialisation"],
+      "support": ["grant"],
+      "access": "direct portal call",
+      "status": "periodic-calls",
+      "summary": "Milestone grants for indigenous telecom and digital-communication products across R&D, PoC, pilot and manufacturing readiness.",
+      "eligibility": [
+        "DPIIT-recognised startup, eligible Indian MSME/company or individual innovator",
+        "For company/MSME route, Indian ownership/headquarters conditions apply",
+        "Individual innovators must form an eligible startup/MSME before agreement and fund release",
+        "Proposal must address telecom/digital-communication innovation"
+      ],
+      "benefits": [
+        "Startups: up to ₹50 lakh",
+        "MSMEs: up to ₹2 crore",
+        "High-funding technology products: up to ₹10 crore",
+        "Milestone-based support"
+      ],
+      "apply": [
+        "Register on the DCIS portal during an open call",
+        "Submit problem, novelty, design, TRL, IP, commercialisation plan, milestones and budget",
+        "Complete expert evaluation/presentation",
+        "Form the required legal entity before agreement if applying as an individual"
+      ],
+      "url": "https://dcis.dot.gov.in/",
+      "availability": "Call-based; check the portal for current proposal windows."
+    },
+    {
+      "id": 28,
+      "group": "startup-specific",
+      "slug": "great-technical-textiles",
+      "name": "Grant for Research and Entrepreneurship across Aspiring Innovators in Technical Textiles",
+      "acronym": "GREAT",
+      "owner": "Ministry of Textiles / National Technical Textiles Mission",
+      "sector": ["technical textiles", "materials", "manufacturing"],
+      "stage": ["prototype", "commercialisation"],
+      "support": ["grant", "incubation"],
+      "access": "direct portal through incubator",
+      "status": "periodic-calls",
+      "summary": "Milestone grant and incubation support to convert technical-textile prototypes into market-ready products.",
+      "eligibility": [
+        "Individual Indian innovator aged 21+ and incubated with an eligible incubator, or eligible startup",
+        "Startup generally no more than 5 years old, turnover below ₹100 crore and at least 51% Indian resident ownership/control",
+        "Project must fall within notified technical-textile areas",
+        "Applicant/incubator must accept the IP, milestone and monitoring terms"
+      ],
+      "benefits": [
+        "Normally up to ₹50 lakh grant for up to 18 months",
+        "Typical milestone release pattern 40:40:20",
+        "Additional incubator support budget under scheme norms",
+        "IP retained by innovator/startup or shared per incubator agreement"
+      ],
+      "apply": [
+        "Register on the NTTM GREAT portal when a call is open",
+        "Confirm an eligible incubator",
+        "Submit technical-textile problem, prototype evidence, market case, IP, budget and milestones",
+        "Complete technical and incubator evaluation"
+      ],
+      "url": "https://nttm.texmin.gov.in/StartupRegistration/StartupUserRegistration",
+      "availability": "Periodic NTTM calls."
+    },
+    {
+      "id": 29,
+      "group": "startup-specific",
+      "slug": "bharati-apeda",
+      "name": "Bharat’s Hub for Agritech, Resilience, Advancement and Incubation for Export Innovation",
+      "acronym": "BHARATI",
+      "owner": "APEDA, Ministry of Commerce and Industry",
+      "sector": ["agri-food", "agritech", "food exports"],
+      "stage": ["acceleration", "market access"],
+      "support": ["acceleration", "export readiness", "market access"],
+      "access": "direct programme application",
+      "status": "periodic-cohorts",
+      "summary": "Export-readiness and acceleration support for agri-food, agritech and SPS-focused innovators.",
+      "eligibility": [
+        "Agri-food startup with innovative/high-value export product",
+        "Technology/service startup enabling the agri export value chain",
+        "SPS solution provider, individual researcher/innovator or solo entrepreneur under relevant route",
+        "APEDA-registered exporter or FPC may qualify",
+        "Must meet cohort-specific export and innovation criteria"
+      ],
+      "benefits": [
+        "Product-development, regulatory, export-readiness and market-access acceleration",
+        "Connections to APEDA, universities, technical institutions, accelerators and industry",
+        "Support across packaging, traceability, logistics, sustainability and quality assurance"
+      ],
+      "apply": [
+        "Review the current BHARATI cohort and “Who Can Apply” page",
+        "Submit product/solution, export-market case, compliance needs and team details",
+        "Complete screening and accelerator onboarding",
+        "Use the programme to close export, certification and market-access gaps"
+      ],
+      "url": "https://apeda.gov.in/bharati/",
+      "availability": "Cohort/programme based; confirm the current intake."
+    },
+    {
+      "id": 30,
+      "group": "startup-specific",
+      "slug": "science-technology-prism-mining",
+      "name": "Promotion of Research and Innovation in Mining, Minerals and Recycling Sector",
+      "acronym": "S&T-PRISM",
+      "owner": "Ministry of Mines",
+      "sector": ["mining", "minerals", "metallurgy", "recycling"],
+      "stage": ["prototype", "pilot"],
+      "support": ["grant", "incubation"],
+      "access": "direct guideline/call route",
+      "status": "periodic-calls",
+      "summary": "Prototype and pilot support for early-stage mining, minerals, metals and recycling technologies.",
+      "eligibility": [
+        "Early-stage startup in mining, mineral processing, metallurgy, metals or recycling",
+        "Must demonstrate capability and intent to build a functional prototype or productise technology",
+        "Proposal must meet the current Ministry of Mines technical and milestone criteria",
+        "Incubator route may apply depending on the call"
+      ],
+      "benefits": [
+        "Startup grant up to ₹2 crore, milestone-based",
+        "Incubator grant up to ₹10 crore under the incubation-centre component",
+        "Support across PoC, IPR, pilot and manufacturing readiness"
+      ],
+      "apply": [
+        "Review the current S&T-PRISM guidelines/call",
+        "Submit startup credentials, technical proposal, prototype/TRL evidence, milestones, budget and commercial plan",
+        "Complete ministry/expert evaluation",
+        "Execute milestone and utilisation terms"
+      ],
+      "url": "https://mines.gov.in/",
+      "availability": "Call-based; use the Ministry of Mines innovation/startup notice and current guidelines."
+    },
+    {
+      "id": 31,
+      "group": "startup-relevant",
+      "slug": "nidhi-entrepreneur-in-residence",
+      "name": "NIDHI Entrepreneur in Residence",
+      "acronym": "NIDHI-EIR",
+      "owner": "Department of Science and Technology",
+      "sector": ["technology", "sector-agnostic"],
+      "stage": ["idea", "pre-incorporation"],
+      "support": ["fellowship", "workspace", "mentoring"],
+      "access": "through programme-executing TBIs",
+      "status": "periodic-incubator-calls",
+      "summary": "A founder fellowship that provides subsistence support, workspace and mentoring while a technology business idea is developed.",
+      "eligibility": [
+        "Indian citizen",
+        "Minimum 4 years of full-time undergraduate/postgraduate education, or 3-year degree/diploma plus 2 years of full-time post-qualification work experience",
+        "Promising technology business idea",
+        "Must meet the local NIDHI-TBI/Programme Executing Partner call"
+      ],
+      "benefits": [
+        "₹10,000–₹30,000 per month for 12 months, extendable up to 18 months under programme rules",
+        "Co-working space",
+        "Mentoring, market and industry guidance"
+      ],
+      "apply": [
+        "Identify a NIDHI-TBI acting as a Programme Executing Partner",
+        "Monitor its local EIR call",
+        "Submit the prescribed founder profile and idea proposal",
+        "Pitch/interview and join the TBI if selected"
+      ],
+      "url": "https://nidhi.dst.gov.in/nidhieir/",
+      "availability": "Periodic local calls by participating NIDHI-TBIs."
+    },
+    {
+      "id": 32,
+      "group": "startup-relevant",
+      "slug": "nm-icps-technology-innovation-hubs",
+      "name": "National Mission on Interdisciplinary Cyber-Physical Systems – Technology Innovation Hubs",
+      "acronym": "NM-ICPS",
+      "owner": "Department of Science and Technology",
+      "sector": ["AI", "robotics", "IoT", "cyber-physical systems", "deep tech"],
+      "stage": ["R&D", "prototype", "scaling"],
+      "support": ["grant", "incubation", "research support"],
+      "access": "through 25 technology innovation hubs",
+      "status": "periodic-hub-calls",
+      "summary": "A national network of 25 Technology Innovation Hubs that fund and support cyber-physical-systems research, products and startups.",
+      "eligibility": [
+        "Startup, student, entrepreneur, researcher or other entity permitted by the relevant TIH call",
+        "Work must fit the hub’s technology vertical",
+        "Meet the call’s TRL, IP, team, location and collaboration conditions",
+        "Use of funds and deliverables are governed by the issuing hub"
+      ],
+      "benefits": [
+        "Financial and non-financial R&D support",
+        "Incubation, translational research, product development and commercialisation support",
+        "Ticket size and instrument vary by hub/call"
+      ],
+      "apply": [
+        "Map the proposal to one of the 25 TIHs",
+        "Monitor that hub’s call-for-proposals page",
+        "Submit technical plan, TRL, milestones, budget, IP and commercialisation path",
+        "Complete hub evaluation and contracting"
+      ],
+      "url": "https://nmicps.in/",
+      "availability": "Calls are issued periodically by individual Technology Innovation Hubs."
+    },
+    {
+      "id": 33,
+      "group": "startup-relevant",
+      "slug": "nidhi-technology-business-incubator",
+      "name": "NIDHI Technology Business Incubator",
+      "acronym": "NIDHI-TBI",
+      "owner": "Department of Science and Technology",
+      "sector": ["technology incubation"],
+      "stage": ["incubation infrastructure"],
+      "support": ["grant", "incubator support"],
+      "access": "institution application",
+      "status": "periodic-institution-calls",
+      "summary": "Funds eligible institutions to establish Technology Business Incubators that support technology startups.",
+      "eligibility": [
+        "Host academic, technical or R&D institution with suitable expertise and infrastructure, or eligible Indian not-for-profit entity",
+        "Clear objective of promoting research, innovation and entrepreneurship",
+        "Adequate space, governance, team and sustainability plan",
+        "Not a direct founder grant"
+      ],
+      "benefits": [
+        "Capital and recurring support for approved TBI establishment/operation under DST cost-sharing norms",
+        "Enables workspace, mentoring, labs and startup support",
+        "Exact approved amount is proposal-dependent"
+      ],
+      "apply": [
+        "Prepare the prescribed institutional proposal, governance model, space plan, budget, sector focus and sustainability case",
+        "Submit on the NIDHI portal during an institutional call",
+        "Complete expert evaluation and site/due-diligence process"
+      ],
+      "url": "https://nidhi.dst.gov.in/nidhitbi/",
+      "availability": "For host institutions; startups access benefits by joining a funded TBI."
+    },
+    {
+      "id": 34,
+      "group": "startup-relevant",
+      "slug": "nidhi-inclusive-technology-business-incubator",
+      "name": "NIDHI Inclusive Technology Business Incubator",
+      "acronym": "NIDHI-iTBI",
+      "owner": "Department of Science and Technology",
+      "sector": ["inclusive innovation", "underserved regions"],
+      "stage": ["incubation infrastructure"],
+      "support": ["grant", "incubator support", "ignition support"],
+      "access": "institution application",
+      "status": "periodic-institution-calls",
+      "summary": "Supports new incubators in underserved regions and institutions where the startup ecosystem is nascent.",
+      "eligibility": [
+        "Host institution must provide roughly 7,000–10,000 sq ft built-up space",
+        "Must establish a separate Section 8 company to operate the i-TBI",
+        "Long-term lease/use arrangement for the space",
+        "Capacity to accommodate at least 30 ventures/startups",
+        "Not a direct founder application"
+      ],
+      "benefits": [
+        "Up to ₹5 crore over 3 years for approved i-TBI",
+        "Capital infrastructure and cost-shared non-recurring support",
+        "Ignition support for prototypes/products through the incubator"
+      ],
+      "apply": [
+        "Host institution prepares the i-TBI proposal, space commitment, Section 8 governance and budget",
+        "Apply through the NIDHI portal during a call",
+        "Complete institutional evaluation and agreement",
+        "Startups later apply to the established i-TBI’s programmes"
+      ],
+      "url": "https://nidhi.dst.gov.in/nidhiitbi/",
+      "availability": "Institution-focused periodic calls; startup benefit is indirect through the funded i-TBI."
+    },
+    {
+      "id": 35,
+      "group": "startup-relevant",
+      "slug": "nidhi-accelerator",
+      "name": "NIDHI Accelerator",
+      "acronym": "—",
+      "owner": "Department of Science and Technology",
+      "sector": ["sector-agnostic", "technology"],
+      "stage": ["post-incubation", "acceleration"],
+      "support": ["accelerator grant", "demo-day awards"],
+      "access": "through eligible incubators",
+      "status": "periodic-institution-calls",
+      "summary": "Supports eligible incubators to run short, intensive acceleration programmes and demo days for promising startups.",
+      "eligibility": [
+        "Formal applicant is a TBI funded by DST or another Central/State government",
+        "Incubator generally at least 3 years old",
+        "At least 20 startups previously incubated across multiple domains",
+        "Startups enter through the selected incubator’s cohort, not through DST directly"
+      ],
+      "benefits": [
+        "Up to ₹40 lakh per cohort: generally up to ₹30 lakh for the accelerator programme and up to ₹10 lakh for demo-day awards",
+        "Mentoring, networks and investor/demo-day exposure"
+      ],
+      "apply": [
+        "Incubators apply to DST/NIDHI under the current call",
+        "Startups monitor participating incubators and apply to a live cohort",
+        "Complete cohort selection, acceleration milestones and demo day"
+      ],
+      "url": "https://nidhi.dst.gov.in/schemes-programmes/nidhiaccelerator/",
+      "availability": "Institution-routed; founder applications depend on accelerator cohorts."
+    },
+    {
+      "id": 36,
+      "group": "startup-relevant",
+      "slug": "nidhi-centre-of-excellence",
+      "name": "NIDHI Centre of Excellence",
+      "acronym": "NIDHI-CoE",
+      "owner": "Department of Science and Technology",
+      "sector": ["sector-agnostic", "technology"],
+      "stage": ["scale-up", "incubation ecosystem"],
+      "support": ["institutional grant", "incubator support"],
+      "access": "institution application",
+      "status": "periodic-institution-calls",
+      "summary": "Helps a mature technology business incubator expand into a nationally significant centre of excellence with deeper facilities, programmes and investment linkages.",
+      "eligibility": [
+        "Formal applicant is an established incubator or host institution",
+        "Strong operating track record, governance, startup portfolio and measurable outcomes",
+        "Detailed expansion, facilities, staffing and sustainability plan",
+        "Not a direct founder application"
+      ],
+      "benefits": [
+        "Institutional support can be up to ₹50 crore over about 5 years, subject to the approved call and project",
+        "Expanded infrastructure, sector facilities, mentoring, market and investment programmes",
+        "Startups benefit by entering a funded centre’s programmes"
+      ],
+      "apply": [
+        "Eligible institution monitors NIDHI/DST calls",
+        "Prepare institutional proposal, audited track record, expansion plan, milestones and budget",
+        "Submit and complete expert/site appraisal",
+        "Founders separately apply to programmes run by an approved CoE"
+      ],
+      "url": "https://nidhi.dst.gov.in/schemes-programmes/nidhicoe/",
+      "availability": "Institution-focused; availability depends on DST calls and individual CoE cohorts."
+    },
+    {
+      "id": 37,
+      "group": "startup-relevant",
+      "slug": "bioangels",
+      "name": "BioAngels",
+      "acronym": "—",
+      "owner": "Biotechnology Industry Research Assistance Council",
+      "sector": ["biotechnology", "healthtech", "agribiotech", "deep-tech"],
+      "stage": ["seed", "early growth"],
+      "support": ["equity investment", "mentoring", "investor access"],
+      "access": "investor platform",
+      "status": "rolling-or-cohort-based",
+      "summary": "A life-sciences angel network and investment platform connecting screened biotechnology ventures with domain investors and mentors.",
+      "eligibility": [
+        "Biotechnology or life-sciences venture with a credible innovation and commercial case",
+        "Investment-ready team, evidence and business plan",
+        "Must satisfy the platform and participating investors’ diligence and transaction requirements",
+        "Investment is selective, not an entitlement or grant"
+      ],
+      "benefits": [
+        "Investor introductions, domain mentoring and transaction support",
+        "Potential equity investment; ticket and terms are deal-specific",
+        "Visibility within the BIRAC-supported innovation ecosystem"
+      ],
+      "apply": [
+        "Create or submit the venture profile through the BioAngels platform/current invitation",
+        "Provide deck, technology evidence, IP/regulatory plan, cap table and funding ask",
+        "Complete screening, presentation and investor due diligence",
+        "Negotiate investment terms directly with participating investors"
+      ],
+      "url": "https://bioangels.vc/",
+      "availability": "Platform route; deal availability, ticket and terms depend on investors."
+    },
+    {
+      "id": 38,
+      "group": "startup-relevant",
+      "slug": "bionest",
+      "name": "Bioincubators Nurturing Entrepreneurship for Scaling Technologies",
+      "acronym": "BioNEST",
+      "owner": "Biotechnology Industry Research Assistance Council",
+      "sector": ["biotechnology", "healthtech", "agribiotech", "industrial biotech"],
+      "stage": ["ideation", "prototype", "validation"],
+      "support": ["incubation", "laboratories", "shared equipment", "mentoring"],
+      "access": "through funded bioincubators",
+      "status": "incubator-dependent",
+      "summary": "Funds and networks bioincubators that give biotechnology innovators access to wet labs, shared equipment, mentoring, regulatory support and commercialisation networks.",
+      "eligibility": [
+        "Formal grant applicant is an eligible host institution proposing or expanding a bioincubator",
+        "Founders and startups apply separately to individual BioNEST incubators",
+        "Venture must fit the incubator’s sector, stage, safety and facility rules",
+        "Admission and fees vary by incubator"
+      ],
+      "benefits": [
+        "Institutional grant is need- and scope-based under the applicable call",
+        "For startups: shared laboratories/equipment, incubation space, mentoring and ecosystem access",
+        "Some incubators run separate seed, fellowship or acceleration programmes"
+      ],
+      "apply": [
+        "Institutions apply to BIRAC when BioNEST calls are open",
+        "Startups identify a suitable BioNEST centre in BIRAC’s incubator network",
+        "Apply to that centre’s resident/virtual incubation process",
+        "Complete technical, biosafety, team and commercial review"
+      ],
+      "url": "https://birac.nic.in/bionest.php",
+      "availability": "Startup access is through individual BioNEST centres; terms and openings vary."
+    },
+    {
+      "id": 39,
+      "group": "startup-relevant",
+      "slug": "biotechnology-industry-partnership-programme",
+      "name": "Biotechnology Industry Partnership Programme",
+      "acronym": "BIPP",
+      "owner": "Biotechnology Industry Research Assistance Council",
+      "sector": ["biotechnology", "healthtech", "agribiotech", "industrial biotech"],
+      "stage": ["research", "development", "validation"],
+      "support": ["grant", "cost sharing"],
+      "access": "direct call application",
+      "status": "periodic-calls",
+      "summary": "Supports high-risk, accelerated biotechnology R&D by Indian companies, including collaborative industry–academic projects with strong commercial potential.",
+      "eligibility": [
+        "Indian company/startup must meet the current BIRAC call and ownership/incorporation rules",
+        "Project must be innovative biotechnology R&D with defined milestones and commercial potential",
+        "Appropriate technical team, facilities or formal research collaborators",
+        "Applicants must disclose prior BIRAC support and avoid duplicate funding"
+      ],
+      "benefits": [
+        "For a company with no prior BIRAC support, grant support can be up to ₹50 lakh under the stated category",
+        "For larger projects, the playbook describes support up to 70% of eligible project cost, subject to the applicable rules",
+        "Technical monitoring and milestone-based release"
+      ],
+      "apply": [
+        "Monitor BIRAC’s proposal portal and BIPP calls, commonly announced in defined windows",
+        "Register the company and investigators",
+        "Submit technical proposal, work packages, budget, IP/commercialisation and collaborator documents",
+        "Complete scientific review, presentation, due diligence and funding agreement"
+      ],
+      "url": "https://birac.nic.in/bipp.php",
+      "availability": "Periodic call; the live call document controls dates, cost sharing and eligibility."
+    },
+    {
+      "id": 40,
+      "group": "startup-relevant",
+      "slug": "e-yuva",
+      "name": "Empowering Youth for Undertaking Value Added Innovative Translational Research",
+      "acronym": "E-YUVA",
+      "owner": "Biotechnology Industry Research Assistance Council",
+      "sector": ["biotechnology", "student innovation", "healthtech", "agribiotech"],
+      "stage": ["student", "pre-incorporation", "prototype"],
+      "support": ["fellowship", "research grant", "incubation"],
+      "access": "through E-YUVA centres",
+      "status": "centre-cohort-based",
+      "summary": "Builds biotechnology entrepreneurship among students and young researchers through fellowships, research grants and pre-incubation at supported centres.",
+      "eligibility": [
+        "Applicant must fit the current undergraduate/postgraduate/research fellow category at an E-YUVA centre",
+        "Biotechnology or life-sciences innovation with a proposed work plan",
+        "Founder-stage individuals are the primary beneficiaries; an incorporated startup is not always required",
+        "Centre-specific academic and residency rules apply"
+      ],
+      "benefits": [
+        "Monthly fellowship is typically ₹30,000–₹50,000 depending on category",
+        "Annual research support is typically ₹3–₹5 lakh",
+        "Mentoring, laboratory access, entrepreneurship training and pre-incubation"
+      ],
+      "apply": [
+        "Find a participating E-YUVA centre and its open cohort",
+        "Submit academic profile, innovation concept, research plan and mentor/host details",
+        "Complete centre/BIRAC selection",
+        "Undertake the approved fellowship and milestone reporting"
+      ],
+      "url": "https://birac.nic.in/e_yuva.php",
+      "availability": "Cohort-based; exact fellowship categories and dates are centre/call-specific."
+    },
+    {
+      "id": 41,
+      "group": "startup-relevant",
+      "slug": "sitare",
+      "name": "Students Innovations for Translation and Advancement of Research Explorations",
+      "acronym": "SITARE",
+      "owner": "Biotechnology Industry Research Assistance Council",
+      "sector": ["biotechnology", "student innovation", "healthtech", "agribiotech"],
+      "stage": ["student", "prototype", "translation"],
+      "support": ["grant", "recognition", "mentoring"],
+      "access": "competition or programme application",
+      "status": "periodic-calls",
+      "summary": "Supports student biotechnology innovations through recognition and translational grants under the GYTI-linked programme.",
+      "eligibility": [
+        "Student innovator/team in the biotechnology or allied domain",
+        "Novel concept with evidence and potential for translation",
+        "Must meet the current SITARE/GYTI category and institutional endorsement rules",
+        "Startup incorporation is not necessarily required at entry"
+      ],
+      "benefits": [
+        "SITARE-GYTI translational grant can be up to ₹15 lakh",
+        "SITARE Appreciation support can be up to ₹1 lakh",
+        "Mentoring, recognition and exposure to BIRAC’s network"
+      ],
+      "apply": [
+        "Monitor BIRAC/SRISTI announcements for the current SITARE cycle",
+        "Submit the innovation, evidence, team and institutional details",
+        "Complete expert evaluation/presentation",
+        "If selected, sign the award terms and execute milestones through the designated host mechanism"
+      ],
+      "url": "https://birac.nic.in/sitare.php",
+      "availability": "Periodic competition/programme; the current announcement controls categories."
+    },
+    {
+      "id": 42,
+      "group": "startup-relevant",
+      "slug": "pace",
+      "name": "Promoting Academic Research Conversion to Enterprise",
+      "acronym": "PACE",
+      "owner": "Biotechnology Industry Research Assistance Council",
+      "sector": ["biotechnology", "academic research", "healthtech", "agribiotech"],
+      "stage": ["research", "translation", "commercialisation"],
+      "support": ["grant", "industry-academic collaboration"],
+      "access": "direct call application",
+      "status": "periodic-calls",
+      "summary": "Moves biotechnology discoveries from academia toward validation and enterprise through Academic Innovation Research and Contract Research Scheme components.",
+      "eligibility": [
+        "Eligible academic/research institution and investigators under the current call",
+        "Industry/startup partner required or encouraged depending on component",
+        "Novel biotechnology research with defined translation and commercialisation pathway",
+        "Appropriate IP, collaborator and institutional approvals"
+      ],
+      "benefits": [
+        "Academic Innovation Research project cost is generally up to ₹50 lakh",
+        "Contract Research Scheme has no single stated ceiling in the playbook and is proposal-based",
+        "Up to 100% support may be possible for approved academic components, subject to the call"
+      ],
+      "apply": [
+        "Monitor BIRAC’s calls, commonly issued twice yearly",
+        "Choose the AIR or CRS route",
+        "Submit scientific plan, validation milestones, IP/commercial pathway, partner documents and budget",
+        "Complete scientific review, presentation and agreement"
+      ],
+      "url": "https://birac.nic.in/pace.php",
+      "availability": "Periodic call; formal applicant and funding share depend on AIR/CRS route."
+    },
+    {
+      "id": 43,
+      "group": "startup-relevant",
+      "slug": "sbiri",
+      "name": "Small Business Innovation Research Initiative",
+      "acronym": "SBIRI",
+      "owner": "Biotechnology Industry Research Assistance Council",
+      "sector": ["biotechnology", "healthtech", "agribiotech", "industrial biotech"],
+      "stage": ["early research", "prototype", "validation"],
+      "support": ["grant", "soft loan", "cost sharing"],
+      "access": "direct call application",
+      "status": "periodic-calls",
+      "summary": "Supports early-stage, high-risk biotechnology innovation by small Indian companies, often with academic collaboration.",
+      "eligibility": [
+        "Eligible Indian small business/startup under the current BIRAC rules",
+        "Innovative biotechnology R&D with technical risk and commercial potential",
+        "Qualified team and access to required facilities or collaborators",
+        "Company contribution and collaborator terms must match the approved budget"
+      ],
+      "benefits": [
+        "For projects up to ₹50 lakh, the playbook describes up to 100% grant support",
+        "For projects above ₹50 lakh, grant can cover ₹50 lakh plus up to 70% of the amount above it; other support may be soft loan/cost sharing under the call",
+        "Milestone-based technical and financial monitoring"
+      ],
+      "apply": [
+        "Register on BIRAC’s proposal portal and open call",
+        "Submit company, technical, IP, market, milestone and budget information",
+        "Complete scientific review, presentation and due diligence",
+        "Execute the funding agreement and report against milestones"
+      ],
+      "url": "https://birac.nic.in/sbiri.php",
+      "availability": "Periodic call; current call guidelines supersede summary funding ratios."
+    },
+    {
+      "id": 44,
+      "group": "startup-relevant",
+      "slug": "tide-2",
+      "name": "Technology Incubation and Development of Entrepreneurs 2.0",
+      "acronym": "TIDE 2.0",
+      "owner": "Ministry of Electronics and Information Technology",
+      "sector": ["digital technology", "AI", "IoT", "cybersecurity", "electronics", "ICT"],
+      "stage": ["ideation", "prototype", "commercialisation"],
+      "support": ["grant", "investment", "incubation"],
+      "access": "through TIDE incubators",
+      "status": "incubator-dependent",
+      "summary": "Supports ICT and emerging-technology startups through a national network of incubators offering entrepreneur-in-residence, grant and investment support.",
+      "eligibility": [
+        "Technology idea/startup must fit MeitY’s current TIDE thematic areas",
+        "Apply through a supported TIDE 2.0 incubation centre",
+        "Indian team/entity and founder commitment requirements are centre-specific",
+        "No automatic entitlement; incubator selection and milestone review apply"
+      ],
+      "benefits": [
+        "Entrepreneur-in-residence/idea-stage support can be up to ₹4 lakh",
+        "Prototype grant can be up to ₹7 lakh",
+        "Investment support can be up to ₹40 lakh through the programme mechanism",
+        "Incubation, mentoring and market connections"
+      ],
+      "apply": [
+        "Identify a participating TIDE 2.0 centre and open call",
+        "Submit problem, technical approach, team, stage, milestones and budget",
+        "Pitch to the centre’s selection committee",
+        "Sign incubation/funding terms and achieve milestone releases"
+      ],
+      "url": "https://msh.meity.gov.in/schemes/tide",
+      "availability": "Founder access is incubator-routed; calls and themes vary by centre."
+    },
+    {
+      "id": 45,
+      "group": "startup-relevant",
+      "slug": "design-linked-incentive",
+      "name": "Design Linked Incentive Scheme",
+      "acronym": "DLI",
+      "owner": "Ministry of Electronics and Information Technology",
+      "sector": ["semiconductors", "chip design", "electronics", "deep-tech"],
+      "stage": ["design", "prototype", "deployment", "scale-up"],
+      "support": ["reimbursement", "sales-linked incentive", "infrastructure access"],
+      "access": "direct portal application",
+      "status": "periodic-calls",
+      "summary": "Supports domestic semiconductor design companies, startups and MSMEs with design infrastructure and incentives tied to eligible expenditure and deployment-linked sales.",
+      "eligibility": [
+        "Eligible Indian semiconductor design company/startup/MSME under the current DLI guidelines",
+        "Domestic ownership/control and qualifying design activity as prescribed",
+        "Approved semiconductor design and deployment plan",
+        "Must meet technical milestones, expenditure evidence and sales/deployment conditions"
+      ],
+      "benefits": [
+        "Product Design Linked Incentive: reimbursement up to 50% of eligible expenditure, capped at ₹15 crore per application",
+        "Deployment Linked Incentive: roughly 6%–4% of net sales over the prescribed years, capped at ₹30 crore",
+        "Access to design infrastructure under the scheme"
+      ],
+      "apply": [
+        "Review the live DLI guidelines and call on the C-DAC/India Semiconductor Mission portal",
+        "Register and submit company, design, IP, technical, financial and deployment plan",
+        "Complete appraisal and approval",
+        "Claim reimbursement/incentive with milestone, expenditure and sales evidence"
+      ],
+      "url": "https://chips-dli.gov.in/",
+      "availability": "Call-based; exact windows, eligible costs and incentive years are governed by live guidelines."
+    },
+    {
+      "id": 46,
+      "group": "startup-relevant",
+      "slug": "antariksh-venture-capital-fund",
+      "name": "Antariksh Venture Capital Fund",
+      "acronym": "—",
+      "owner": "Department of Space / IN-SPACe / SIDBI Venture Capital",
+      "sector": ["space-tech", "deep-tech", "satellites", "launch", "geospatial"],
+      "stage": ["growth", "scale-up"],
+      "support": ["equity", "convertible investment"],
+      "access": "fund manager application",
+      "status": "investment-window-dependent",
+      "summary": "A dedicated space-economy venture fund intended to invest in growth-oriented Indian space companies and catalyse private capital.",
+      "eligibility": [
+        "Indian space-sector company/startup aligned with the fund mandate",
+        "Technology generally at or beyond TRL 4, subject to diligence",
+        "Scalable commercial model, governance and regulatory readiness",
+        "Must pass fund manager investment, legal, technical and commercial diligence"
+      ],
+      "benefits": [
+        "Fund corpus is ₹1,000 crore plus an indicated ₹5 crore contribution arrangement in the playbook, commonly presented as ₹1,005 crore",
+        "Equity or convertible investment; ticket and ownership terms are transaction-specific",
+        "Strategic sector validation and co-investment potential"
+      ],
+      "apply": [
+        "Review the current Antariksh fund information from IN-SPACe/SIDBI Venture Capital",
+        "Submit investment materials to the fund manager when intake is open",
+        "Complete technical, market, regulatory, financial and legal diligence",
+        "Negotiate and execute investment documents"
+      ],
+      "url": "https://www.sidbiventure.co.in/",
+      "availability": "Investment route; no standard grant or guaranteed ticket."
+    },
+    {
+      "id": 47,
+      "group": "startup-relevant",
+      "slug": "space-technology-adoption-fund",
+      "name": "Space Technology Adoption Fund",
+      "acronym": "TAF",
+      "owner": "Department of Space / IN-SPACe",
+      "sector": ["space-tech", "downstream space", "manufacturing", "geospatial"],
+      "stage": ["prototype", "adoption", "commercialisation"],
+      "support": ["project support", "cost sharing"],
+      "access": "direct call application",
+      "status": "periodic-calls",
+      "summary": "Supports adoption and commercialisation of Indian space technologies through approved projects by startups, MSMEs and other eligible entities.",
+      "eligibility": [
+        "Indian startup/MSME or other eligible entity under the live IN-SPACe call",
+        "Project must adopt, develop or commercialise eligible space technology with measurable outcomes",
+        "Required regulatory authorisations and technical capability",
+        "Applicant co-funding is required"
+      ],
+      "benefits": [
+        "For startups/MSMEs, support can be up to 60% of approved project cost",
+        "Maximum support can be up to ₹25 crore per project, subject to guidelines",
+        "Milestone-based project monitoring"
+      ],
+      "apply": [
+        "Monitor IN-SPACe announcements for a TAF call",
+        "Submit entity, technology, use case, adoption plan, milestones, cost and co-funding evidence",
+        "Complete technical/commercial appraisal",
+        "Execute agreement and claim milestone-linked support"
+      ],
+      "url": "https://www.inspace.gov.in/inspace?id=inspace_technology_adoption_fund",
+      "availability": "Periodic call; current guidelines control cost share, cap and project themes."
+    },
+    {
+      "id": 48,
+      "group": "startup-relevant",
+      "slug": "cgtmse",
+      "name": "Credit Guarantee Trust Fund for Micro and Small Enterprises",
+      "acronym": "CGTMSE",
+      "owner": "Ministry of Micro, Small and Medium Enterprises / SIDBI",
+      "sector": ["sector-agnostic", "manufacturing", "services"],
+      "stage": ["early revenue", "working capital", "growth"],
+      "support": ["credit guarantee"],
+      "access": "through member lending institutions",
+      "status": "rolling-lender-route",
+      "summary": "Provides a government-backed guarantee to eligible lenders so micro and small enterprises can obtain collateral-free or reduced-collateral credit.",
+      "eligibility": [
+        "Borrower must qualify as an eligible micro or small enterprise under the current scheme",
+        "Viable new or existing business and acceptable lender appraisal",
+        "Credit must be sanctioned by a registered Member Lending Institution",
+        "Exclusions, guarantee coverage and borrower contribution depend on current CGTMSE rules"
+      ],
+      "benefits": [
+        "Guarantee cover is available for eligible credit facilities up to the scheme ceiling; the 2026 playbook cites ₹10 crore",
+        "Coverage percentage varies by borrower category, loan size and region",
+        "Term loan and/or working capital may be covered when sanctioned by the lender"
+      ],
+      "apply": [
+        "Approach a CGTMSE member bank/NBFC/financial institution with the loan proposal",
+        "Complete the lender’s credit appraisal and documentation",
+        "Ask the lender to place the eligible facility under CGTMSE",
+        "Lender files the guarantee and services the loan; borrower does not obtain a cash grant from CGTMSE"
+      ],
+      "url": "https://www.cgtmse.in/",
+      "availability": "Rolling lender route; the lender decides credit and files the guarantee."
+    },
+    {
+      "id": 49,
+      "group": "startup-relevant",
+      "slug": "self-reliant-india-fund",
+      "name": "Self Reliant India Fund",
+      "acronym": "SRI Fund",
+      "owner": "Ministry of Micro, Small and Medium Enterprises / NSIC Venture Capital Fund",
+      "sector": ["MSME", "manufacturing", "services", "growth capital"],
+      "stage": ["growth", "scale-up"],
+      "support": ["equity", "quasi-equity", "fund-of-funds"],
+      "access": "through daughter funds",
+      "status": "investment-window-dependent",
+      "summary": "A fund-of-funds programme that channels growth capital to viable MSMEs through SEBI-registered daughter funds rather than investing directly in every enterprise.",
+      "eligibility": [
+        "Enterprise must qualify as an MSME and meet the investing daughter fund’s thesis",
+        "Growth potential, viable business model, governance and investment readiness",
+        "No direct entitlement from the mother fund",
+        "Must pass the daughter fund’s diligence and transaction requirements"
+      ],
+      "benefits": [
+        "Targeted fund ecosystem of ₹50,000 crore through government anchoring and private mobilisation",
+        "Equity, quasi-equity or similar growth investment via daughter funds",
+        "Ticket, valuation and terms are decided by the investing fund"
+      ],
+      "apply": [
+        "Review SRI Fund information and identify participating daughter funds",
+        "Approach a relevant daughter fund with investment materials",
+        "Complete commercial, financial, legal and ESG diligence",
+        "Negotiate and close the investment with the daughter fund"
+      ],
+      "url": "https://www.srifund.com/",
+      "availability": "Indirect investment route; the mother fund does not run a universal startup application."
+    },
+    {
+      "id": 50,
+      "group": "startup-relevant",
+      "slug": "msme-champions",
+      "name": "MSME Champions Scheme",
+      "acronym": "—",
+      "owner": "Ministry of Micro, Small and Medium Enterprises",
+      "sector": ["MSME", "manufacturing", "services", "quality", "innovation"],
+      "stage": ["formalisation", "productivity", "growth"],
+      "support": ["subsidy", "consulting", "certification", "innovation support"],
+      "access": "programme-specific portals",
+      "status": "extension-to-be-confirmed",
+      "summary": "An umbrella for MSME Sustainable (ZED), Competitive (Lean) and Innovative interventions covering quality, productivity, design, incubation and intellectual property support.",
+      "eligibility": [
+        "Valid Udyam-registered MSME for the applicable component",
+        "Meet the chosen ZED, Lean or Innovative sub-scheme’s conditions",
+        "Provide required enterprise, production, assessment and expenditure evidence",
+        "Component-specific exclusions and cost sharing apply"
+      ],
+      "benefits": [
+        "ZED certification/handholding and related subsidies",
+        "Lean implementation and consultant support",
+        "Innovation components including incubation, design and IPR support",
+        "Exact caps and contribution vary by component"
+      ],
+      "apply": [
+        "Confirm that the relevant component and extension is live on the MSME Champions portal",
+        "Use Udyam credentials and select ZED, Lean or Innovative route",
+        "Submit component-specific assessment/proposal and documents",
+        "Complete assessment/implementation and claim reimbursement where applicable"
+      ],
+      "url": "https://champions.gov.in/",
+      "availability": "The playbook cites the 2021-22 to 2025-26 cycle; confirm post-March-2026 extension before relying on benefits."
+    },
+    {
+      "id": 51,
+      "group": "startup-relevant",
+      "slug": "msme-international-cooperation",
+      "name": "International Cooperation Scheme",
+      "acronym": "IC Scheme",
+      "owner": "Ministry of Micro, Small and Medium Enterprises",
+      "sector": ["MSME", "exports", "trade fairs", "market access"],
+      "stage": ["market entry", "export growth"],
+      "support": ["reimbursement", "delegation support", "market access"],
+      "access": "through eligible organisations or portal",
+      "status": "periodic-or-event-based",
+      "summary": "Supports MSME participation in international exhibitions, trade fairs, buyer–seller meets and market-development activities, generally through eligible organisations and approved events.",
+      "eligibility": [
+        "Udyam-registered MSME and/or eligible implementing organisation under the chosen component",
+        "Proposed event/activity must meet the scheme and approval conditions",
+        "Prior approval may be required before expenditure",
+        "Travel, stall, freight or organiser claims need prescribed evidence"
+      ],
+      "benefits": [
+        "Reimbursement/support for approved international participation, delegations and market-development activities",
+        "Eligible heads and caps vary by component, enterprise category and destination",
+        "Exposure to export buyers and global markets"
+      ],
+      "apply": [
+        "Check the IC scheme portal for an open event/component and who must submit the application",
+        "Obtain required prior approval",
+        "Participate and preserve tickets, invoices, participation and payment evidence",
+        "Submit the claim within the prescribed timeline"
+      ],
+      "url": "https://ic.msme.gov.in/",
+      "availability": "Event- and component-based; do not incur costs before checking prior-approval rules."
+    },
+    {
+      "id": 52,
+      "group": "startup-relevant",
+      "slug": "national-sc-st-hub",
+      "name": "National SC-ST Hub",
+      "acronym": "NSSH",
+      "owner": "Ministry of Micro, Small and Medium Enterprises / National Small Industries Corporation",
+      "sector": ["SC-ST entrepreneurship", "MSME", "procurement", "manufacturing", "services"],
+      "stage": ["formalisation", "procurement", "growth"],
+      "support": ["capital subsidy", "training", "market access", "capacity building"],
+      "access": "portal and implementing-agency route",
+      "status": "programme-component-dependent",
+      "summary": "Improves the competitiveness and public-procurement participation of SC/ST-owned micro and small enterprises through finance facilitation, capacity building, market support and targeted subsidy components.",
+      "eligibility": [
+        "Enterprise must meet the applicable SC/ST ownership/control condition and hold Udyam registration",
+        "Promoter caste and ownership evidence required",
+        "Chosen component may require an eligible loan, machinery purchase, vendor registration or training need",
+        "Benefits cannot be duplicated for the same expenditure"
+      ],
+      "benefits": [
+        "The playbook cites a 25% subsidy on eligible plant and machinery/equipment, capped at ₹25 lakh, for the relevant component",
+        "Vendor development, procurement facilitation, mentoring and capacity building",
+        "Component-specific reimbursements/support"
+      ],
+      "apply": [
+        "Register/verify enterprise details on the NSSH portal and Udyam",
+        "Select the relevant subsidy, training or market-access component",
+        "Submit caste, ownership, enterprise, finance and expenditure documents",
+        "Complete appraisal/verification and claim the approved component"
+      ],
+      "url": "https://www.scsthub.in/",
+      "availability": "Component-dependent; confirm the live component and approval sequence before purchasing equipment."
+    },
+    {
+      "id": 53,
+      "group": "startup-relevant",
+      "slug": "atal-tinkering-labs",
+      "name": "Atal Tinkering Labs",
+      "acronym": "ATL",
+      "owner": "Atal Innovation Mission, NITI Aayog",
+      "sector": ["school innovation", "STEM", "robotics", "maker education"],
+      "stage": ["school", "pre-startup"],
+      "support": ["institutional grant", "maker lab", "mentoring"],
+      "access": "school application",
+      "status": "periodic-institution-calls",
+      "summary": "Establishes maker spaces in schools so students can experiment with electronics, robotics, rapid prototyping and problem solving before the startup stage.",
+      "eligibility": [
+        "Formal applicant is an eligible school under the current AIM call",
+        "School must provide space, teachers, governance and long-term operational commitment",
+        "Compliance with AIM procurement, utilisation and reporting rules",
+        "Not a direct startup grant"
+      ],
+      "benefits": [
+        "Grant support has historically totalled up to ₹20 lakh per selected school across establishment and operations, subject to current call terms",
+        "Equipment, maker activities, challenges and mentor networks",
+        "Pipeline-building benefit for future founders"
+      ],
+      "apply": [
+        "School monitors AIM for an ATL selection call",
+        "Submit institutional, infrastructure, faculty and student-reach information",
+        "Complete selection and agreement",
+        "Establish and operate the lab under AIM guidelines"
+      ],
+      "url": "https://aim.gov.in/atl.php",
+      "availability": "Institution-focused; calls are periodic and founders cannot apply for cash support."
+    },
+    {
+      "id": 54,
+      "group": "startup-relevant",
+      "slug": "atal-incubation-centres",
+      "name": "Atal Incubation Centres",
+      "acronym": "AIC",
+      "owner": "Atal Innovation Mission, NITI Aayog",
+      "sector": ["sector-agnostic", "technology", "social innovation"],
+      "stage": ["incubation", "prototype", "commercialisation"],
+      "support": ["institutional grant", "incubation", "mentoring"],
+      "access": "institution application and incubator cohorts",
+      "status": "incubator-dependent",
+      "summary": "Builds world-class incubators and upgrades innovation facilities that support startups with space, mentoring, laboratories, markets and investor connections.",
+      "eligibility": [
+        "Formal grant applicant is an eligible institution/consortium under the current AIM call",
+        "Dedicated governance, infrastructure, sector plan, team and sustainability model",
+        "Startups apply separately to a funded AIC’s cohort",
+        "AIC-specific selection, equity/fee and residency terms apply"
+      ],
+      "benefits": [
+        "The playbook cites support up to ₹5 crore for centres without sector laboratories and up to ₹10 crore for centres with specialised laboratories, subject to call terms",
+        "For startups: incubation, technical facilities, mentoring, corporate/market and investor access"
+      ],
+      "apply": [
+        "Institutions apply to AIM when an AIC call opens",
+        "Founders use AIM’s incubator directory to identify a relevant AIC",
+        "Apply to the AIC’s resident/virtual programme and complete screening",
+        "Execute the incubator’s agreement and milestones"
+      ],
+      "url": "https://aim.gov.in/aic.php",
+      "availability": "Founder access is through individual AICs; terms and cohort windows vary."
+    },
+    {
+      "id": 55,
+      "group": "startup-relevant",
+      "slug": "atal-community-innovation-centres",
+      "name": "Atal Community Innovation Centres",
+      "acronym": "ACIC",
+      "owner": "Atal Innovation Mission, NITI Aayog",
+      "sector": ["community innovation", "rural", "underserved regions", "social enterprise"],
+      "stage": ["ideation", "incubation", "community enterprise"],
+      "support": ["institutional grant", "incubation", "capacity building"],
+      "access": "institution application and centre cohorts",
+      "status": "incubator-dependent",
+      "summary": "Creates innovation centres in underserved and unserved regions to support community innovators, grassroots entrepreneurs and locally relevant ventures.",
+      "eligibility": [
+        "Formal applicant is an eligible institution/organisation in or serving a target region",
+        "Must demonstrate local partnerships, space, governance and co-funding/sustainability",
+        "Community innovators apply to individual funded centres",
+        "Not a universal direct cash grant to startups"
+      ],
+      "benefits": [
+        "The playbook cites AIM support up to ₹2.5 crore, ordinarily up to 50% of project cost, subject to the call",
+        "Community incubation, mentoring, innovation facilities and ecosystem development",
+        "Local venture and livelihood support through centre programmes"
+      ],
+      "apply": [
+        "Institutions monitor AIM for ACIC calls and submit a co-funded centre proposal",
+        "Innovators locate the nearest ACIC and an open programme",
+        "Submit the problem, solution, community evidence and team details",
+        "Complete centre selection and milestone process"
+      ],
+      "url": "https://aim.gov.in/acic.php",
+      "availability": "Institution- and centre-routed; current calls and centre programmes control access."
+    },
+    {
+      "id": 56,
+      "group": "startup-relevant",
+      "slug": "eic-scale-up-support",
+      "name": "Established Incubator Centre Scale-up Support",
+      "acronym": "EIC",
+      "owner": "Atal Innovation Mission, NITI Aayog",
+      "sector": ["sector-agnostic", "incubation ecosystem"],
+      "stage": ["incubator scale-up"],
+      "support": ["institutional grant", "infrastructure", "programme expansion"],
+      "access": "institution application",
+      "status": "periodic-institution-calls",
+      "summary": "Helps established incubators scale capacity, facilities and programmes so they can serve more high-growth startups.",
+      "eligibility": [
+        "Formal applicant is an established eligible incubator under the current AIM call",
+        "Documented operating track record, startup outcomes, governance and financial controls",
+        "Credible scale-up plan and sustainability",
+        "Not a direct founder application"
+      ],
+      "benefits": [
+        "The playbook cites institutional support up to ₹10 crore, subject to approved scope and call rules",
+        "Expanded incubation, facilities, programmes and ecosystem links",
+        "Startups benefit indirectly through funded incubators"
+      ],
+      "apply": [
+        "Incubator monitors AIM for the EIC scale-up call",
+        "Submit audited history, portfolio outcomes, governance, infrastructure and scale-up budget",
+        "Complete appraisal/due diligence",
+        "Deliver approved expansion and report outcomes"
+      ],
+      "url": "https://aim.gov.in/",
+      "availability": "Institution-focused periodic call; founders should instead apply to programmes of funded incubators."
+    },
+    {
+      "id": 57,
+      "group": "startup-relevant",
+      "slug": "agriculture-infrastructure-fund",
+      "name": "Agriculture Infrastructure Fund",
+      "acronym": "AIF",
+      "owner": "Ministry of Agriculture and Farmers Welfare",
+      "sector": ["agriculture", "agri-infrastructure", "post-harvest", "supply chain"],
+      "stage": ["commercialisation", "asset creation", "growth"],
+      "support": ["interest subvention", "credit guarantee linkage", "loan"],
+      "access": "portal plus lender",
+      "status": "rolling-until-scheme-close",
+      "summary": "Enables debt financing for post-harvest management and community farming assets, including eligible projects promoted by agri-entrepreneurs and startups.",
+      "eligibility": [
+        "Eligible beneficiary category and eligible infrastructure project under current AIF guidelines",
+        "Viable project with land/lease, permissions and promoter contribution as required by lender",
+        "Loan must be appraised and sanctioned by a participating lending institution",
+        "Benefits apply only to eligible loan amount and period"
+      ],
+      "benefits": [
+        "Interest subvention of 3% per year on eligible loans up to ₹2 crore",
+        "Subvention available for up to 7 years including permitted moratorium",
+        "Credit-guarantee fee support/linkage may apply to eligible borrowers",
+        "Larger loans may be sanctioned, but benefit is limited to the eligible tranche"
+      ],
+      "apply": [
+        "Register on the AIF portal and create the project proposal",
+        "Upload entity, DPR, site, quotations, permissions and financial information",
+        "Choose/approach a participating lender",
+        "Complete lender appraisal and portal approval",
+        "Use funds for approved assets and comply with monitoring"
+      ],
+      "url": "https://agriinfra.dac.gov.in/",
+      "availability": "Rolling portal/lender route during scheme validity; sanction remains a lender decision."
+    },
+    {
+      "id": 58,
+      "group": "startup-relevant",
+      "slug": "pradhan-mantri-mudra-yojana",
+      "name": "Pradhan Mantri MUDRA Yojana",
+      "acronym": "PMMY",
+      "owner": "Department of Financial Services, Ministry of Finance",
+      "sector": ["microenterprise", "services", "trading", "manufacturing", "allied agriculture"],
+      "stage": ["launch", "working capital", "growth"],
+      "support": ["loan"],
+      "access": "through banks NBFCs and MFIs",
+      "status": "rolling-lender-route",
+      "summary": "Provides small business loans through participating banks, NBFCs and microfinance institutions for eligible non-corporate micro enterprises.",
+      "eligibility": [
+        "Eligible income-generating microenterprise and permitted activity",
+        "Acceptable KYC, business purpose and lender credit appraisal",
+        "No grant element; borrower must repay",
+        "Lender may require business evidence, quotations, cash-flow and credit checks"
+      ],
+      "benefits": [
+        "Shishu: up to ₹50,000",
+        "Kishor: above ₹50,000 and up to ₹5 lakh",
+        "Tarun: above ₹5 lakh and up to ₹10 lakh",
+        "Tarun Plus: above ₹10 lakh and up to ₹20 lakh for eligible prior Tarun borrowers, subject to current rules"
+      ],
+      "apply": [
+        "Prepare KYC, business plan/use of funds, quotations and cash-flow estimate",
+        "Approach a participating lender or use the JanSamarth route where available",
+        "Complete lender application and appraisal",
+        "Accept sanction terms and repay as scheduled"
+      ],
+      "url": "https://www.mudra.org.in/",
+      "availability": "Rolling lender route; pricing, security and sanction depend on lender and current policy."
+    },
+    {
+      "id": 59,
+      "group": "startup-relevant",
+      "slug": "stand-up-india",
+      "name": "Stand-Up India",
+      "acronym": "—",
+      "owner": "Department of Financial Services, Ministry of Finance",
+      "sector": ["women entrepreneurship", "SC-ST entrepreneurship", "greenfield enterprise"],
+      "stage": ["launch", "asset creation"],
+      "support": ["composite loan", "handholding"],
+      "access": "through scheduled commercial banks",
+      "status": "historical-ended-march-2025",
+      "summary": "Provided bank loans for greenfield enterprises promoted by women or SC/ST entrepreneurs; retained here because it appears in the official playbook but its stated operating period ended in March 2025.",
+      "eligibility": [
+        "Historical criteria: borrower at least 18 years old and a woman or SC/ST entrepreneur",
+        "Greenfield enterprise in manufacturing, services, trading or eligible allied agriculture",
+        "For a non-individual entity, at least 51% shareholding and controlling stake held by eligible promoter",
+        "Borrower not in default to any bank/financial institution"
+      ],
+      "benefits": [
+        "Historical composite loan from ₹10 lakh to ₹1 crore covering term loan and working capital",
+        "Bank finance generally up to 75% of project cost, subject to convergence and promoter contribution",
+        "Handholding through the portal/ecosystem"
+      ],
+      "apply": [
+        "Do not assume new applications are open",
+        "Check the official portal or a scheduled commercial bank for any successor/extension",
+        "If a successor window exists, submit greenfield project, identity/category, ownership, contribution and financial documents through the bank"
+      ],
+      "url": "https://www.standupmitra.in/",
+      "availability": "Historical/inactive as listed: the official playbook says the scheme was operational until March 2025."
+    },
+    {
+      "id": 60,
+      "group": "startup-relevant",
+      "slug": "pmfme",
+      "name": "PM Formalisation of Micro Food Processing Enterprises",
+      "acronym": "PMFME",
+      "owner": "Ministry of Food Processing Industries",
+      "sector": ["food processing", "agri-food", "microenterprise"],
+      "stage": ["formalisation", "asset creation", "growth"],
+      "support": ["credit-linked subsidy", "seed capital", "training"],
+      "access": "portal plus lender or state nodal agency",
+      "status": "programme-window-dependent",
+      "summary": "Supports formalisation and competitiveness of micro food-processing enterprises, producer groups and self-help groups, often aligned with the One District One Product approach.",
+      "eligibility": [
+        "Eligible new/upgrading micro food-processing enterprise, FPO, cooperative or SHG under current guidelines",
+        "Project and beneficiary must satisfy state/ODOP and enterprise conditions",
+        "Credit-linked cases require lender sanction and promoter contribution",
+        "Food, land, registration and statutory compliance as applicable"
+      ],
+      "benefits": [
+        "Individual microenterprise: credit-linked capital subsidy of 35% of eligible project cost, capped at ₹10 lakh",
+        "FPO/cooperative/common infrastructure components can receive 35% support under applicable rules",
+        "SHG seed capital can be up to ₹40,000 per member for eligible activities",
+        "Training and branding/marketing support"
+      ],
+      "apply": [
+        "Check the PMFME portal and state nodal agency for a live window",
+        "Select individual, group, common infrastructure or branding route",
+        "Prepare DPR, quotations, food licences/registrations, entity and bank documents",
+        "Submit through portal and complete district/state/lender appraisal",
+        "Claim subsidy after sanctioned implementation"
+      ],
+      "url": "https://pmfme.mofpi.gov.in/",
+      "availability": "Programme-window and state-implementation dependent; current portal rules control new intake."
+    },
+    {
+      "id": 61,
+      "group": "startup-relevant",
+      "slug": "ifsca-fintech-incentive",
+      "name": "IFSCA FinTech Incentive Scheme",
+      "acronym": "—",
+      "owner": "International Financial Services Centres Authority",
+      "sector": ["fintech", "regtech", "suptech", "green finance", "financial services"],
+      "stage": ["prototype", "sandbox", "market entry", "acceleration"],
+      "support": ["grant", "sandbox support", "market access"],
+      "access": "direct IFSCA application",
+      "status": "periodic-or-cohort-based",
+      "summary": "Offers grants and regulatory innovation routes for eligible fintech entities working in or with India’s International Financial Services Centre ecosystem.",
+      "eligibility": [
+        "Eligible domestic or foreign fintech entity/startup under the chosen incentive category",
+        "Innovation relevant to financial services in the IFSC ecosystem",
+        "Meet IFSCA registration, sandbox, authorisation or accelerator conditions for the route",
+        "No duplicate funding for the same eligible expenditure"
+      ],
+      "benefits": [
+        "Startup grant up to ₹15 lakh",
+        "Proof-of-concept grant up to ₹50 lakh",
+        "Sandbox grant up to ₹30 lakh",
+        "Green fintech grant up to ₹75 lakh",
+        "Accelerator grant up to ₹10 lakh",
+        "Other categories may exist under live guidelines"
+      ],
+      "apply": [
+        "Choose the applicable grant, sandbox or accelerator route on IFSCA’s fintech pages",
+        "Submit entity, innovation, regulatory, technical, milestone, cost and funding information",
+        "Complete eligibility and expert/regulatory assessment",
+        "Execute terms and provide utilisation/milestone evidence"
+      ],
+      "url": "https://ifsca.gov.in/Pages/FinTech",
+      "availability": "Periodic/category-based; live IFSCA circulars and calls govern eligibility and amounts."
+    },
+    {
+      "id": 62,
+      "group": "startup-relevant",
+      "slug": "dae-technology-development-incubation-centres",
+      "name": "Technology Development-cum-Incubation Centres",
+      "acronym": "TDIC",
+      "owner": "Department of Atomic Energy",
+      "sector": [
+        "advanced materials",
+        "nuclear applications",
+        "deep-tech",
+        "manufacturing",
+        "health technology"
+      ],
+      "stage": ["technology transfer", "prototype", "validation"],
+      "support": ["incubation", "test facilities", "technology access", "mentoring"],
+      "access": "through DAE centres",
+      "status": "centre-dependent",
+      "summary": "Provides innovators and enterprises access to selected Department of Atomic Energy technologies, facilities, testing and incubation support through DAE institutions.",
+      "eligibility": [
+        "Technology/startup must fit the selected DAE centre’s domain and safety/security rules",
+        "Technically credible team and development/adoption plan",
+        "Required licences, confidentiality, technology-transfer and facility agreements",
+        "Admission depends on the centre and proposed technology"
+      ],
+      "benefits": [
+        "Access to specialised laboratories, test beds, scientific expertise and incubation",
+        "Technology-transfer/licensing and joint development possibilities",
+        "No universal standard grant amount; terms are centre/project-specific"
+      ],
+      "apply": [
+        "Identify the relevant DAE constituent unit/technology and incubation contact",
+        "Submit technical concept, team, facility needs and commercial plan",
+        "Complete scientific, safety, IP and security review",
+        "Execute incubation, access or licensing agreement"
+      ],
+      "url": "https://dae.gov.in/",
+      "availability": "Centre/project-specific; contact the relevant DAE unit for current intake and terms."
+    },
+    {
+      "id": 63,
+      "group": "startup-relevant",
+      "slug": "start-up-village-entrepreneurship-programme",
+      "name": "Start-up Village Entrepreneurship Programme",
+      "acronym": "SVEP",
+      "owner": "Ministry of Rural Development",
+      "sector": ["rural enterprise", "livelihoods", "women entrepreneurship", "microenterprise"],
+      "stage": ["ideation", "launch", "formalisation"],
+      "support": ["training", "community enterprise fund", "mentoring"],
+      "access": "through DAY-NRLM state missions and blocks",
+      "status": "location-and-cohort-dependent",
+      "summary": "A DAY-NRLM sub-programme that helps rural households establish and strengthen small non-farm enterprises through local business support and community finance.",
+      "eligibility": [
+        "Beneficiary is generally a rural SHG member or household/family member in an SVEP implementation block",
+        "Proposed viable non-farm livelihood enterprise",
+        "Participation in local appraisal, training and repayment/community-fund rules",
+        "Geographic availability depends on approved blocks"
+      ],
+      "benefits": [
+        "Entrepreneurship orientation, business-plan support and local mentoring",
+        "Access to Community Enterprise Fund through the local institutional mechanism",
+        "Post-launch handholding and market/finance linkages"
+      ],
+      "apply": [
+        "Contact the Block Mission Management Unit, State Rural Livelihood Mission or local SHG federation",
+        "Confirm that the block runs SVEP",
+        "Complete orientation and business appraisal",
+        "Apply for community-fund support through the prescribed local institution",
+        "Receive ongoing CRP-EP mentoring"
+      ],
+      "url": "https://svep.nrlm.gov.in/landing",
+      "availability": "Location-dependent; access is through DAY-NRLM institutions in approved SVEP blocks."
+    },
+    {
+      "id": 64,
+      "group": "startup-relevant",
+      "slug": "venture-capital-fund-scheduled-castes",
+      "name": "Venture Capital Fund for Scheduled Castes",
+      "acronym": "VCF-SC",
+      "owner": "Ministry of Social Justice and Empowerment / IFCI Venture Capital Funds",
+      "sector": ["SC entrepreneurship", "sector-agnostic", "manufacturing", "services"],
+      "stage": ["launch", "growth", "scale-up"],
+      "support": ["concessional finance", "equity-like support", "loan"],
+      "access": "fund application",
+      "status": "investment-window-dependent",
+      "summary": "Provides concessional growth and project finance to eligible Scheduled Caste entrepreneurs through a professionally managed fund.",
+      "eligibility": [
+        "Eligible SC ownership and management/control under current fund rules",
+        "The playbook states 51% SC ownership/control, maintained for at least 6 months for assistance up to ₹50 lakh and 12 months for higher assistance",
+        "Viable project, promoter contribution and acceptable diligence",
+        "Entity and activity must fall within fund guidelines"
+      ],
+      "benefits": [
+        "Financial assistance generally from ₹10 lakh up to ₹15 crore, depending on instrument/project",
+        "The playbook cites concessional loan pricing of about 4% for the relevant component",
+        "Eligible project-cost coverage and instrument mix depend on appraisal"
+      ],
+      "apply": [
+        "Review the current VCF-SC guidelines and application channel",
+        "Submit caste, ownership history, entity, project, market, financial, collateral/security if any and promoter-contribution documents",
+        "Complete technical, commercial, legal and financial diligence",
+        "Execute funding documents and meet disbursement conditions"
+      ],
+      "url": "https://vcfsc.in/apply-online.html",
+      "availability": "Fund/appraisal route; current guidelines control instrument, pricing and ownership tests."
+    },
+    {
+      "id": 65,
+      "group": "startup-relevant",
+      "slug": "sti-hubs-sc-st",
+      "name": "Science Technology and Innovation Hubs for SC/ST Communities",
+      "acronym": "STI Hubs",
+      "owner": "Department of Science and Technology",
+      "sector": [
+        "SC-ST communities",
+        "grassroots innovation",
+        "livelihood technology",
+        "social enterprise"
+      ],
+      "stage": ["community innovation", "technology deployment"],
+      "support": ["institutional grant", "technology support", "capacity building"],
+      "access": "institution application and hub programmes",
+      "status": "periodic-institution-calls",
+      "summary": "Funds institutions to establish science, technology and innovation hubs that deploy locally relevant technologies and build entrepreneurship in SC/ST communities.",
+      "eligibility": [
+        "Formal applicant is an eligible institution/organisation under DST’s call",
+        "Proposal must address identified SC/ST community needs with appropriate technology and participation",
+        "Community partnerships, field capacity, governance and measurable outcomes",
+        "Individual startups access activities through a funded hub"
+      ],
+      "benefits": [
+        "Institutional project grant based on approved scope and budget",
+        "Technology demonstration, skill building, livelihood/enterprise development and field support",
+        "No universal direct founder ticket"
+      ],
+      "apply": [
+        "Institutions monitor DST SEED Division calls and submit a community-grounded proposal",
+        "Entrepreneurs identify a funded STI Hub serving their geography/community",
+        "Join the hub’s training, technology or enterprise programme",
+        "Follow hub-specific selection and support terms"
+      ],
+      "url": "https://dst.gov.in/callforproposals/science-technology-and-innovation-sti-hubs-development-scheduled-caste-sc-and",
+      "availability": "Call/hub-dependent; use the current DST call for the exact STI Hub programme."
+    },
+    {
+      "id": 66,
+      "group": "startup-relevant",
+      "slug": "national-livestock-mission",
+      "name": "National Livestock Mission",
+      "acronym": "NLM",
+      "owner": "Department of Animal Husbandry and Dairying",
+      "sector": ["livestock", "poultry", "fodder", "research and innovation", "rural enterprise"],
+      "stage": ["research", "extension", "innovation", "challenge"],
+      "support": ["project grant", "grand challenge", "institutional support"],
+      "access": "portal plus parent or state recommendation",
+      "status": "programme-window-dependent",
+      "summary": "Supports livestock-sector extension, R&D and innovation and includes startup problem-solving and Grand Challenge opportunities in sheep, goat, poultry, pig, feed and fodder.",
+      "eligibility": [
+        "ICAR institutes, Central institutes, State Government university farms, other credible institutions and startups under the applicable component/call",
+        "Proposal must address livestock extension, R&D, innovation or a notified startup challenge",
+        "Institutional proposals require approval and recommendation through the parent organisation or State Animal Husbandry Department",
+        "Technical capability, measurable milestones and current portal conditions"
+      ],
+      "benefits": [
+        "The playbook states up to 100% Central assistance for approved Extension, R&D and Innovation activities based on the need and scope of the proposal",
+        "Startup Grand Challenge/problem-solving opportunities",
+        "Project support is call- and proposal-specific rather than a universal startup ticket"
+      ],
+      "apply": [
+        "Review the current NLM portal, operational guidelines and Startup Grand Challenge notice",
+        "Prepare the technical problem, work plan, budget, facilities and expected livestock-value-chain impact",
+        "Obtain parent organisation/State Animal Husbandry Department recommendation where required",
+        "Submit through the NLM portal and complete technical appraisal"
+      ],
+      "url": "https://nlm.udyamimitra.in/",
+      "availability": "Component- and window-dependent; the live NLM notice controls applicant route and project support."
+    },
+    {
+      "id": 67,
+      "group": "startup-relevant",
+      "slug": "mahir",
+      "name": "Mission on Advanced and High-Impact Research",
+      "acronym": "MAHIR",
+      "owner": "Ministry of Power and Ministry of New and Renewable Energy",
+      "sector": ["power", "energy transition", "grid technology", "clean-tech", "deep-tech"],
+      "stage": ["research", "prototype", "pilot", "deployment"],
+      "support": ["project grant", "challenge support", "industry collaboration"],
+      "access": "challenge or consortium call",
+      "status": "periodic-calls",
+      "summary": "Funds advanced research and indigenous technology development for the power sector through problem statements, collaborative projects and pilots.",
+      "eligibility": [
+        "Indian startup/industry/academic/research participant fitting a live MAHIR problem statement or consortium",
+        "Relevant high-impact power-sector technology and credible technical team",
+        "Defined milestones, testing/pilot pathway and IP/commercialisation plan",
+        "Formal applicant/lead structure is call-specific"
+      ],
+      "benefits": [
+        "Project-specific financial support, testing, pilot and utility/industry collaboration",
+        "No universal founder ticket; approved budget and cost share depend on the call",
+        "Potential pathway to field validation in the power sector"
+      ],
+      "apply": [
+        "Monitor Ministry of Power/Central Electricity Authority/MAHIR announcements",
+        "Map the solution to a live problem statement",
+        "Form required consortium and submit technical, milestone, IP, pilot and budget proposal",
+        "Complete expert review and agreement"
+      ],
+      "url": "https://cpri.res.in/en/content/mahir",
+      "availability": "Challenge/call-based; use the live MAHIR notice for applicant structure and support."
+    },
+    {
+      "id": 68,
+      "group": "startup-relevant",
+      "slug": "yuva-sahakar",
+      "name": "Yuva Sahakar — Cooperative Enterprise Support and Innovation Scheme",
+      "acronym": "Yuva Sahakar",
+      "owner": "Ministry of Cooperation / National Cooperative Development Corporation",
+      "sector": ["cooperatives", "agriculture", "rural enterprise", "social enterprise"],
+      "stage": ["launch", "asset creation", "growth"],
+      "support": ["concessional loan", "interest subsidy"],
+      "access": "through NCDC",
+      "status": "programme-window-dependent",
+      "summary": "Encourages newly formed and youth-led cooperatives to start innovative ventures with concessional NCDC finance.",
+      "eligibility": [
+        "Registered cooperative society meeting NCDC and current scheme conditions",
+        "Priority for newly formed or youth-oriented cooperatives as prescribed",
+        "Viable project, member contribution, security and repayment capacity under appraisal",
+        "Startup companies that are not cooperatives are not the formal applicants"
+      ],
+      "benefits": [
+        "The playbook cites an additional 2% interest concession on applicable NCDC lending",
+        "Project finance and longer-term cooperative development support",
+        "Terms, margin and security are project-specific"
+      ],
+      "apply": [
+        "Confirm the live Yuva Sahakar window with NCDC/regional office",
+        "Prepare cooperative registration, bye-laws, board resolution, membership, DPR and financials",
+        "Submit through the prescribed state/direct NCDC route",
+        "Complete appraisal and execute loan terms"
+      ],
+      "url": "https://www.ncdc.in/documents/other/3908071119Yuva.pdf",
+      "availability": "Cooperative-only finance route; confirm current intake and concession before applying."
+    },
+    {
+      "id": 69,
+      "group": "startup-relevant",
+      "slug": "entrepreneurship-and-skill-development-programme",
+      "name": "Entrepreneurship and Skill Development Programme",
+      "acronym": "ESDP",
+      "owner": "Ministry of Micro, Small and Medium Enterprises",
+      "sector": ["entrepreneurship training", "MSME", "manufacturing", "services"],
+      "stage": ["pre-startup", "launch", "capacity building"],
+      "support": ["training", "entrepreneurship development", "skill development"],
+      "access": "through implementing institutions",
+      "status": "calendar-and-location-dependent",
+      "summary": "Provides entrepreneurship awareness, entrepreneurship development and skill-development programmes through MSME institutions and approved implementing organisations.",
+      "eligibility": [
+        "Aspiring or existing entrepreneur fitting the announced programme",
+        "Age, education, sector and residence conditions vary by course",
+        "The playbook indicates at least 40% of beneficiaries are intended from weaker sections in relevant programmes",
+        "Not a startup cash grant"
+      ],
+      "benefits": [
+        "Entrepreneurship awareness and development training",
+        "Technical and management skill programmes",
+        "Exposure to business planning, compliance, markets and institutional support",
+        "Course cost/stipend, if any, is programme-specific"
+      ],
+      "apply": [
+        "Find a current ESDP calendar through the MSME Development Institute or implementing institution",
+        "Register for a suitable course with identity, education/category and enterprise details",
+        "Attend and complete the programme",
+        "Use linked handholding/finance channels separately if offered"
+      ],
+      "url": "https://msmedi.dcmsme.gov.in/",
+      "availability": "Course-, location- and calendar-dependent; verify the current batch with the implementing institute."
+    }
+  ]
+}

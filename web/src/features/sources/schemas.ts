@@ -17,7 +17,11 @@ export const SourceSchema = z.object({
   url: z.string().nullable(),
   attribution: z.string(),
   licence: z.string(),
+  accessMethod: z.string(),
+  cadence: z.string(),
+  mayRedistribute: z.boolean(),
   metadataStatus: z.string(),
+  freshness: z.string(),
   lastSuccessAt: z.string().nullable(),
   lastVintage: z.string().nullable(),
 });

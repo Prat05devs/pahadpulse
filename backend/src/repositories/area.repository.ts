@@ -43,7 +43,7 @@ function toArea(row: AreaRow): Area {
     type: row.type,
     code: row.code,
     slug: row.slug,
-    name: { en: row.name_en, hi: row.name_hi },
+    name: { en: row.name_en, hi: row.name_hi ?? '' },
     parentId: row.parent_id,
     division: row.division,
     headquarters:
@@ -138,7 +138,6 @@ export interface TehsilRef {
   slug: string;
   nameEn: string;
 }
-
 
 export interface UpsertBoundaryInput {
   areaId: number;
@@ -336,7 +335,8 @@ class AreaRepositoryImpl implements IAreaRepository {
             row.centroid_lat !== null && row.centroid_lng !== null
               ? { lat: Number(row.centroid_lat), lng: Number(row.centroid_lng) }
               : null,
-          geojson: typeof row.geojson === 'string' ? (JSON.parse(row.geojson) as unknown) : row.geojson,
+          geojson:
+            typeof row.geojson === 'string' ? (JSON.parse(row.geojson) as unknown) : row.geojson,
           isPlaceholder: row.is_placeholder,
           sourceNote: row.source_note,
         })),
@@ -373,7 +373,9 @@ class AreaRepositoryImpl implements IAreaRepository {
     }
   }
 
-  async listVillagesByTehsil(districtId: number): Promise<Result<Map<number, string[]>, RequestError>> {
+  async listVillagesByTehsil(
+    districtId: number,
+  ): Promise<Result<Map<number, string[]>, RequestError>> {
     try {
       const { rows } = await db.query<AreaRow>(
         `SELECT v.parent_id, v.name_en, v.name_hi, v.id, v.type, v.code, v.slug,
@@ -402,7 +404,6 @@ class AreaRepositoryImpl implements IAreaRepository {
       return err(ERRORS.DATABASE_ERROR);
     }
   }
-
 
   /**
    * Places every village by geometry, in SQL.
@@ -449,8 +450,13 @@ class AreaRepositoryImpl implements IAreaRepository {
         for (const place of chunk) {
           const base = params.length;
           // lng then lat — ST_MakePoint takes X before Y.
-          params.push(place.osmId, place.name.slice(0, 128), place.nameHi?.slice(0, 128) ?? null,
-            place.lng, place.lat);
+          params.push(
+            place.osmId,
+            place.name.slice(0, 128),
+            place.nameHi?.slice(0, 128) ?? null,
+            place.lng,
+            place.lat,
+          );
           const p = (n: number) => `$${base + n}`;
           tuples.push(
             `(${p(1)}, ${p(2)}, ${p(3)}, ST_SetSRID(ST_MakePoint(${p(4)}, ${p(5)}), 4326))`,

@@ -151,9 +151,7 @@ export async function getAlertFeatures(
   // fallback below, but a warning that names nine districts would otherwise re-read the
   // same 13 boundary rows nine times (Q5).
   const boundaries = await AreaRepository.listDistrictBoundaries();
-  const boundaryBySlug = new Map(
-    boundaries.isOk() ? boundaries.value.map((b) => [b.slug, b]) : [],
-  );
+  const boundaryBySlug = new Map(boundaries.isOk() ? boundaries.value.map((b) => [b.slug, b]) : []);
 
   const features: GeoFeature<AlertFeatureProperties>[] = [];
   const attribution = new Set<string>();

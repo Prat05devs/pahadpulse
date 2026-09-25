@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Clock3 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { apiClient } from '@/lib/api';
@@ -274,17 +275,15 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
             </div>
           )}
 
-          {/* Tehsils and their villages.
-              Village names come from OpenStreetMap and are placed in a tehsil by geometry,
-              so coverage is uneven — a tehsil OSM has not drawn a boundary for shows none.
-              That gap is stated rather than hidden, because an empty list here means "not
-              mapped yet", not "no villages". */}
+          {/* The administrative directory and the map are intentionally separate. LGD says
+              which villages exist and which sub-district contains them; map geometry can be
+              added later without changing or suppressing that official directory. */}
           {tehsils.length > 0 && (
             <div className="bg-surface border border-border rounded-lg p-4">
               <div className="mb-4 flex items-baseline justify-between gap-3">
                 <h2 className="font-bold text-lg">Tehsils ({tehsils.length})</h2>
                 <p className="text-xs text-text-light/50">
-                  {totalVillages.toLocaleString('en-IN')} villages mapped
+                  {totalVillages.toLocaleString('en-IN')} official villages
                 </p>
               </div>
 
@@ -297,12 +296,16 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-3">
                       <span>
                         <span className="font-semibold">{tehsil.name.en}</span>
-                        <span className="ml-2 text-sm text-text-light/50">{tehsil.name.hi}</span>
+                        {tehsil.name.hi ? (
+                          <span className="ml-2 text-sm text-text-light/50">
+                            {tehsil.name.hi}
+                          </span>
+                        ) : null}
                       </span>
                       <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 font-mono text-xs text-text-light/60">
                         {tehsil.villages.length > 0
                           ? `${tehsil.villages.length} villages`
-                          : 'not mapped'}
+                          : 'none listed'}
                       </span>
                     </summary>
 
@@ -314,7 +317,8 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
                       </ul>
                     ) : (
                       <p className="border-t border-border px-4 py-3 text-sm text-text-light/50">
-                        No village boundaries mapped for this tehsil yet.
+                        No village record is present for this sub-district in the current LGD
+                        snapshot.
                       </p>
                     )}
                   </details>
@@ -322,18 +326,13 @@ export default async function DistrictDetailPage({ params }: DistrictDetailPageP
               </div>
 
               <p className="mt-4 text-xs leading-relaxed text-text-light/50">
-                Village names from{' '}
-                <a
-                  href="https://www.openstreetmap.org"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="underline underline-offset-2"
-                >
-                  OpenStreetMap contributors
-                </a>{' '}
-                (ODbL), placed by geometry. Uttarakhand has about 16,800 villages in total, so this
-                is a partial list — not every village is mapped, and a few may sit in a neighbouring
-                tehsil.
+                Names and administrative relationships come from the Ministry of Panchayati
+                Raj&rsquo;s monthly Local Government Directory snapshot (21 April 2026). The
+                directory does not provide boundary polygons, so map coverage is handled separately.{' '}
+                <Link href="/sources" className="font-medium text-accent hover:underline">
+                  Read the source and methodology
+                </Link>
+                .
               </p>
             </div>
           )}

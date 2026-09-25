@@ -124,11 +124,13 @@ class ObservationRepositoryImpl implements IObservationRepository {
     type: StationType,
   ): Promise<Result<StationWithArea[], RequestError>> {
     try {
-      const { rows } = await db.query<StationRow & {
-        area_slug: string;
-        area_name_en: string;
-        area_name_hi: string | null;
-      }>(
+      const { rows } = await db.query<
+        StationRow & {
+          area_slug: string;
+          area_name_en: string;
+          area_name_hi: string | null;
+        }
+      >(
         `SELECT s.id, s.source_id, s.source_station_code, s.type, s.name_en, s.name_hi,
                 s.area_id,
                 ST_Y(s.location::geometry) AS lat,
@@ -419,10 +421,10 @@ class ObservationRepositoryImpl implements IObservationRepository {
 
       // Scoped to this source: another source's forecasts for the same area are not this
       // run's to discard (HYD-5 allows several, ordered).
-      await client.query(
-        `DELETE FROM ${FORECASTS_TABLE} WHERE area_id = $1 AND source_id = $2`,
-        [areaId, sourceId],
-      );
+      await client.query(`DELETE FROM ${FORECASTS_TABLE} WHERE area_id = $1 AND source_id = $2`, [
+        areaId,
+        sourceId,
+      ]);
 
       if (inputs.length > 0) {
         const { text, params } = bulkValues(

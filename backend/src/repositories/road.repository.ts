@@ -33,7 +33,7 @@ export interface IRoadRepository {
   /** Replaces the whole set for a source in one transaction (DS-5: idempotent). */
   replaceRoutes(
     sourceId: number,
-    routes: readonly UpsertRoadRouteInput[]
+    routes: readonly UpsertRoadRouteInput[],
   ): Promise<Result<number, RequestError>>;
 }
 
@@ -58,7 +58,7 @@ class RoadRepositoryImpl implements IRoadRepository {
           ORDER BY network ASC,
                    CASE WHEN route_number ~ '^[0-9]+$'
                         THEN route_number::integer ELSE NULL END ASC NULLS LAST,
-                   route_number ASC`
+                   route_number ASC`,
       );
       return ok(rows.map(toRoadRoute));
     } catch (error) {
@@ -77,7 +77,7 @@ class RoadRepositoryImpl implements IRoadRepository {
    */
   async replaceRoutes(
     sourceId: number,
-    routes: readonly UpsertRoadRouteInput[]
+    routes: readonly UpsertRoadRouteInput[],
   ): Promise<Result<number, RequestError>> {
     if (routes.length === 0) return ok(0);
 

@@ -133,8 +133,7 @@ function buildVerdicts(a: ComparedDistrict, b: ComparedDistrict): string[] {
       continue;
     }
 
-    const [ahead, behind] =
-      themeA.score > themeB.score ? [a, b] : [b, a];
+    const [ahead, behind] = themeA.score > themeB.score ? [a, b] : [b, a];
     const aheadScore = Math.max(themeA.score, themeB.score);
     const behindScore = Math.min(themeA.score, themeB.score);
     verdicts.push(
@@ -159,9 +158,7 @@ function buildVerdicts(a: ComparedDistrict, b: ComparedDistrict): string[] {
 function overallOf(themes: readonly ThemeScore[]): number | null {
   const scored = themes.filter((theme) => theme.score !== null);
   if (scored.length === 0) return null;
-  return Math.round(
-    scored.reduce((total, theme) => total + (theme.score ?? 0), 0) / scored.length,
-  );
+  return Math.round(scored.reduce((total, theme) => total + (theme.score ?? 0), 0) / scored.length);
 }
 
 /**
@@ -238,10 +235,7 @@ export async function compareDistricts(
     });
   }
 
-  const build = async (
-    slug: string,
-    name: LocalisedText,
-  ): Promise<ComparedDistrict> => {
+  const build = async (slug: string, name: LocalisedText): Promise<ComparedDistrict> => {
     const themes = THEMES.map((theme) =>
       scoreTheme(
         theme,
@@ -260,7 +254,18 @@ export async function compareDistricts(
       overall: overallOf(themes),
       projects: projects.isOk()
         ? projects.value
-        : { projects: [], summary: { total: 0, active: 0, operational: 0, underConstruction: 0, disclosedCapitalCr: null, withDisclosedCost: 0, bySector: {} } },
+        : {
+            projects: [],
+            summary: {
+              total: 0,
+              active: 0,
+              operational: 0,
+              underConstruction: 0,
+              disclosedCapitalCr: null,
+              withDisclosedCost: 0,
+              bySector: {},
+            },
+          },
     };
   };
 

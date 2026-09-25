@@ -55,6 +55,26 @@ export const ComparisonDistrictSchema = z.object({
   metricDetails: BusinessMetricDetailsSchema.optional(),
 });
 
+export const BusinessSchemeSchema = z.object({
+  id: z.number(),
+  group: z.string(),
+  slug: z.string(),
+  name: z.string(),
+  acronym: z.string(),
+  owner: z.string(),
+  sector: z.array(z.string()),
+  stage: z.array(z.string()),
+  support: z.array(z.string()),
+  access: z.string(),
+  status: z.string(),
+  summary: z.string(),
+  eligibility: z.array(z.string()),
+  benefits: z.array(z.string()),
+  apply: z.array(z.string()),
+  url: z.string().url(),
+  availability: z.string(),
+});
+
 export const ComparisonReportSchema = z.object({
   winner: z.string(),
   districtA: ComparisonDistrictSchema,
@@ -73,6 +93,20 @@ export const ComparisonReportSchema = z.object({
       note: z.string(),
     })
     .optional(),
+  recommendedSchemes: z.array(BusinessSchemeSchema).optional(),
 });
 
 export type ComparisonReport = z.infer<typeof ComparisonReportSchema>;
+
+export const BusinessSchemeDirectorySchema = z.object({
+  verifiedOn: z.string(),
+  sourceUrl: z.string().url(),
+  total: z.number(),
+  filteredCount: z.number(),
+  sectors: z.array(z.string()),
+  supportTypes: z.array(z.string()),
+  schemes: z.array(BusinessSchemeSchema),
+});
+
+export type BusinessScheme = z.infer<typeof BusinessSchemeSchema>;
+export type BusinessSchemeDirectory = z.infer<typeof BusinessSchemeDirectorySchema>;

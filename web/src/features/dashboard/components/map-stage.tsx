@@ -110,6 +110,7 @@ export function MapStage({
   recentAlertCount,
 }: MapStageProps) {
   const alertCount = counters.activeAlerts;
+  const hasAlerts = alertCount !== null && alertCount > 0;
 
   return (
     <section
@@ -183,7 +184,7 @@ export function MapStage({
           <div className="flex items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
               <AlertTriangle
-                className={`size-4 ${alertCount > 0 ? 'text-danger' : 'text-muted-foreground'}`}
+                className={`size-4 ${hasAlerts ? 'text-danger' : 'text-muted-foreground'}`}
                 strokeWidth={2}
                 aria-hidden="true"
               />
@@ -196,11 +197,15 @@ export function MapStage({
               See all <ArrowRight className="size-3" aria-hidden="true" />
             </Link>
           </div>
-          <p className="mt-3 font-mono text-3xl font-semibold tabular-nums">{alertCount}</p>
+          <p className="mt-3 font-mono text-3xl font-semibold tabular-nums">
+            {alertCount === null ? '—' : alertCount}
+          </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            {alertCount === 0
-              ? 'No warnings currently in force across the state.'
-              : `Warning${alertCount === 1 ? '' : 's'} in force. Shaded areas on the map show the districts affected.`}
+            {alertCount === null
+              ? 'The live warning count is temporarily unavailable.'
+              : alertCount === 0
+                ? 'No warnings currently in force across the state.'
+                : `Warning${alertCount === 1 ? '' : 's'} in force. Shaded areas on the map show the districts affected.`}
           </p>
           {alertCount === 0 && recentAlertCount !== null && recentAlertCount > 0 && (
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">

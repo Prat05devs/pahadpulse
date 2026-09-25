@@ -36,22 +36,33 @@ const BASE_BUNDLE_ID = 'in.pahadpulse.app';
 const BRAND_BLUE = '#075E9C';
 
 /**
- * A production binary must never silently inherit the localhost development defaults from
- * `src/config/env.ts`. EAS evaluates this file before bundling, so failing here prevents a
- * store build whose every request would be sent to the reader's own phone.
+ * The public endpoints each variant talks to.
+ *
+ * These live here, not only in `eas.json`, because the store archive is built in Xcode and
+ * Xcode has no EAS environment. 1.0.0 (2) shipped to TestFlight with
+ * `http://localhost:3000/api` inlined into the bundle — the JS is bundled by a build phase
+ * during the archive, `EXPO_PUBLIC_API_URL` was unset there, and `src/config/env.ts` fell
+ * back to its development default. The app launched and then failed every request against
+ * the reader's own phone.
+ *
+ * Neither value is a secret: both are already committed in `eas.json` and `render.yaml`.
+ * An `EXPO_PUBLIC_*` variable in the environment still wins, so EAS and `expo start` are
+ * unaffected; this is the floor under a build that has no environment at all.
+ *
+ * This replaces an `assertProductionUrl` check that threw when the variables were missing at
+ * config time. It could not have caught this bug: the Xcode archive never evaluates a
+ * production EAS environment, and Expo loads the developer's local `.env` — with its
+ * localhost values — inside the bundling step itself. The check that does catch it reads the
+ * bundle that was actually produced, in `withBundleEnvironment` below.
  */
-function assertProductionUrl(name: string, value: string | undefined): void {
-  if (VARIANT !== 'production') return;
-
-  if (!value) {
-    throw new Error(`${name} must be set in the EAS production environment.`);
-  }
-
-  const url = new URL(value);
-  if (url.protocol !== 'https:' || ['localhost', '127.0.0.1', '::1'].includes(url.hostname)) {
-    throw new Error(`${name} must be a public HTTPS URL for production builds.`);
-  }
-}
+const PUBLIC_URLS: Record<Variant, { api: string; web: string }> = {
+  development: { api: 'http://localhost:3000/api', web: 'http://localhost:3001' },
+  preview: { api: 'https://pahadpulse.onrender.com/api', web: 'https://www.pahadpulse.live' },
+  production: {
+    api: 'https://pahadpulse.onrender.com/api',
+    web: 'https://www.pahadpulse.live',
+  },
+};
 
 /**
  * The Expo SDK 57 prebuild template sets `ENABLE_USER_SCRIPT_SANDBOXING = YES`, but the
@@ -72,6 +83,77 @@ const withScriptSandboxingDisabled: ConfigPlugin = (config) =>
       if (typeof entry !== 'object' || entry === null || !('buildSettings' in entry)) continue;
       const { buildSettings } = entry as { buildSettings: Record<string, unknown> };
       buildSettings.ENABLE_USER_SCRIPT_SANDBOXING = 'NO';
+    }
+
+    return modConfig;
+  });
+
+/**
+ * Give the JS bundling phase an environment, and refuse to ship one built without it.
+ *
+ * `expo export:embed` runs inside the "Bundle React Native code and images" phase during a
+ * Release build, inheriting whatever Xcode has — which, for an archive started from the
+ * Xcode UI, is nothing. The exports below only fill in what is missing, so a shell or EAS
+ * build that already set them is untouched.
+ *
+ * The check afterwards is the part that matters: it reads the bundle that was just written
+ * and fails the build if the development fallback is in it. A wrong base URL is invisible
+ * until someone installs the build and every screen shows a network error, which is exactly
+ * how 1.0.0 (2) reached TestFlight.
+ */
+const BUNDLE_PHASE_NAME = 'Bundle React Native code and images';
+
+function bundleEnvironmentPrelude(variant: Variant): string {
+  const { api, web } = PUBLIC_URLS[variant];
+  return [
+    `export APP_VARIANT="\${APP_VARIANT:-${variant}}"`,
+    `export EXPO_PUBLIC_API_URL="\${EXPO_PUBLIC_API_URL:-${api}}"`,
+    `export EXPO_PUBLIC_WEB_URL="\${EXPO_PUBLIC_WEB_URL:-${web}}"`,
+    '',
+  ].join('\n');
+}
+
+const BUNDLE_URL_GUARD = [
+  '',
+  '# What shipped in 1.0.0 (2): a bundle with no API URL inlined, falling back to localhost.',
+  '# The check is for PRESENCE of the expected URL, never absence of the fallback — the',
+  '# fallback is a literal in src/config/env.ts and is in every bundle either way.',
+  'if [ "$CONFIGURATION" = "Release" ]; then',
+  '  BUNDLE="$CONFIGURATION_BUILD_DIR/main.jsbundle"',
+  '  if [ ! -f "$BUNDLE" ]; then',
+  '    echo "error: no main.jsbundle was produced for a Release build." >&2',
+  '    exit 1',
+  '  fi',
+  '  if ! grep -q "$EXPO_PUBLIC_API_URL" "$BUNDLE"; then',
+  '    echo "error: $EXPO_PUBLIC_API_URL is not in the bundle, so the app would fall back to" >&2',
+  '    echo "localhost — exactly what shipped in 1.0.0 (2). See PUBLIC_URLS in app.config.ts." >&2',
+  '    exit 1',
+  '  fi',
+  'fi',
+].join('\n');
+
+const withBundleEnvironment: ConfigPlugin = (config) =>
+  withXcodeProject(config, (modConfig) => {
+    const phases: Record<string, unknown> =
+      modConfig.modResults.hash.project.objects.PBXShellScriptBuildPhase ?? {};
+
+    let patched = false;
+    for (const phase of Object.values(phases)) {
+      if (typeof phase !== 'object' || phase === null || !('shellScript' in phase)) continue;
+      const entry = phase as { name?: string; shellScript: string };
+      if (entry.name?.includes(BUNDLE_PHASE_NAME) !== true) continue;
+
+      // `shellScript` is stored as a quoted, escaped string; JSON round-trips it faithfully.
+      const script: string = JSON.parse(entry.shellScript);
+      if (script.includes('EXPO_PUBLIC_API_URL')) return modConfig; // already patched
+      entry.shellScript = JSON.stringify(
+        bundleEnvironmentPrelude(VARIANT) + script + BUNDLE_URL_GUARD
+      );
+      patched = true;
+    }
+
+    if (!patched) {
+      throw new Error(`Could not find the "${BUNDLE_PHASE_NAME}" build phase to patch.`);
     }
 
     return modConfig;
@@ -342,115 +424,128 @@ const withAndroidReleaseSigning: ConfigPlugin = (config) =>
     return modConfig;
   });
 
-assertProductionUrl('EXPO_PUBLIC_API_URL', process.env.EXPO_PUBLIC_API_URL);
-assertProductionUrl('EXPO_PUBLIC_WEB_URL', process.env.EXPO_PUBLIC_WEB_URL);
-
 export default ({ config }: ConfigContext): ExpoConfig =>
   withAndroidReleaseSigning(
-    withVendoredDsyms(
-      withDevelopmentTeam(
-        withSceneLifecycle(
-          withScriptSandboxingDisabled({
-            ...config,
-            name: NAME[VARIANT],
-            slug: 'pahad-pulse',
-            version: '1.0.0',
-            orientation: 'default',
-            icon: './assets/images/icon.png',
-            scheme: 'pahadpulse',
-            userInterfaceStyle: 'automatic',
-            /**
-             * Over-the-air updates are keyed to the runtime version. Tying it to `appVersion` means a
-             * JS-only fix ships to everyone on the same store build, while any change that touches
-             * native code requires a new store release rather than silently mismatching.
-             */
-            runtimeVersion: { policy: 'appVersion' },
-            ios: {
-              // iPhone only for v1: iPad would need its own QA pass and screenshot set before review.
-              supportsTablet: false,
-              bundleIdentifier: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
-              // Read by EAS, and by `withDevelopmentTeam` below for the local archive. Public: it
-              // is printed in every crash report and on the App Store listing.
-              appleTeamId: APPLE_TEAM_ID,
+    withBundleEnvironment(
+      withVendoredDsyms(
+        withDevelopmentTeam(
+          withSceneLifecycle(
+            withScriptSandboxingDisabled({
+              ...config,
+              name: NAME[VARIANT],
+              slug: 'pahad-pulse',
+              version: '1.0.0',
+              orientation: 'default',
+              icon: './assets/images/icon.png',
+              scheme: 'pahadpulse',
+              userInterfaceStyle: 'automatic',
               /**
-               * Both store builds are produced locally — an Xcode archive and a Gradle bundle — so
-               * these two numbers are the real ones, not a starting point EAS would override.
-               * Increment on every upload: App Store Connect and Play each reject a repeat.
+               * Over-the-air updates are keyed to the runtime version. Tying it to `appVersion` means a
+               * JS-only fix ships to everyone on the same store build, while any change that touches
+               * native code requires a new store release rather than silently mismatching.
                */
-              buildNumber: '2',
-              infoPlist: { ITSAppUsesNonExemptEncryption: false },
-            },
-            android: {
-              package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
-              /**
-               * Raise this by one for EVERY .aab uploaded to Play, including one that is only ever
-               * used for internal testing. Play rejects a reused versionCode outright — AgniVision
-               * hit exactly this and had to rebuild. `versionName` comes from `version` above.
-               */
-              versionCode: 1,
-              predictiveBackGestureEnabled: false,
-              adaptiveIcon: {
-                backgroundColor: '#F2F7F7',
-                foregroundImage: './assets/images/android-icon-foreground.png',
-                monochromeImage: './assets/images/android-icon-monochrome.png',
+              runtimeVersion: { policy: 'appVersion' },
+              ios: {
+                // iPhone only for v1: iPad would need its own QA pass and screenshot set before review.
+                supportsTablet: false,
+                bundleIdentifier: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+                // Read by EAS, and by `withDevelopmentTeam` below for the local archive. Public: it
+                // is printed in every crash report and on the App Store listing.
+                appleTeamId: APPLE_TEAM_ID,
+                /**
+                 * Both store builds are produced locally — an Xcode archive and a Gradle bundle — so
+                 * these two numbers are the real ones, not a starting point EAS would override.
+                 * Increment on every upload: App Store Connect and Play each reject a repeat.
+                 */
+                buildNumber: '4',
+                infoPlist: { ITSAppUsesNonExemptEncryption: false },
+                /*
+                 * Push, declared here rather than clicked into Xcode.
+                 *
+                 * 1.0.0 (2) failed to archive with "entitlements file was modified during the
+                 * build": the App ID had Push Notifications enabled while the app shipped no
+                 * push code, so automatic signing rewrote the empty entitlements mid-archive.
+                 * The app now registers for alert notifications, so the entitlement is real —
+                 * and it belongs in this file, because `/ios` is prebuild output and anything
+                 * set in the Xcode UI is destroyed by the next prebuild.
+                 *
+                 * `production` is what an App Store or TestFlight build needs; a debug build
+                 * run from Xcode gets `development` from the automatic signing flow.
+                 */
+                entitlements: { 'aps-environment': 'production' },
               },
-              /**
-               * Permissions the app does not use, removed from the merged manifest.
-               *
-               * The Expo template requests "display over other apps" and legacy storage access by
-               * default. Neither is used here, and Play review asks for a justification of each — a
-               * read-only data app declaring them invites a delayed or rejected review. INTERNET and
-               * VIBRATE (haptics) stay.
-               */
-              blockedPermissions: [
-                'android.permission.ACCESS_COARSE_LOCATION',
-                'android.permission.ACCESS_FINE_LOCATION',
-                'android.permission.SYSTEM_ALERT_WINDOW',
-                'android.permission.READ_EXTERNAL_STORAGE',
-                'android.permission.WRITE_EXTERNAL_STORAGE',
-              ],
-            },
-            web: {
-              output: 'static',
-              favicon: './assets/images/favicon.png',
-            },
-            plugins: [
-              'expo-router',
-              'expo-secure-store',
-              'expo-localization',
-              [
-                'expo-splash-screen',
-                {
+              android: {
+                package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
+                /**
+                 * Raise this by one for EVERY .aab uploaded to Play, including one that is only ever
+                 * used for internal testing. Play rejects a reused versionCode outright — AgniVision
+                 * hit exactly this and had to rebuild. `versionName` comes from `version` above.
+                 */
+                versionCode: 2,
+                predictiveBackGestureEnabled: false,
+                adaptiveIcon: {
                   backgroundColor: '#F2F7F7',
-                  dark: { backgroundColor: '#071719' },
-                  image: './assets/images/splash-icon.png',
-                  imageWidth: 180,
+                  foregroundImage: './assets/images/android-icon-foreground.png',
+                  monochromeImage: './assets/images/android-icon-monochrome.png',
                 },
+                /**
+                 * Permissions the app does not use, removed from the merged manifest.
+                 *
+                 * The Expo template requests "display over other apps" and legacy storage access by
+                 * default. Neither is used here, and Play review asks for a justification of each — a
+                 * read-only data app declaring them invites a delayed or rejected review. INTERNET and
+                 * VIBRATE (haptics) stay.
+                 */
+                blockedPermissions: [
+                  'android.permission.ACCESS_COARSE_LOCATION',
+                  'android.permission.ACCESS_FINE_LOCATION',
+                  'android.permission.SYSTEM_ALERT_WINDOW',
+                  'android.permission.READ_EXTERNAL_STORAGE',
+                  'android.permission.WRITE_EXTERNAL_STORAGE',
+                ],
+              },
+              web: {
+                output: 'static',
+                favicon: './assets/images/favicon.png',
+              },
+              plugins: [
+                'expo-router',
+                'expo-secure-store',
+                'expo-localization',
+                [
+                  'expo-splash-screen',
+                  {
+                    backgroundColor: '#F2F7F7',
+                    dark: { backgroundColor: '#071719' },
+                    image: './assets/images/splash-icon.png',
+                    imageWidth: 180,
+                  },
+                ],
               ],
-            ],
-            experiments: {
-              typedRoutes: true,
-              reactCompiler: true,
-            },
-            extra: {
-              variant: VARIANT,
-              brandColor: BRAND_BLUE,
-              router: {},
-              /**
-               * The `eas` key is OMITTED entirely until a project ID exists, rather than set to null.
-               *
-               * Expo's config serialisation turns a null here into `{}`, which is truthy — so the dev
-               * server treats it as a real project ID, tries to sign the Expo Go manifest with it, and
-               * fails with "The path argument must be of type string". An absent key takes the
-               * unconfigured branch instead, which is what a fresh clone without EAS should do.
-               *
-               * `eas init` writes the real value; once it exists this passes it through.
-               */
-              ...(process.env.EAS_PROJECT_ID
-                ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
-                : null),
-            },
-          })
+              experiments: {
+                typedRoutes: true,
+                reactCompiler: true,
+              },
+              extra: {
+                variant: VARIANT,
+                brandColor: BRAND_BLUE,
+                router: {},
+                /**
+                 * The `eas` key is OMITTED entirely until a project ID exists, rather than set to null.
+                 *
+                 * Expo's config serialisation turns a null here into `{}`, which is truthy — so the dev
+                 * server treats it as a real project ID, tries to sign the Expo Go manifest with it, and
+                 * fails with "The path argument must be of type string". An absent key takes the
+                 * unconfigured branch instead, which is what a fresh clone without EAS should do.
+                 *
+                 * `eas init` writes the real value; once it exists this passes it through.
+                 */
+                ...(process.env.EAS_PROJECT_ID
+                  ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
+                  : null),
+              },
+            })
+          )
         )
       )
     )
