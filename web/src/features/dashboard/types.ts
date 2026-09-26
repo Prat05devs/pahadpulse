@@ -25,6 +25,20 @@ export const LiveCountersSchema = z.object({
     verifiedCount: z.number(),
     verifiedOn: z.string().nullable(),
   }),
+  /**
+   * PWD road closures. `available: false` (not yet permitted, stale, or unreachable) must
+   * never be rendered as zero closures.
+   */
+  roadClosures: z.object({
+    available: z.boolean(),
+    unavailableReason: z
+      .enum(['not_permitted', 'never_checked', 'stale', 'unreachable'])
+      .nullable(),
+    closed: z.number(),
+    highways: z.number(),
+    reopened: z.number(),
+    checkedAt: z.string().nullable(),
+  }),
 });
 
 export type LiveCounters = z.infer<typeof LiveCountersSchema>;

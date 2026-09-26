@@ -44,6 +44,15 @@ const INK = {
   },
 } as const;
 
+function formatIstTime(iso: string | null): string {
+  if (iso === null) return 'time unknown';
+  return new Date(iso).toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Kolkata',
+  });
+}
+
 function quarter(value: string | null): string {
   if (value === null) return 'Quarter unavailable';
   const [year, month] = value.split('-').map(Number);
@@ -96,14 +105,24 @@ export function LiveCounters({ data, loading }: LiveCountersProps) {
       periodTone: 'text-rose-200',
     },
     {
-      label: 'Road closure coverage',
-      value: 'Not tracked',
-      period: 'No verified live feed',
-      context: 'The platform maps highway references but does not invent a closure count',
-      href: '/roads',
-      linkLabel: 'Road network',
-      badge: 'Coverage gap',
-      image: '/cards/roads.jpg',
+      label: 'Road closures',
+      value: data.roadClosures.available
+        ? `${data.roadClosures.closed.toLocaleString('en-IN')} closed`
+        : data.roadClosures.unavailableReason === 'not_permitted'
+          ? 'Coming soon'
+          : 'Unavailable',
+      period: data.roadClosures.available
+        ? `PWD, checked ${formatIstTime(data.roadClosures.checkedAt)}`
+        : data.roadClosures.unavailableReason === 'not_permitted'
+          ? 'Awaiting PWD permission'
+          : 'Check PWD or call 1364',
+      context: data.roadClosures.available
+        ? `${data.roadClosures.highways} on highways · ${data.roadClosures.reopened} reopened in the last 24 h`
+        : 'Closures reported to PWD appear here once they can be shown — never as a guessed zero',
+      href: '/roads#closures',
+      linkLabel: 'Road closures',
+      badge: data.roadClosures.available ? 'Live' : 'PWD',
+      image: '/cards/roads-rockfall.jpg',
       ink: 'dark',
       glassTone: 'bg-amber-50/40',
       periodTone: 'text-amber-900',

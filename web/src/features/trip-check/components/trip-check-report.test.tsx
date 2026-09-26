@@ -53,9 +53,33 @@ describe('TripCheckReport', () => {
     ).toBeInTheDocument();
   });
 
-  it('says so when road closures are not tracked, and still lists emergency help', () => {
-    render(<TripCheckReport {...base} alerts={[]} />);
-    expect(screen.getByText(/does not track road closures/i)).toBeInTheDocument();
+  it('never reads a failed road-closure request as "roads open", and still lists help', () => {
+    render(<TripCheckReport {...base} alerts={[]} roads={null} />);
+    expect(screen.getByText('Road closures could not be loaded')).toBeInTheDocument();
+    expect(screen.getByText(/does not mean every road is open/i)).toBeInTheDocument();
     expect(screen.getByText('112')).toBeInTheDocument();
+  });
+
+  it('explains that closures await PWD permission instead of showing none', () => {
+    render(
+      <TripCheckReport
+        {...base}
+        alerts={[]}
+        roads={{
+          available: false,
+          unavailableReason: 'not_permitted',
+          checkedAt: '2026-09-26T04:29:14.000Z',
+          closures: [],
+          recentlyReopened: [],
+          source: {
+            department: 'Public Works Department, Government of Uttarakhand',
+            url: 'https://mis.pwduk.in/pwd/roadClosure',
+            attribution: 'PWD',
+          },
+        }}
+      />
+    );
+    expect(screen.getByText('Live road closures are coming soon')).toBeInTheDocument();
+    expect(screen.queryByText(/No closures are currently reported/i)).not.toBeInTheDocument();
   });
 });

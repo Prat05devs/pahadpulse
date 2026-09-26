@@ -69,10 +69,10 @@ const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
     description: 'Verified finance, grants, guarantees and official application routes',
   },
   {
-    label: 'Road network',
+    label: 'Roads & closures',
     href: '/roads',
     icon: Route,
-    description: 'Mapped highway references and coverage limits',
+    description: 'Closures reported to PWD, reopenings and the highway network',
   },
   {
     label: 'Connectivity',

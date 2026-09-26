@@ -34,7 +34,7 @@ const OTHER_REFERENCES: readonly { title: string; use: string; url: string }[] =
   },
   {
     title: 'Unsplash',
-    use: 'Photographs of Kedarnath and Gangotri in the tourism guide, used under the Unsplash licence.',
+    use: 'Photographs of Kedarnath and Gangotri in the tourism guide, and the rockfall photograph on the Roads page (Wolfgang Hasselmann), used under the Unsplash licence.',
     url: 'https://unsplash.com/license',
   },
   {

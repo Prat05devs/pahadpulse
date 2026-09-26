@@ -11,6 +11,7 @@ import { fetchAreaAlerts } from '@/features/alerts/services';
 import { fetchAreaNetwork } from '@/features/connectivity/services';
 import { fetchTourismGuide } from '@/features/tourism/services';
 import { fetchWeatherForArea } from '@/features/weather/services';
+import { fetchRoadClosures } from '@/features/roads/services';
 import {
   destinationGroups,
   istDate,
@@ -68,10 +69,11 @@ export default async function TripCheckPage({ searchParams }: TripCheckPageProps
     const slug = destination.district.slug;
     // Each signal is fetched and fails independently; a failure renders as "could not load",
     // never as an empty — and therefore reassuring — result.
-    const [alerts, weather, network] = await Promise.allSettled([
+    const [alerts, weather, network, roads] = await Promise.allSettled([
       fetchAreaAlerts(slug, undefined, 50),
       fetchWeatherForArea(slug),
       fetchAreaNetwork(slug),
+      fetchRoadClosures(slug),
     ]);
     report = (
       <TripCheckReport
@@ -85,6 +87,7 @@ export default async function TripCheckPage({ searchParams }: TripCheckPageProps
         network={network.status === 'fulfilled' ? network.value : null}
         guide={guide}
         dates={dates}
+        roads={roads.status === 'fulfilled' ? roads.value : null}
       />
     );
   }

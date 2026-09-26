@@ -6,6 +6,8 @@ import { AreaIndicatorsSchema } from '@/features/indicators/schemas';
 import { fetchAllIndicators } from '@/features/indicators/services';
 import { fetchPilgrimArrivals } from '@/features/tourism/services';
 import { fetchBusinessSchemes } from '@/features/business/services';
+import { fetchRoadClosures } from '@/features/roads/services';
+import { closureCounts } from '@/features/roads/closures';
 import type {
   DistrictSummary,
   ImdCapLiveStatus,
@@ -29,14 +31,16 @@ export async function fetchImdCapLiveStatus(): Promise<ImdCapLiveStatus> {
 }
 
 export async function fetchLiveCounters(): Promise<LiveCounters> {
-  const [alerts, tourism, network, budget, indicators, schemes] = await Promise.all([
+  const [alerts, tourism, network, budget, indicators, schemes, roads] = await Promise.all([
     apiClient.get('/alerts/summary', AlertSummarySchema).catch(() => null),
     fetchPilgrimArrivals().catch(() => null),
     fetchStateNetwork().catch(() => null),
     fetchDepartmentBudget().catch(() => null),
     fetchAllIndicators().catch(() => null),
     fetchBusinessSchemes({ limit: 1 }).catch(() => null),
+    fetchRoadClosures().catch(() => null),
   ]);
+  const roadCounts = roads?.available ? closureCounts(roads) : null;
 
   // The latest year can be an in-progress pilgrimage season. The homepage must not turn a
   // partial annual total into a claim about how many people are physically in the state now.
@@ -77,6 +81,15 @@ export async function fetchLiveCounters(): Promise<LiveCounters> {
     startupSchemes: {
       verifiedCount: schemes?.total ?? 0,
       verifiedOn: schemes?.verifiedOn ?? null,
+    },
+    roadClosures: {
+      available: roadCounts !== null,
+      unavailableReason:
+        roads === null ? 'unreachable' : roads.available ? null : roads.unavailableReason,
+      closed: roadCounts?.closed ?? 0,
+      highways: roadCounts?.highways ?? 0,
+      reopened: roadCounts?.reopened ?? 0,
+      checkedAt: roads?.checkedAt ?? null,
     },
   };
 }

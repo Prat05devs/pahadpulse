@@ -43,3 +43,48 @@ export const RoadNetworkSchema = z.object({
 
 export type RoadRoute = z.infer<typeof RoadRouteSchema>;
 export type RoadNetwork = z.infer<typeof RoadNetworkSchema>;
+
+const IsoDateTime = z.string().datetime({ offset: true });
+
+export const RoadClosureStatusSchema = z.enum([
+  'closed',
+  'partially_closed',
+  'partially_opened',
+  'open',
+  'unknown',
+]);
+
+export const RoadClosureSchema = z.object({
+  id: z.number(),
+  roadName: z.string(),
+  roadType: z.string().nullable(),
+  /** The km markers PWD highlights as blocked now. */
+  kmMarkers: z.string().nullable(),
+  department: z.string().nullable(),
+  division: z.string().nullable(),
+  district: z.object({ slug: z.string(), name: z.string() }).nullable(),
+  status: RoadClosureStatusSchema,
+  closedAt: IsoDateTime,
+  /** The division's own estimate — shown as theirs, never as a promise. */
+  expectedOpenAt: IsoDateTime.nullable(),
+  estimatePassed: z.boolean(),
+  /** When Pahad Pulse first saw the current status; the honest "reopened by" time. */
+  statusSeenAt: IsoDateTime,
+});
+
+/**
+ * `available: false` means the lists must not be read as the state of the roads — the source
+ * is not yet cleared for display, never checked, or its last check is too old. An empty list
+ * is then NOT "no closures".
+ */
+export const RoadClosuresReportSchema = z.object({
+  available: z.boolean(),
+  unavailableReason: z.enum(['not_permitted', 'never_checked', 'stale']).nullable(),
+  checkedAt: IsoDateTime.nullable(),
+  closures: z.array(RoadClosureSchema),
+  recentlyReopened: z.array(RoadClosureSchema),
+  source: z.object({ department: z.string(), url: z.string(), attribution: z.string() }),
+});
+
+export type RoadClosure = z.infer<typeof RoadClosureSchema>;
+export type RoadClosuresReport = z.infer<typeof RoadClosuresReportSchema>;

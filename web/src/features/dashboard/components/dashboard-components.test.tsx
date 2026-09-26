@@ -21,6 +21,14 @@ describe('dashboard overview components', () => {
           budget: { total: 1_117_032_100, fiscalYear: '2026-27', yearsAvailable: 19 },
           indicatorCatalogue: { indicatorCount: 29, categoryCount: 10 },
           startupSchemes: { verifiedCount: 70, verifiedOn: '2026-07-22' },
+          roadClosures: {
+            available: false,
+            unavailableReason: 'not_permitted',
+            closed: 0,
+            highways: 0,
+            reopened: 0,
+            checkedAt: null,
+          },
         }}
       />
     );
@@ -33,9 +41,10 @@ describe('dashboard overview components', () => {
       'href',
       '/tourism'
     );
-    expect(screen.getByRole('link', { name: /Road closure coverage/i })).toHaveTextContent(
-      'Not tracked'
-    );
+    // Not yet permitted: never a "0 closed" that reads as "every road is open".
+    const roads = screen.getByRole('link', { name: /Road closures/i });
+    expect(roads).toHaveTextContent('Coming soon');
+    expect(roads).not.toHaveTextContent(/0 closed/);
   });
 
   it('uses links for dashboard navigation cards', () => {

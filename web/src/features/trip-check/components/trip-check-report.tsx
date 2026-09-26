@@ -25,6 +25,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { AlertCard } from '@/features/alerts/components';
+import { RoadClosuresPanel } from '@/features/roads/components/road-closures-panel';
+import type { RoadClosuresReport } from '@/features/roads/schemas';
 import type { Alert } from '@/features/alerts/schemas';
 import type { DistrictNetwork } from '@/features/connectivity/schemas';
 import type { TourismGuide } from '@/features/tourism/pilgrim-schemas';
@@ -44,6 +46,8 @@ interface TripCheckReportProps {
   guide: TourismGuide | null;
   /** The selectable travel dates, so the forecast strip can switch between them. */
   dates?: { value: string; label: string }[];
+  /** PWD closures for the district; `null` when the request failed. */
+  roads?: RoadClosuresReport | null;
 }
 
 const directionsUrl = (destination: string) =>
@@ -143,6 +147,7 @@ export function TripCheckReport({
   network,
   guide,
   dates = [],
+  roads = null,
 }: TripCheckReportProps) {
   const district = destination.district;
   const place = destination.kind === 'place' ? destination.place : null;
@@ -496,8 +501,39 @@ export function TripCheckReport({
         </p>
       </section>
 
-      {/* 3. Signal, roads and help */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      {/* 3. Roads — PWD closures in this district, or an honest "cannot say". */}
+      <section aria-labelledby="trip-roads-heading" className="scroll-mt-24 space-y-3">
+        <SectionHeading icon={Route} title="Road closures" id="trip-roads-heading" />
+        <RoadClosuresPanel
+          report={roads}
+          now={checkedAt}
+          limit={6}
+          moreHref={`/roads?district=${district.slug}#closures`}
+          showDistrict={false}
+          scopeLabel={`${district.name} district`}
+        />
+        <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          {registration !== null ? (
+            <a
+              href={registration.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 font-semibold text-accent hover:underline"
+            >
+              {registration.label} <ExternalLink className="size-3.5" aria-hidden="true" />
+            </a>
+          ) : null}
+          <Link
+            href={`/roads?district=${district.slug}#closures`}
+            className="font-semibold text-accent hover:underline"
+          >
+            Roads &amp; highways in {district.name}
+          </Link>
+        </p>
+      </section>
+
+      {/* 4. Signal and help */}
+      <div className="grid gap-4 lg:grid-cols-2">
         <section
           aria-labelledby="trip-signal-heading"
           className="surface-card scroll-mt-24 space-y-3 rounded-2xl p-4 sm:p-5"
@@ -540,40 +576,6 @@ export function TripCheckReport({
             passes and valleys can have no signal at all — download offline maps and share your plan
             before you go.
           </p>
-        </section>
-
-        <section
-          aria-labelledby="trip-roads-heading"
-          className="surface-card space-y-3 rounded-2xl p-4 sm:p-5"
-        >
-          <SectionHeading icon={Route} title="Road status" id="trip-roads-heading" />
-          <p className="text-sm">
-            Pahad Pulse does not track road closures: there is no verified live feed, and we do not
-            guess one.
-          </p>
-          <ul className="space-y-3 text-sm">
-            {registration !== null ? (
-              <li>
-                <a
-                  href={registration.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 font-semibold text-accent hover:underline"
-                >
-                  {registration.label} <ExternalLink className="size-3.5" aria-hidden="true" />
-                </a>
-                <span className="block text-muted-foreground">{registration.description}</span>
-              </li>
-            ) : null}
-            <li>
-              <Link href="/roads" className="font-semibold text-accent hover:underline">
-                Highways through {district.name}
-              </Link>
-              <span className="block text-muted-foreground">
-                Which national and state highways serve the district.
-              </span>
-            </li>
-          </ul>
         </section>
 
         <section
