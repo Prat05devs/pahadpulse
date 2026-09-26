@@ -5,18 +5,15 @@ import { db } from '../database/db.js';
 import {
   INGESTION_RUNS_TABLE,
   SOURCES_TABLE,
-  type IngestionRun,
   type IngestionRunRow,
   type Source,
   type SourceRow,
   type SourceWithRunRow,
 } from '../models/source.model.js';
 import { RunStatus } from '../types/dataset.js';
-import type { Paginated } from '../types/pagination.js';
 import { ERRORS, type RequestError } from '../utils/errors.js';
 import { freshnessOf } from '../utils/freshness.js';
 import createLogger from '../utils/logger.js';
-import { toPage } from '../utils/pagination.js';
 import { describeError } from '../utils/describe-error.js';
 
 const logger = createLogger('@source.repository');
@@ -72,22 +69,6 @@ function toSource(row: SourceWithRunRow, now: Date): Source {
   };
 }
 
-function toRun(row: IngestionRunRow): IngestionRun {
-  return {
-    id: row.id,
-    sourceKey: row.source_key,
-    startedAt: row.started_at,
-    finishedAt: row.finished_at,
-    status: row.status,
-    rowsWritten: row.rows_written,
-    rowsRejected: row.rows_rejected,
-    errorCode: row.error_code,
-    notes: row.notes,
-    vintage: row.vintage,
-    triggeredBy: row.triggered_by,
-  };
-}
-
 export interface CompleteRunInput {
   runId: number;
   status: RunStatus;
@@ -105,12 +86,12 @@ export interface ISourceRepository {
   findByIds(ids: readonly number[], now?: Date): Promise<Result<Map<number, Source>, RequestError>>;
   startRun(sourceId: number, triggeredBy: string): Promise<Result<number, RequestError>>;
   completeRun(input: CompleteRunInput): Promise<Result<void, RequestError>>;
-  listRuns(
-    cursor: number,
-    limit: number,
-    sourceKey?: string,
-  ): Promise<Result<Paginated<IngestionRun>, RequestError>>;
   expireStuckRuns(): Promise<Result<number, RequestError>>;
+  /**
+   * Deletes finished runs older than `retentionDays`, keeping each source's latest successful
+   * run and latest run of any status — freshness and the registry's status are read from them.
+   */
+  pruneRuns(retentionDays: number): Promise<Result<number, RequestError>>;
 }
 
 /** Matches `ingestion_runs.notes VARCHAR(1024)` (migration 003). */
@@ -257,29 +238,24 @@ class SourceRepositoryImpl implements ISourceRepository {
     }
   }
 
-  async listRuns(
-    cursor: number,
-    limit: number,
-    sourceKey?: string,
-  ): Promise<Result<Paginated<IngestionRun>, RequestError>> {
+  async pruneRuns(retentionDays: number): Promise<Result<number, RequestError>> {
     try {
-      const filterByKey = sourceKey !== undefined;
-      const { rows } = await db.query<IngestionRunRow>(
-        `SELECT r.id, r.source_id, s.source_key, r.started_at, r.finished_at, r.status,
-                r.rows_written, r.rows_rejected, r.error_code, r.notes, r.vintage, r.triggered_by
-           FROM ${INGESTION_RUNS_TABLE} r
-           JOIN ${SOURCES_TABLE} s ON s.id = r.source_id
-          WHERE r.id < $1::bigint
-            ${filterByKey ? 'AND s.source_key = $2' : ''}
-          ORDER BY r.id DESC
-          -- The limit's position depends on whether the optional filter added a parameter,
-          -- so it is numbered from the actual argument count rather than hardcoded.
-          LIMIT $${filterByKey ? 3 : 2}`,
-        filterByKey ? [cursor, sourceKey, limit + 1] : [cursor, limit + 1],
+      const result = await db.query(
+        `DELETE FROM ${INGESTION_RUNS_TABLE} r
+          WHERE r.started_at < (now() AT TIME ZONE 'utc') - ($1 * INTERVAL '1 day')
+            AND r.status <> $2
+            AND r.id NOT IN (
+                  SELECT DISTINCT ON (source_id) id FROM ${INGESTION_RUNS_TABLE}
+                   WHERE status IN ('succeeded', 'partial_success')
+                   ORDER BY source_id, started_at DESC)
+            AND r.id NOT IN (
+                  SELECT DISTINCT ON (source_id) id FROM ${INGESTION_RUNS_TABLE}
+                   ORDER BY source_id, started_at DESC)`,
+        [retentionDays, RunStatus.Running],
       );
-      return ok(toPage(rows.map(toRun), limit));
+      return ok(result.rowCount ?? 0);
     } catch (error) {
-      logger.error('listRuns failed', { cursor, limit, sourceKey, error });
+      logger.error('pruneRuns failed', { retentionDays, error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }

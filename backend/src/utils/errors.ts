@@ -52,8 +52,6 @@ export const ERRORS = {
    * district with nothing recorded), which a reader should be able to tell apart from a
    * missing area.
    */
-  PROJECT_NOT_FOUND: new RequestError('Development project not found', 85001, 404),
-  PROJECT_SECTOR_NOT_SUPPORTED: new RequestError('Unknown project sector', 85002, 400),
 
   SOURCE_NOT_FOUND: new RequestError('Data source not found', 90001, 404),
   UPSTREAM_UNAVAILABLE: new RequestError('Upstream data source is unavailable', 90002, 502),

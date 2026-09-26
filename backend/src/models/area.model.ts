@@ -2,7 +2,6 @@ import type { AreaType, Division } from '../types/area.js';
 
 export const AREAS_TABLE = 'areas';
 export const AREA_BOUNDARIES_TABLE = 'area_boundaries';
-export const MAP_LAYERS_TABLE = 'map_layers';
 
 /** Raw `areas` row. Column names, not domain names. */
 export interface AreaRow {
@@ -31,17 +30,6 @@ export interface AreaBoundaryRow {
   is_placeholder: boolean;
   source_note: string;
   updated_at: string;
-}
-
-export interface MapLayerRow {
-  id: number;
-  layer_key: string;
-  owner_module: string;
-  name_en: string;
-  name_hi: string;
-  display_order: number;
-  is_default_visible: boolean;
-  is_available: boolean;
 }
 
 /** Result of a bare `COUNT(*)` aggregate. */
@@ -115,15 +103,6 @@ export interface AreaBoundary {
   isPlaceholder: boolean;
   sourceNote: string;
   updatedAt: string;
-}
-
-export interface MapLayer {
-  key: string;
-  ownerModule: string;
-  name: LocalisedText;
-  displayOrder: number;
-  isDefaultVisible: boolean;
-  isAvailable: boolean;
 }
 
 /** One district as the map consumes it: simplified geometry plus what a label needs. */

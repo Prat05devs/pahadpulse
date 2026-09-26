@@ -86,7 +86,6 @@ district boundary changing is a government act, not a user action.
 |---|---|---|
 | `areas` | the hierarchy | small and hot — cache the full district list in process |
 | `area_boundaries` | geometry | RFC 7946 GeoJSON in a `JSON` column; never in a list `SELECT` |
-| `map_layers` | layer registry | seeded, ~12 rows |
 
 ### Indexes and why
 
@@ -120,7 +119,6 @@ consumer would be that module. The schema and endpoints exist now; only the data
 | GET | `/api/areas/:slug` | none | 24h | no |
 | GET | `/api/areas/:slug/boundary` | none | 24h | no |
 | GET | `/api/areas/:slug/children?type=` | none | 24h | no |
-| GET | `/api/map/layers` | none | 24h | no |
 
 ### `GET /api/areas/districts`
 

@@ -52,8 +52,8 @@ says so, rather than issuing any of its own.
 | **API**         | Express + PostgreSQL, on Render | Live, public, no key               |
 
 **Web pages:** dashboard (map-first), alerts, districts (list and per-district), hydromet
-(weather and air), connectivity, roads, tourism, compare, intelligence, migration, governance,
-sources, support, privacy, offline.
+(weather and air), connectivity, roads and road closures, tourism, trip check, compare,
+intelligence, governance, sources, support, privacy, offline.
 
 **App screens:** tabs for Today, Districts, Map, Alerts and More; plus air quality, alerts and
 alert detail, districts and district detail, roads, seismic, tourism, connectivity, compare
@@ -69,7 +69,7 @@ why there is no login anywhere in the product today.
 
 ## 3. Where the data comes from
 
-25 sources are defined: the 20 registered up to migration 061, four Uttarakhand Tourism Development Board statistics reports (migration 062) and PWD road closures (migration 064). The registry is a
+27 sources are registered as of migration 066 (which retired the project register and Migration Commission sources with their features). The registry is a
 database table, served at `/api/sources`, and it is
 the single place a source's department, link, licence and cadence are defined — the same row
 that stamps every figure derived from it. The web page `/sources` and the app's Credits screen
@@ -114,7 +114,6 @@ totals that report states for itself. Each row records the page it came from.
 | `uk-des-ddp`                  | Directorate of Economics & Statistics, Uttarakhand | des.uk.gov.in             | Per capita income, 11 years                                       |
 | `uk-des-district-reports`     | Directorate of Economics & Statistics, Uttarakhand | palayanayog.uk.gov.in     | Schools and hospital beds, 3 districts                            |
 | `uk-district-composite-index` | Uttarakhand State SDG Composite Index              | palayanayog.uk.gov.in     | District SDG score and rank                                       |
-| `uk-migration-commission`     | Rural Development and Migration Commission         | palayanayog.uk.gov.in     | Out-migration, 2008–2022                                          |
 | `uk-tourism-capacity`         | Uttarakhand Tourism Department                     | uttarakhandtourism.gov.in | Accommodation capacity, Char Dham arrivals                        |
 | `uk-tourism-statistics-*`     | Uttarakhand Tourism Development Board              | uttarakhandtourism.gov.in | Published pilgrim arrivals 2019–2025, four reports (migration 062)  |
 | `uk-dairy-federation`         | Uttarakhand Co-operative Dairy Federation          | uttarakhandmilk.com       | Dairy societies, milk production                                  |
@@ -129,9 +128,7 @@ They are allocations, not expenditure or outcome measures.
 
 `data-gov-in` (data.gov.in) needs a free API key that has not been obtained — it is the single
 unlock for several indicator sets. `ookla-open-data` (Speedtest open data, CC BY-NC-SA) backs
-the connectivity figures. `pahad-pulse-project-register` is the one hand-curated dataset the
-platform owns: infrastructure projects, each row linked to the government page supporting it and
-dated by when a human last checked it.
+the connectivity figures.
 
 ### 3.4 References that are not data sources
 
@@ -164,16 +161,16 @@ stored data; it records the failure, and freshness degrades on its own.
 | Layer        | Stack                                                                                                                                                            |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **API**      | Node 22/24, TypeScript ESM, Express 5, PostgreSQL 16 + PostGIS, `pg`, Zod, neverthrow, Winston, node-cache, fast-xml-parser, helmet, express-rate-limit          |
-| **Web**      | Next.js 15 (App Router), React 19, TanStack Query, Tailwind v4, MapLibre GL, Zod, Framer Motion, Lucide                                                          |
+| **Web**      | Next.js 15 (App Router), React 19, TanStack Query, Tailwind v4, MapLibre GL, Zod, Lucide                                                          |
 | **Mobile**   | Expo SDK 57, React Native 0.86, React 19.2, Expo Router, TanStack Query (+ AsyncStorage persistence), Zustand, Zod, Reanimated, Noto Sans / Noto Sans Devanagari |
-| **Database** | 45 SQL migration files, PostgreSQL tables plus PostGIS geometry for boundaries and alert extents                                                                 |
+| **Database** | 55 SQL migration files, PostgreSQL tables plus PostGIS geometry for boundaries and alert extents                                                                 |
 | **Hosting**  | Render free instance (API + ingestion), Supabase Postgres, Vercel (web, Mumbai `bom1`), cron-job.org (keep-alive ping)                                           |
-| **Quality**  | TypeScript `strict`, ESLint, Prettier, Jest (backend, 445 tests), Vitest (web, 61), Jest + Testing Library (mobile, 81)                                          |
+| **Quality**  | TypeScript `strict`, ESLint, Prettier, Jest (backend, 447 tests), Vitest (web, 90), Jest + Testing Library (mobile, 81)                                          |
 
 **Conventions that hold across all three codebases.** Errors are values, not exceptions:
 the backend returns `Result<T, RequestError>` (neverthrow) across every layer boundary, and each
 error carries a stable numeric code from a central registry (1xxxx common, 4xxxx geography,
-5xxxx indicators, 6xxxx alerts, 7xxxx hydromet, 8xxxx roads, 85xxx projects, 9xxxx datasets).
+5xxxx indicators, 6xxxx alerts, 7xxxx hydromet, 8xxxx roads, 9xxxx datasets).
 Every boundary is validated with Zod — HTTP in, HTTP out, environment variables, and every API
 response the clients read. No `process.env` access outside `config/env.ts`. The backend is
 layered (routes → controllers → services → repositories); the web and mobile apps are
@@ -366,6 +363,10 @@ a mid-day cutoff split the boundary day and silently overwrote half of it on the
 Steady state is roughly 74 MB and flat. Hourly detail older than 90 days is lost, deliberately
 and in writing.
 
+The same nightly job trims `ingestion_runs` to 90 days (about 200 runs a day with road closures
+polled every ten minutes), always keeping each source's latest run and latest successful run,
+because freshness and the registry's status are computed from them.
+
 ### 6.8 Clients
 
 **Web.** Server components fetch from the API with an 8-second timeout — a hang is not an error,
@@ -410,6 +411,5 @@ Recorded here because a reviewer will find them anyway, and they are tracked in 
   comes only from PWD's closure dashboard, which is collected but not displayed until PWD grants
   reproduction permission; until then closures are shown as not tracked.
 - **`accounts` is deferred**, so there are no logins, subscriptions or saved districts on the web.
-- **`ingestion_runs` has no retention policy** and grows without bound.
 - **Single instance:** the scheduler assumes exactly one API instance; scaling out needs the flag
   on one of them.

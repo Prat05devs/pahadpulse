@@ -1,6 +1,6 @@
 import { err, ok, type Result } from 'neverthrow';
 
-import type { Area, AreaBoundary, DistrictSummary, MapLayer } from '../models/area.model.js';
+import type { Area, AreaBoundary, DistrictSummary } from '../models/area.model.js';
 import { AreaRepository } from '../repositories/area.repository.js';
 import { AreaType } from '../types/area.js';
 import { ERRORS, type RequestError } from '../utils/errors.js';
@@ -87,8 +87,4 @@ export async function listAreaChildren(
   const area = await AreaRepository.findBySlug(slug);
   if (area.isErr()) return err(area.error);
   return AreaRepository.listChildren(area.value.id, childType);
-}
-
-export async function listMapLayers(): Promise<Result<MapLayer[], RequestError>> {
-  return AreaRepository.listMapLayers();
 }

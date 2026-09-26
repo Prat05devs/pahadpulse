@@ -115,15 +115,6 @@ describe('GET /api/areas/:slug/boundary', () => {
   });
 });
 
-describe('GET /api/map/layers', () => {
-  maybe('returns the layer registry with districts available', async () => {
-    const res = await request(app).get('/api/map/layers');
-    expect(res.status).toBe(200);
-    const districts = res.body.data.find((l: { key: string }) => l.key === 'districts');
-    expect(districts.isAvailable).toBe(true);
-  });
-});
-
 describe('unknown routes', () => {
   it('404s with ROUTE_NOT_FOUND', async () => {
     const res = await request(app).get('/api/nope');

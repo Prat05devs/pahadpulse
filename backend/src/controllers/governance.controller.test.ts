@@ -22,8 +22,8 @@ const mockSourceRepo: jest.Mocked<ISourceRepository> = {
   findByIds: jest.fn(),
   startRun: jest.fn(),
   completeRun: jest.fn(),
-  listRuns: jest.fn(),
   expireStuckRuns: jest.fn(),
+  pruneRuns: jest.fn(),
 };
 
 jest.unstable_mockModule('../repositories/governance.repository.js', () => ({

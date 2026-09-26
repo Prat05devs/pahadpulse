@@ -1,5 +1,4 @@
 import React from 'react';
-import { Activity } from 'lucide-react';
 import type { RecentSeismic, SeismicBand, SeismicEvent } from '../schemas';
 
 const BAND_STYLE: Record<SeismicBand, { label: string; dot: string; text: string }> = {
@@ -108,8 +107,9 @@ export function SeismicPanel({ data }: { data: RecentSeismic }) {
               {countLast30Days === 1 ? '' : 's'} recorded in the last 30 days
               {largest !== null && (
                 <>
-                  , the largest <span className="font-semibold">M{largest.magnitude.toFixed(1)}</span>{' '}
-                  at {largest.place}
+                  , the largest{' '}
+                  <span className="font-semibold">M{largest.magnitude.toFixed(1)}</span> at{' '}
+                  {largest.place}
                 </>
               )}
               .
@@ -120,8 +120,8 @@ export function SeismicPanel({ data }: { data: RecentSeismic }) {
         {/* Said plainly, because a seismic panel on a government dashboard invites exactly
             this misreading. */}
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          These are earthquakes that have already happened, not warnings or predictions.
-          Earthquakes cannot be predicted.
+          These are earthquakes that have already happened, not warnings or predictions. Earthquakes
+          cannot be predicted.
         </p>
       </div>
 
@@ -148,21 +148,5 @@ export function SeismicPanel({ data }: { data: RecentSeismic }) {
         </p>
       )}
     </section>
-  );
-}
-
-/** Compact strip for pages where seismic activity is context rather than the subject. */
-export function SeismicStrip({ data }: { data: RecentSeismic }) {
-  return (
-    <div className="surface-card pp-rise flex items-center gap-4 p-4">
-      <Activity className="size-5 shrink-0 text-accent" strokeWidth={1.8} aria-hidden="true" />
-      <p className="text-sm text-text-light">
-        <span className="font-semibold">{data.countLast30Days}</span> earthquake
-        {data.countLast30Days === 1 ? '' : 's'} in the last 30 days
-        {data.largest !== null && (
-          <> · largest M{data.largest.magnitude.toFixed(1)}</>
-        )}
-      </p>
-    </div>
   );
 }

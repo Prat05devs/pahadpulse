@@ -23,7 +23,6 @@ const mockAreaRepo: jest.Mocked<IAreaRepository> = {
   findByCode: jest.fn(),
   listChildren: jest.fn(),
   findBoundaryByAreaId: jest.fn(),
-  listMapLayers: jest.fn(),
   countByType: jest.fn(),
   resolveToDistricts: jest.fn(),
   listDistrictBoundaries: jest.fn(),
@@ -53,8 +52,8 @@ const mockSourceRepo: jest.Mocked<ISourceRepository> = {
   findByIds: jest.fn(),
   startRun: jest.fn(),
   completeRun: jest.fn(),
-  listRuns: jest.fn(),
   expireStuckRuns: jest.fn(),
+  pruneRuns: jest.fn(),
 };
 
 jest.unstable_mockModule('../repositories/area.repository.js', () => ({

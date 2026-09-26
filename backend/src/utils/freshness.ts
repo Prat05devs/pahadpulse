@@ -45,9 +45,4 @@ export function secondsUntilStale(
   return Math.max(0, Math.round(interval * FRESHNESS_GRACE.STALE_AFTER - ageSeconds));
 }
 
-/** True when this source's data may be shown to the public (DS-6). */
-export function isPubliclyDisplayable(mayRedistribute: boolean): boolean {
-  return mayRedistribute;
-}
-
 export { Cadence, Freshness };

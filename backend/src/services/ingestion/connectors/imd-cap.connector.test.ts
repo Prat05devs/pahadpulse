@@ -14,7 +14,6 @@ const mockAreaRepo: jest.Mocked<IAreaRepository> = {
   findByCode: jest.fn(),
   listChildren: jest.fn(),
   findBoundaryByAreaId: jest.fn(),
-  listMapLayers: jest.fn(),
   countByType: jest.fn(),
   resolveToDistricts: jest.fn(),
   listDistrictBoundaries: jest.fn(),

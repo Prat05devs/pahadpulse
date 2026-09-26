@@ -4,7 +4,6 @@ import { db } from '../database/db.js';
 import {
   AREA_BOUNDARIES_TABLE,
   AREAS_TABLE,
-  MAP_LAYERS_TABLE,
   type Area,
   type AreaBoundary,
   type AreaBoundaryRow,
@@ -16,8 +15,6 @@ import {
   type DistrictNameRow,
   type DistrictSummary,
   type DistrictWithCountsRow,
-  type MapLayer,
-  type MapLayerRow,
 } from '../models/area.model.js';
 import { AreaType } from '../types/area.js';
 import { ERRORS, type RequestError } from '../utils/errors.js';
@@ -63,17 +60,6 @@ function toDistrictSummary(row: DistrictWithCountsRow): DistrictSummary {
   };
 }
 
-function toMapLayer(row: MapLayerRow): MapLayer {
-  return {
-    key: row.layer_key,
-    ownerModule: row.owner_module,
-    name: { en: row.name_en, hi: row.name_hi },
-    displayOrder: row.display_order,
-    isDefaultVisible: row.is_default_visible,
-    isAvailable: row.is_available,
-  };
-}
-
 /** A place node as OSM gives it, before any decision about which tehsil contains it. */
 export interface CandidatePlace {
   osmId: number;
@@ -95,7 +81,6 @@ export interface IAreaRepository {
   findByCode(type: AreaType, code: string): Promise<Result<Area, RequestError>>;
   listChildren(parentId: number, type: AreaType): Promise<Result<Area[], RequestError>>;
   findBoundaryByAreaId(areaId: number): Promise<Result<AreaBoundary, RequestError>>;
-  listMapLayers(): Promise<Result<MapLayer[], RequestError>>;
   countByType(type: AreaType): Promise<Result<number, RequestError>>;
   /**
    * Resolves free-text place names (as an upstream feed names them in prose) onto
@@ -262,21 +247,6 @@ class AreaRepositoryImpl implements IAreaRepository {
       });
     } catch (error) {
       logger.error('findBoundaryByAreaId failed', { areaId, error });
-      return err(ERRORS.DATABASE_ERROR);
-    }
-  }
-
-  async listMapLayers(): Promise<Result<MapLayer[], RequestError>> {
-    try {
-      const { rows } = await db.query<MapLayerRow>(
-        `SELECT id, layer_key, owner_module, name_en, name_hi,
-                display_order, is_default_visible, is_available
-           FROM ${MAP_LAYERS_TABLE}
-          ORDER BY display_order ASC, id ASC`,
-      );
-      return ok(rows.map(toMapLayer));
-    } catch (error) {
-      logger.error('listMapLayers failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }

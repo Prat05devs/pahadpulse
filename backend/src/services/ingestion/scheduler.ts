@@ -1,4 +1,4 @@
-import { INGESTION_SCHEDULE, PUSH } from '../../config/constants.js';
+import { INGESTION_RUN_RETENTION_DAYS, INGESTION_SCHEDULE, PUSH } from '../../config/constants.js';
 import { SourceRepository } from '../../repositories/source.repository.js';
 import { RunStatus } from '../../types/dataset.js';
 import { describeError } from '../../utils/describe-error.js';
@@ -65,7 +65,7 @@ export const SCHEDULED_JOBS: readonly ScheduledJob[] = [
     intervalMs: INGESTION_SCHEDULE.AIR_QUALITY_MS,
     sourceKey: 'open-meteo-air-quality',
   },
-  // Keeps `observations` under the database's free-tier ceiling.
+  // Keeps `observations` and the run log under the database's free-tier ceiling.
   { name: 'observation-rollup', intervalMs: INGESTION_SCHEDULE.ROLLUP_MS, sourceKey: null },
   // Tells the devices that asked about warnings the alert jobs above just stored.
   { name: 'alert-notifications', intervalMs: PUSH.DISPATCH_MS, sourceKey: null },
@@ -125,6 +125,11 @@ async function runJob(job: ScheduledJob): Promise<void> {
   }
   if (job.sourceKey === null) {
     await rollupObservations();
+    // Same nightly slot: the run log is the other table that would otherwise grow forever.
+    const pruned = await SourceRepository.pruneRuns(INGESTION_RUN_RETENTION_DAYS);
+    if (pruned.isOk() && pruned.value > 0) {
+      logger.info('pruned old ingestion runs', { deleted: pruned.value });
+    }
     return;
   }
   const report = await runSource(job.sourceKey, 'scheduler');

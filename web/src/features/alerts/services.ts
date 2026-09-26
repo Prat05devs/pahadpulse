@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api';
-import { ActiveAlertsSchema, AlertSchema, AlertSummarySchema } from './schemas';
+import { ActiveAlertsSchema } from './schemas';
 
 export async function fetchActiveAlerts(
   cursor?: number,
@@ -21,10 +21,6 @@ export async function fetchActiveAlerts(
   return apiClient.get(`/alerts/active${query}`, ActiveAlertsSchema);
 }
 
-export async function fetchAlertById(id: number) {
-  return apiClient.get(`/alerts/${id}`, AlertSchema);
-}
-
 export async function fetchAreaAlerts(slug: string, cursor?: number, limit: number = 20) {
   const params = new URLSearchParams();
   if (cursor) params.append('cursor', cursor.toString());
@@ -42,8 +38,4 @@ export async function fetchAreaAlerts(slug: string, cursor?: number, limit: numb
  */
 export async function fetchRecentAlerts(hours: number = 48, limit: number = 20) {
   return apiClient.get(`/alerts/recent?hours=${hours}&limit=${limit}`, ActiveAlertsSchema);
-}
-
-export async function fetchAlertSummary() {
-  return apiClient.get('/alerts/summary', AlertSummarySchema);
 }

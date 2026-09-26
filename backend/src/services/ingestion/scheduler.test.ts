@@ -7,7 +7,10 @@ import { RunStatus } from '../../types/dataset.js';
 import { ERRORS } from '../../utils/errors.js';
 import type { RunReport } from './runner.js';
 
-const mockRepo = { listAll: jest.fn<ISourceRepository['listAll']>() };
+const mockRepo = {
+  listAll: jest.fn<ISourceRepository['listAll']>(),
+  pruneRuns: jest.fn<ISourceRepository['pruneRuns']>(),
+};
 const mockRunSource = jest.fn<(key: string, triggeredBy?: string) => Promise<unknown>>();
 const mockRollup = jest.fn<() => Promise<unknown>>();
 
@@ -61,6 +64,8 @@ beforeEach(() => {
   mockRepo.listAll.mockReset();
   mockRunSource.mockReset();
   mockRollup.mockReset();
+  mockRepo.pruneRuns.mockReset();
+  mockRepo.pruneRuns.mockResolvedValue(ok(0));
   mockRunSource.mockResolvedValue(ok(report(RunStatus.Succeeded)));
   mockRollup.mockResolvedValue(ok({ cutoffUtc: '', daysWritten: 0, rawRowsPruned: 0 }));
 });
@@ -124,6 +129,8 @@ describe('runDueJobs', () => {
     expect(mockRunSource).toHaveBeenCalledTimes(1);
     expect(mockRunSource).toHaveBeenCalledWith('sachet-ndma', 'scheduler');
     expect(mockRollup).toHaveBeenCalledTimes(1);
+    // The nightly slot also trims the run log to its 90-day retention.
+    expect(mockRepo.pruneRuns).toHaveBeenCalledWith(90);
     expect(lastRuns.get('sachet-ndma')).toEqual(NOW);
     expect(lastRuns.get('open-meteo')).toEqual(minutesAgo(5));
   });

@@ -1,9 +1,5 @@
 import { apiClient } from '@/lib/api';
-import { AreaIndicatorsSchema, ComparisonSchema, IndicatorListSchema } from './schemas';
-
-export async function fetchAreaIndicators(slug: string) {
-  return apiClient.get(`/areas/${slug}/indicators`, AreaIndicatorsSchema);
-}
+import { ComparisonSchema, IndicatorListSchema } from './schemas';
 
 export async function fetchAllIndicators() {
   return apiClient.get('/indicators', IndicatorListSchema);

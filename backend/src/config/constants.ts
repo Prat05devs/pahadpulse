@@ -100,14 +100,18 @@ export const INGESTION_SCHEDULE = {
   ROLLUP_MS: 24 * 60 * 60 * 1000,
 } as const;
 
+/**
+ * The run log keeps 90 days. It records every fetch of every source — about 200 a day with
+ * road closures polled every ten minutes — and nothing reads runs that old; each source's
+ * latest successful run is always kept, because freshness is computed from it.
+ */
+export const INGESTION_RUN_RETENTION_DAYS = 90;
+
 /** Uttarakhand has exactly 13 districts. The seed asserts this (rule GEO-6). */
 export const UTTARAKHAND_DISTRICT_COUNT = 13;
 
 export const CACHE_TTL_INDICATORS = 60 * 60; // 1h — per-area values and comparison
 export const CACHE_TTL_INDICATOR_SERIES = 6 * 60 * 60; // 6h — trend and ranking change slowly
-
-/** The demo source's registry key (indicators.md-equivalent §8 decision, recorded in code). */
-export const DEMO_SOURCE_KEY = 'pahad-pulse-demo-data';
 
 /**
  * The window the alerts page's "Recently expired" section looks back over.
