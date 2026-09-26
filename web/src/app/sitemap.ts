@@ -29,6 +29,7 @@ const ROUTES: Array<{
   { path: '/hydromet', changeFrequency: 'hourly', priority: 0.85 },
   { path: '/roads', changeFrequency: 'daily', priority: 0.8 },
   { path: '/tourism', changeFrequency: 'daily', priority: 0.8 },
+  { path: '/trip-check', changeFrequency: 'hourly', priority: 0.85 },
   { path: '/connectivity', changeFrequency: 'weekly', priority: 0.8 },
   { path: '/intelligence', changeFrequency: 'weekly', priority: 0.75 },
   { path: '/support', changeFrequency: 'monthly', priority: 0.5 },

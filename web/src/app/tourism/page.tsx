@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowRight,
+  CalendarCheck,
   CalendarDays,
   CheckCircle2,
   ExternalLink,
@@ -256,6 +257,12 @@ export default async function TourismPage() {
                           >
                             Official guide <ExternalLink className="size-4" aria-hidden="true" />
                           </a>
+                          <Link
+                            href={`/trip-check?to=${place.slug}`}
+                            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border px-4 text-sm font-semibold text-accent transition hover:bg-surface-hover"
+                          >
+                            <CalendarCheck className="size-4" aria-hidden="true" /> Check conditions
+                          </Link>
                         </div>
                       </div>
                     </article>
@@ -320,7 +327,7 @@ export default async function TourismPage() {
                         <p className="mt-3 text-sm leading-6 text-muted-foreground">
                           {place.summary}
                         </p>
-                        <div className="mt-4 flex gap-4 text-sm font-semibold">
+                        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold">
                           <a
                             href={directionsUrl(place.mapDestination)}
                             target="_blank"
@@ -337,6 +344,12 @@ export default async function TourismPage() {
                           >
                             Official page
                           </a>
+                          <Link
+                            href={`/trip-check?to=${place.slug}`}
+                            className="text-accent hover:underline"
+                          >
+                            Check conditions
+                          </Link>
                         </div>
                       </div>
                     </article>
@@ -478,7 +491,7 @@ export default async function TourismPage() {
                         <p className="mt-3 text-sm leading-6 text-muted-foreground">
                           {place.summary}
                         </p>
-                        <div className="mt-4 flex gap-4 text-sm font-semibold">
+                        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold">
                           <a
                             href={directionsUrl(place.mapDestination)}
                             target="_blank"
@@ -495,6 +508,12 @@ export default async function TourismPage() {
                           >
                             Official page
                           </a>
+                          <Link
+                            href={`/trip-check?to=${place.slug}`}
+                            className="text-accent hover:underline"
+                          >
+                            Check conditions
+                          </Link>
                         </div>
                       </div>
                     </article>

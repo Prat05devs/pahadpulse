@@ -1,5 +1,9 @@
 import { apiClient } from '@/lib/api';
-import { PilgrimArrivalsSchema, TourismOverviewSchema } from './pilgrim-schemas';
+import {
+  PilgrimArrivalsSchema,
+  TourismGuideSchema,
+  TourismOverviewSchema,
+} from './pilgrim-schemas';
 
 // Bump only when the bundled tourism guide changes. The backend and Next.js intentionally cache
 // this read model, so a content version gives deployments immediate, deterministic invalidation
@@ -20,6 +24,17 @@ export async function fetchTourismOverview() {
   return apiClient.get(
     `/tourism/overview?guideVersion=${encodeURIComponent(TOURISM_GUIDE_VERSION)}`,
     TourismOverviewSchema,
+    {
+      next: { revalidate: 24 * 60 * 60 },
+    }
+  );
+}
+
+/** The curated travel guide alone, for pages that need places but not visitor history. */
+export async function fetchTourismGuide() {
+  return apiClient.get(
+    `/tourism/guide?guideVersion=${encodeURIComponent(TOURISM_GUIDE_VERSION)}`,
+    TourismGuideSchema,
     {
       next: { revalidate: 24 * 60 * 60 },
     }

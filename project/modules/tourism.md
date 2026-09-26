@@ -259,3 +259,28 @@ partnership the whole platform depends on. The downside is unbounded and the ups
 - [ ] Which non-Char-Dham destinations are in v1? — *owner:* `<TBD>`
 - [ ] Does the IMD Char Dham pilgrimage forecast land here or in `hydromet`? It is weather, so
       `hydromet` owns it and this module links to it — confirm. — *owner:* `<TBD>`
+
+## Trip check (`/trip-check`)
+
+A web tool for residents and visitors: pick a guide place or any district and a travel date
+within the 7-day forecast window (`/trip-check?to=kedarnath&date=YYYY-MM-DD`). It composes
+existing endpoints and adds no backend: `/api/tourism/guide`, `/api/areas/districts`, and for
+the destination's district `/api/areas/:slug/alerts`, `/weather` and `/connectivity`.
+
+Rules (agreed with the product owner, 2026-09-26):
+
+- **No verdict.** Pahad Pulse never says a trip is safe or unsafe. It leads with official
+  SDMA/NDMA warnings, then the forecast, mobile signal, road-status honesty and helplines.
+- **Warnings first, and a failure is never "none".** If the alerts request fails, the page
+  says warnings could not be loaded and points to NDMA SACHET. "No warning" is green only for
+  today; for a later date it is neutral ("none issued so far").
+- **Warnings are matched to the date** from their own `effectiveFrom`/`expiresAt` on the
+  Indian calendar; ones that end before or start after the date are listed separately.
+- **Rain uses IMD's 24-hour intensity terms** (very light < 2.5 mm … heavy ≥ 64.5 mm, very
+  heavy ≥ 115.6 mm, extremely heavy ≥ 204.5 mm) applied to the Open-Meteo model forecast for
+  the district headquarters area, which the page says is not an IMD forecast.
+- **Road closures are stated as not tracked**, with the official registration portal and
+  helplines instead.
+
+Logic lives in `web/src/features/trip-check/model.ts` (tested); entry points are the nav,
+the homepage tools section, and "Check conditions" on every place card on `/tourism`.

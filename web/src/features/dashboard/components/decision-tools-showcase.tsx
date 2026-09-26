@@ -5,6 +5,7 @@ import {
   BadgeIndianRupee,
   BarChart3,
   BriefcaseBusiness,
+  CalendarCheck,
   GitCompareArrows,
   Landmark,
   MountainSnow,
@@ -12,6 +13,13 @@ import {
 } from 'lucide-react';
 
 const supportingTools = [
+  {
+    title: 'Trip check',
+    description:
+      'Official warnings, rain forecast, mobile signal and helplines for any place on your travel date.',
+    href: '/trip-check',
+    icon: CalendarCheck,
+  },
   {
     title: 'Char Dham journey planner',
     description:
@@ -153,7 +161,7 @@ export function DecisionToolsShowcase() {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {supportingTools.map((tool) => {
           const Icon = tool.icon;
           return (

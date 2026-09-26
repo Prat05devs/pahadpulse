@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Menu as MenuIconData, X as CloseIconData } from 'lucide';
 import {
   AlertTriangle,
+  CalendarCheck,
   BarChart3,
   Building2,
   CloudRain,
@@ -53,6 +54,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { label: 'Home', href: '/', icon: Home },
       { label: 'Live Alerts', href: '/alerts', icon: AlertTriangle },
+      { label: 'Trip Check', href: '/trip-check', icon: CalendarCheck },
       { label: 'Districts', href: '/districts', icon: Building2 },
       { label: 'Compare', href: '/compare', icon: GitCompareArrows },
     ],
