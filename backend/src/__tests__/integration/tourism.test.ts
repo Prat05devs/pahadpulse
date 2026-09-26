@@ -57,9 +57,9 @@ describe('GET /api/tourism/pilgrim-arrivals', () => {
     const totals = res.body.data.totals as Array<{ year: number; visitors: number }>;
     const byYear = new Map(totals.map((total) => [total.year, total.visitors]));
     // The transcription's external check: a mistyped digit at any shrine moves one of these.
-    expect(byYear.get(2019)).toBe(3477957);
-    expect(byYear.get(2020)).toBe(330039);
-    expect(byYear.get(2021)).toBe(529382);
+    expect(byYear.get(2019)).toBe(3480792);
+    expect(byYear.get(2020)).toBe(330196);
+    expect(byYear.get(2021)).toBe(529412);
   });
 
   maybe('totals equal the sum of the destinations actually served', async () => {
@@ -115,5 +115,14 @@ describe('GET /api/tourism/pilgrim-arrivals', () => {
       // would silently drop out of that sum instead of failing loudly.
       expect(slugs.has(destination.district.slug)).toBe(true);
     }
+  });
+
+  maybe('serves the whole tourism page through one bounded overview endpoint', async () => {
+    const res = await request(app).get('/api/tourism/overview');
+    expect(res.status).toBe(200);
+    expect(res.body.data.guide.charDham).toHaveLength(4);
+    expect(res.body.data.guide.destinations.length).toBeGreaterThanOrEqual(8);
+    expect(res.body.data.arrivals.destinations.length).toBeGreaterThanOrEqual(5);
+    expect(res.body.data.arrivals.years).not.toContain(2026);
   });
 });

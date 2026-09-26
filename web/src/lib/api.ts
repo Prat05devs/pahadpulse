@@ -132,7 +132,12 @@ export const apiClient = {
          * `next: { revalidate: n }`, and a genuinely live read still passes
          * `cache: 'no-store'` — both win, because `...options` is spread after this.
          */
-        next: { revalidate: DEFAULT_REVALIDATE_SECONDS },
+        // Next rejects a request that carries both `cache: 'no-store'` and a revalidation
+        // interval. A live caller opts out of this default entirely rather than relying on
+        // property precedence, which still leaves both directives visible to the runtime.
+        ...(options?.cache === 'no-store'
+          ? {}
+          : { next: { revalidate: DEFAULT_REVALIDATE_SECONDS } }),
         ...options,
         method: 'GET',
         // The caller's own signal wins if it passed one; otherwise the deadline applies.

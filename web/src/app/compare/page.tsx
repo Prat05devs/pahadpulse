@@ -144,9 +144,10 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
                   <p className="text-muted-foreground mt-3 text-sm max-w-3xl leading-relaxed">
                     Explore 51 venture models tailored to Uttarakhand. The engine combines current
                     connectivity measurements with published tourism, market, workforce and
-                    development evidence, discloses every source and vintage, and clearly marks
-                    factors that cannot yet be scored. Results indicate relative, data-supported
-                    suitability—not guaranteed profitability.
+                    development evidence, then adds scenario-relevant state budget context and
+                    verified support schemes. Every source and vintage is disclosed, and factors
+                    without comparable district evidence are not scored. Results indicate relative,
+                    data-supported suitability—not guaranteed profitability.
                   </p>
                 </div>
 

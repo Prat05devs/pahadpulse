@@ -17,6 +17,7 @@ import {
   Trees,
   ArrowUpRight,
   BadgeIndianRupee,
+  Landmark,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { type BusinessWeights } from '../schemas';
@@ -77,6 +78,9 @@ const formatFactValue = (value: number, unit: string) => {
   });
   return `${formatted} ${unit.replace(/_/g, ' ')}`;
 };
+
+const formatCrore = (thousandRupees: number) =>
+  `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 1 }).format(thousandRupees / 10_000)} crore`;
 
 // We receive `districts` (the list of all districts) as a prop from the server component
 export function BusinessComparisonScreen({
@@ -306,6 +310,97 @@ export function BusinessComparisonScreen({
             </Card>
           ) : null}
 
+          {report.publicInvestmentContext ? (
+            <Card className="border-amber-200 bg-amber-50/60">
+              <CardHeader className="border-amber-200">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Landmark className="size-5 text-amber-700" aria-hidden="true" />
+                      State public-investment context
+                    </CardTitle>
+                    <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">
+                      Relevant departmental budget estimates for {report.scenario.category}. This
+                      context helps assess the sector environment but does not rank either district.
+                    </p>
+                  </div>
+                  <span className="self-start rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-900">
+                    Statewide · not scored
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-lg border border-amber-200 bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Combined allocation
+                    </p>
+                    <p className="mt-2 text-xl font-bold tabular-nums text-slate-900">
+                      {formatCrore(report.publicInvestmentContext.total)}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Budget estimate {report.publicInvestmentContext.fiscalYear}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-amber-200 bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Capital component
+                    </p>
+                    <p className="mt-2 text-xl font-bold tabular-nums text-slate-900">
+                      {formatCrore(report.publicInvestmentContext.capital)}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">Planned capital allocation</p>
+                  </div>
+                  <div className="rounded-lg border border-amber-200 bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Annual movement
+                    </p>
+                    <p className="mt-2 text-xl font-bold tabular-nums text-slate-900">
+                      {report.publicInvestmentContext.changePct === null
+                        ? 'Not comparable'
+                        : `${report.publicInvestmentContext.changePct >= 0 ? '+' : ''}${report.publicInvestmentContext.changePct}%`}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      vs {report.publicInvestmentContext.previousFiscalYear ?? 'previous year'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 overflow-hidden rounded-lg border border-amber-200 bg-white">
+                  <ul className="divide-y divide-amber-100">
+                    {report.publicInvestmentContext.departments.map((department) => (
+                      <li
+                        key={department.demandNo}
+                        className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
+                      >
+                        <span className="text-slate-700">
+                          Demand {department.demandNo} · {department.name}
+                        </span>
+                        <span className="shrink-0 font-semibold tabular-nums text-slate-900">
+                          {formatCrore(department.total)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-2 text-xs leading-relaxed text-slate-600 sm:flex-row sm:items-end sm:justify-between">
+                  <p className="max-w-3xl">{report.publicInvestmentContext.note}</p>
+                  {report.publicInvestmentContext.sourceUrl ? (
+                    <a
+                      href={report.publicInvestmentContext.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-11 shrink-0 items-center gap-1.5 font-semibold text-amber-900 underline decoration-amber-300 underline-offset-2"
+                    >
+                      Budget source <ArrowUpRight className="size-4" aria-hidden="true" />
+                    </a>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
           {report.recommendedSchemes && report.recommendedSchemes.length > 0 ? (
             <Card>
               <CardHeader>
@@ -314,7 +409,8 @@ export function BusinessComparisonScreen({
                   Support matched to {report.scenario.name}
                 </CardTitle>
                 <p className="mt-1 text-sm text-slate-500">
-                  Programme relevance is based on sector and support type; eligibility still requires official review.
+                  Programme relevance is based on sector and support type; eligibility still
+                  requires official review.
                 </p>
               </CardHeader>
               <CardContent className="grid gap-3 md:grid-cols-2">
@@ -328,7 +424,10 @@ export function BusinessComparisonScreen({
                   >
                     <span className="flex items-start justify-between gap-3">
                       <span className="font-semibold text-slate-900">{scheme.name}</span>
-                      <ArrowUpRight className="size-4 shrink-0 text-emerald-700" aria-hidden="true" />
+                      <ArrowUpRight
+                        className="size-4 shrink-0 text-emerald-700"
+                        aria-hidden="true"
+                      />
                     </span>
                     <span className="mt-1 block text-xs capitalize text-slate-500">
                       {scheme.status.replace(/-/g, ' ')} · {scheme.access}

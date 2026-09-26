@@ -78,6 +78,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
 }
 
 body {
@@ -86,8 +87,13 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-ui);
+  font-optical-sizing: auto;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+:target {
+  scroll-margin-top: 5rem;
 }
 
 ::selection {
@@ -95,8 +101,70 @@ body {
 }
 
 a,
-button {
+button,
+input,
+select,
+textarea {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Apple-style material hierarchy, using the existing Pahad Pulse palette. Structural
+   chrome is heavier than floating chrome; neither changes the product's brand colours. */
+.pp-material {
+  background: color-mix(in oklch, var(--surface) 82%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
+.pp-structural-material {
+  background: color-mix(in oklch, var(--sidebar) 96%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  backdrop-filter: blur(24px) saturate(140%);
+}
+
+@media (max-width: 767px) {
+  /* iOS zooms focused controls below 16px, which breaks the apparent viewport and makes
+     responsive forms feel unstable. */
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .pp-material {
+    background: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .pp-structural-material {
+    background: var(--sidebar);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  [class*='backdrop-blur'] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --background: oklch(0.99 0.004 250);
+    --foreground: oklch(0.14 0.025 250);
+    --surface: oklch(1 0 0);
+    --muted-foreground: oklch(0.34 0.025 250);
+    --border: oklch(0.62 0.025 250);
+  }
+
+  .pp-material,
+  .pp-structural-material {
+    border-color: currentColor;
+  }
 }
 
 :focus-visible {

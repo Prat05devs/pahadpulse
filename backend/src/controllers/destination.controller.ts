@@ -4,6 +4,7 @@ import { toAnnualVisitors, type DestinationVisitors } from '../models/destinatio
 import { DestinationRepository } from '../repositories/destination.repository.js';
 import { attachProvenance, publiclyDisplayable } from '../services/provenance.service.js';
 import type { RequestError } from '../utils/errors.js';
+import { getTourismGuide } from '../services/tourism-guide.service.js';
 
 export interface PilgrimArrivals {
   destinations: DestinationVisitors[];
@@ -64,4 +65,35 @@ export async function listPilgrimArrivals(
     totals: years.map((year) => ({ year, visitors: totals.get(year) ?? 0 })),
     years,
   });
+}
+
+export interface TourismOverview {
+  guide: ReturnType<typeof getTourismGuide>;
+  arrivals: PilgrimArrivals;
+}
+
+let tourismOverviewInFlight: Promise<Result<TourismOverview, RequestError>> | null = null;
+
+/**
+ * One bounded read model for the tourism page. The static guide is parsed once at process
+ * start and the arrivals query executes once; every section on the page reuses this payload.
+ */
+export async function getTourismOverview(
+  now?: Date,
+): Promise<Result<TourismOverview, RequestError>> {
+  const build = async (): Promise<Result<TourismOverview, RequestError>> => {
+    const arrivals = await listPilgrimArrivals(now);
+    if (arrivals.isErr()) return err(arrivals.error);
+    return ok({ guide: getTourismGuide(), arrivals: arrivals.value });
+  };
+
+  // Coalesce a cold-cache burst into one database read. Express's response cache handles
+  // subsequent requests; this closes the small window before the first response is stored.
+  if (now !== undefined) return build();
+  if (tourismOverviewInFlight !== null) return tourismOverviewInFlight;
+
+  tourismOverviewInFlight = build().finally(() => {
+    tourismOverviewInFlight = null;
+  });
+  return tourismOverviewInFlight;
 }

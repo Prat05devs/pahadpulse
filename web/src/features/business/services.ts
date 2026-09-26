@@ -31,8 +31,6 @@ export async function fetchScenarios() {
 
 export async function compareDistricts(districtA: string, districtB: string, scenarioId: string) {
   if (!districtA || !districtB || !scenarioId) return null;
-  return apiClient.get(
-    `/business/compare?districtA=${districtA}&districtB=${districtB}&scenarioId=${scenarioId}`,
-    ComparisonReportSchema
-  );
+  const params = new URLSearchParams({ districtA, districtB, scenarioId });
+  return apiClient.get(`/business/compare?${params.toString()}`, ComparisonReportSchema);
 }

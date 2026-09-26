@@ -37,6 +37,28 @@ export const BusinessMetricDetailSchema = z.object({
   facts: z.array(BusinessEvidenceFactSchema),
 });
 
+export const PublicInvestmentContextSchema = z.object({
+  scope: z.literal('statewide'),
+  fiscalYear: z.string(),
+  previousFiscalYear: z.string().nullable(),
+  unit: z.literal('thousand_inr'),
+  total: z.number(),
+  capital: z.number(),
+  changePct: z.number().nullable(),
+  departments: z.array(
+    z.object({
+      demandNo: z.number(),
+      name: z.string(),
+      total: z.number(),
+      capital: z.number(),
+      previousTotal: z.number().nullable(),
+    })
+  ),
+  source: z.string(),
+  sourceUrl: z.string().nullable(),
+  note: z.string(),
+});
+
 const BusinessMetricDetailsSchema = z.object({
   connectivity: BusinessMetricDetailSchema,
   tourism: BusinessMetricDetailSchema,
@@ -94,6 +116,8 @@ export const ComparisonReportSchema = z.object({
     })
     .optional(),
   recommendedSchemes: z.array(BusinessSchemeSchema).optional(),
+  // Optional during independent frontend/backend deployment.
+  publicInvestmentContext: PublicInvestmentContextSchema.nullable().optional(),
 });
 
 export type ComparisonReport = z.infer<typeof ComparisonReportSchema>;

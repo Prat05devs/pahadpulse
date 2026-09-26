@@ -1,0 +1,326 @@
+{
+  "verified_on": "2026-09-25",
+  "source": "https://www.uttarakhandtourism.gov.in/",
+  "char_dham": [
+    {
+      "slug": "yamunotri",
+      "name": "Yamunotri",
+      "name_hi": "यमुनोत्री",
+      "district": "Uttarkashi",
+      "altitude_m": 3293,
+      "best_season": "May to June, September to October",
+      "access": "Road to Janki Chatti, followed by an approximately 5 km mountain trail. Use only the current official advisory for local access conditions.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736760607Yamunotri_under_banner_image.jpg",
+      "image_alt": "Yamunotri temple in its Himalayan valley",
+      "official_url": "https://uttarakhandtourism.gov.in/destination/yamunotri",
+      "map_destination": "Yamunotri Temple, Uttarakhand",
+      "lat": 31.0104,
+      "lng": 78.4496
+    },
+    {
+      "slug": "gangotri",
+      "name": "Gangotri",
+      "name_hi": "गंगोत्री",
+      "district": "Uttarkashi",
+      "altitude_m": 3048,
+      "best_season": "May to June, September to October",
+      "access": "The temple town is reached by road from Uttarkashi. Confirm road, weather and registration advisories before departure.",
+      "image_url": "https://images.unsplash.com/photo-1630307357687-8222c5ac88dd?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "image_alt": "Gangotri temple beneath the Himalaya",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/gangotri",
+      "map_destination": "Gangotri Temple, Uttarakhand",
+      "lat": 30.9947,
+      "lng": 78.9398
+    },
+    {
+      "slug": "kedarnath",
+      "name": "Kedarnath",
+      "name_hi": "केदारनाथ",
+      "district": "Rudraprayag",
+      "altitude_m": 3584,
+      "best_season": "May to June, September to October",
+      "access": "Road travel ends near Gaurikund. The final approach is a strenuous high-altitude trek; use registered services and the current official route advisory.",
+      "image_url": "https://images.unsplash.com/photo-1612438214708-f428a707dd4e?q=80&w=1548&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "image_alt": "Kedarnath temple against snow-covered mountains",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/kedarnath",
+      "map_destination": "Gaurikund, Uttarakhand",
+      "lat": 30.7346,
+      "lng": 79.0669
+    },
+    {
+      "slug": "badrinath",
+      "name": "Badrinath",
+      "name_hi": "बद्रीनाथ",
+      "district": "Chamoli",
+      "altitude_m": 3133,
+      "best_season": "May to June, September to October",
+      "access": "Badrinath is road-accessible in the notified season. Check the official portal for registration, weather and route controls before travelling.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1735534887Badrinath_banner.jpg",
+      "image_alt": "Badrinath temple and surrounding mountains",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/badrinath",
+      "map_destination": "Badrinath Temple, Uttarakhand",
+      "lat": 30.7433,
+      "lng": 79.4938
+    }
+  ],
+  "pilgrimages": [
+    {
+      "slug": "hemkund-sahib",
+      "name": "Hemkund Sahib",
+      "district": "Chamoli",
+      "category": "Sikh pilgrimage",
+      "summary": "A high-altitude gurudwara reached from Ghangaria on a steep seasonal trail.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736148535Hemkund-Lake.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/ghangaria",
+      "map_destination": "Govindghat, Uttarakhand",
+      "lat": 30.7006,
+      "lng": 79.6154
+    },
+    {
+      "slug": "tungnath",
+      "name": "Tungnath",
+      "district": "Rudraprayag",
+      "category": "Panch Kedar",
+      "summary": "One of the world's highest Shiva temples, approached on foot from Chopta.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1735981870Tungnath_Temple.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/tourism-circuit-details/panch-kedar-circuit",
+      "map_destination": "Chopta, Uttarakhand",
+      "lat": 30.489,
+      "lng": 79.217
+    },
+    {
+      "slug": "madhyamaheshwar",
+      "name": "Madhyamaheshwar",
+      "district": "Rudraprayag",
+      "category": "Panch Kedar",
+      "summary": "A remote Shiva shrine in a mountain valley, reached by a demanding multi-stage trek.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736334076Banner_madhyamaheshwar.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/madhyamaheshwar",
+      "map_destination": "Ransi, Uttarakhand",
+      "lat": 30.6484,
+      "lng": 79.2217
+    },
+    {
+      "slug": "devprayag",
+      "name": "Devprayag",
+      "district": "Tehri Garhwal",
+      "category": "Panch Prayag",
+      "summary": "The sacred confluence where the Bhagirathi and Alaknanda take the name Ganga.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736140332Devprayag_banner.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/devprayag",
+      "map_destination": "Devprayag, Uttarakhand",
+      "lat": 30.146,
+      "lng": 78.598
+    },
+    {
+      "slug": "har-ki-pauri",
+      "name": "Har Ki Pauri",
+      "district": "Haridwar",
+      "category": "Ganga pilgrimage",
+      "summary": "Haridwar's landmark sacred ghat and a principal gateway to the Char Dham journey.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736247124Har_ki_Pauri.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/haridwar",
+      "map_destination": "Har Ki Pauri, Haridwar, Uttarakhand",
+      "lat": 29.956,
+      "lng": 78.171
+    },
+    {
+      "slug": "neelkanth-mahadev",
+      "name": "Neelkanth Mahadev",
+      "district": "Pauri Garhwal",
+      "category": "Shiva temple",
+      "summary": "A forested pilgrimage above Rishikesh, reached by a winding mountain road and walking routes.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736491078under_banner_1.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/rishikesh",
+      "map_destination": "Neelkanth Mahadev Temple, Uttarakhand",
+      "lat": 30.0806,
+      "lng": 78.3411
+    },
+    {
+      "slug": "jageshwar-dham",
+      "name": "Jageshwar Dham",
+      "district": "Almora",
+      "category": "Kumaon temple heritage",
+      "summary": "A historic group of stone temples set in a deodar valley in Kumaon.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736313069Jageswar_banner.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/jageshwar",
+      "map_destination": "Jageshwar Dham, Uttarakhand",
+      "lat": 29.638,
+      "lng": 79.853
+    },
+    {
+      "slug": "kainchi-dham",
+      "name": "Kainchi Dham",
+      "district": "Nainital",
+      "category": "Kumaon ashram",
+      "summary": "A well-known Hanuman temple and ashram in the Kosi valley near Bhowali.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736410167Kainchi_Dham_(1).jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/nainital",
+      "map_destination": "Kainchi Dham, Uttarakhand",
+      "lat": 29.423,
+      "lng": 79.512
+    },
+    {
+      "slug": "naina-devi",
+      "name": "Naina Devi Temple",
+      "district": "Nainital",
+      "category": "Shakti shrine",
+      "summary": "The lakeside temple that gives Nainital its sacred identity.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736410822Naina_Devi_Temple.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/nainital",
+      "map_destination": "Naina Devi Temple, Nainital, Uttarakhand",
+      "lat": 29.3955,
+      "lng": 79.4573
+    }
+  ],
+  "destinations": [
+    {
+      "slug": "auli",
+      "name": "Auli",
+      "district": "Chamoli",
+      "category": "Mountain escape",
+      "summary": "High Himalayan views, walking trails and seasonal skiing above Joshimath.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1777022471Auli_Himalayas.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/auli",
+      "map_destination": "Auli, Uttarakhand",
+      "lat": 30.5286,
+      "lng": 79.566
+    },
+    {
+      "slug": "valley-of-flowers",
+      "name": "Valley of Flowers",
+      "district": "Chamoli",
+      "category": "Nature & trek",
+      "summary": "A UNESCO-listed alpine valley reached on a seasonal mountain trek.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1749210514flower-valley.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/valley-of-flowers",
+      "map_destination": "Govindghat, Uttarakhand",
+      "lat": 30.728,
+      "lng": 79.605
+    },
+    {
+      "slug": "nainital",
+      "name": "Nainital",
+      "district": "Nainital",
+      "category": "Lake town",
+      "summary": "A Kumaon lake destination with viewpoints, heritage walks and nearby nature escapes.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736410062Nainital_lake_IMG_0778_AS_H.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/nainital",
+      "map_destination": "Nainital, Uttarakhand",
+      "lat": 29.3919,
+      "lng": 79.4542
+    },
+    {
+      "slug": "mussoorie",
+      "name": "Mussoorie",
+      "district": "Dehradun",
+      "category": "Hill station",
+      "summary": "A well-connected hill town known for ridge walks and views over the Doon valley.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736404698Mussoorie_banner_(1).jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/mussoorie",
+      "map_destination": "Mussoorie, Uttarakhand",
+      "lat": 30.4598,
+      "lng": 78.0644
+    },
+    {
+      "slug": "rishikesh",
+      "name": "Rishikesh",
+      "district": "Dehradun",
+      "category": "Yoga & adventure",
+      "summary": "A Ganga-side spiritual centre and gateway to rafting, yoga and the Garhwal Himalaya.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736491069Banner_Rishikesh.jpeg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/rishikesh",
+      "map_destination": "Rishikesh, Uttarakhand",
+      "lat": 30.0869,
+      "lng": 78.2676
+    },
+    {
+      "slug": "haridwar",
+      "name": "Haridwar",
+      "district": "Haridwar",
+      "category": "Pilgrimage gateway",
+      "summary": "A sacred Ganga city and a principal gateway for journeys into Uttarakhand.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736247034Banner3.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/haridwar",
+      "map_destination": "Har Ki Pauri, Haridwar, Uttarakhand",
+      "lat": 29.9457,
+      "lng": 78.1642
+    },
+    {
+      "slug": "corbett-national-park",
+      "name": "Corbett National Park",
+      "district": "Nainital",
+      "category": "Wildlife",
+      "summary": "Forest and grassland safaris in India's oldest national park; permits should be booked through authorised channels.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_17359831061_(2).jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/corbett-national-park",
+      "map_destination": "Jim Corbett National Park, Uttarakhand",
+      "lat": 29.53,
+      "lng": 78.7747
+    },
+    {
+      "slug": "chopta",
+      "name": "Chopta",
+      "district": "Rudraprayag",
+      "category": "Meadow & trek",
+      "summary": "A high meadow base for the Tungnath and Chandrashila trail.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1735981854Banner_3.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/chopta",
+      "map_destination": "Chopta, Uttarakhand",
+      "lat": 30.472,
+      "lng": 79.16
+    },
+    {
+      "slug": "jageshwar",
+      "name": "Jageshwar",
+      "district": "Almora",
+      "category": "Temple heritage",
+      "summary": "A historic temple cluster set among deodar forests in Kumaon.",
+      "image_url": "https://www.uttarakhandtourism.gov.in/assets/media/UTDB_media_1736313069Jageswar_banner.jpg",
+      "official_url": "https://www.uttarakhandtourism.gov.in/destination/jageshwar",
+      "map_destination": "Jageshwar Dham, Uttarakhand",
+      "lat": 29.638,
+      "lng": 79.853
+    }
+  ],
+  "official_links": [
+    {
+      "label": "Register for the yatra",
+      "description": "Official pilgrim and vehicle registration portal.",
+      "url": "https://registrationandtouristcare.uk.gov.in/",
+      "kind": "primary"
+    },
+    {
+      "label": "Char Dham itinerary",
+      "description": "Official Uttarakhand Tourism route and itinerary PDF.",
+      "url": "https://uttarakhandtourism.gov.in/sites/default/files/itineraries-pdf/Itinerary_Char%20Dham.pdf",
+      "kind": "guide"
+    },
+    {
+      "label": "Tourist map",
+      "description": "Official downloadable map of Uttarakhand.",
+      "url": "https://uttarakhandtourism.gov.in/assets/media/Tourist-Map-Uttarakhand.pdf",
+      "kind": "map"
+    },
+    {
+      "label": "Tourism circuits",
+      "description": "Explore official thematic circuits across the state.",
+      "url": "https://www.uttarakhandtourism.gov.in/tourism-circuits",
+      "kind": "guide"
+    },
+    {
+      "label": "Winter Char Dham",
+      "description": "Official information for winter worship locations.",
+      "url": "https://www.uttarakhandtourism.gov.in/tourism-circuit-details/winter-char-dham-circuit",
+      "kind": "guide"
+    }
+  ],
+  "guidelines": [
+    "Complete tourist and vehicle registration on the official portal before the journey.",
+    "Carry the registration letter or QR code and a valid identity document.",
+    "Check official weather, road and health advisories again on the day of travel.",
+    "Allow time for acclimatisation; the shrines are at high altitude and weather changes quickly.",
+    "Book helicopter travel only through the official IRCTC channel linked by the registration portal.",
+    "For yatra help call 1364 or 0135-3520100; use 112 for an immediate emergency."
+  ]
+}

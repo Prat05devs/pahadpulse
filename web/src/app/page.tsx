@@ -7,6 +7,7 @@ import { fetchAlertFeatures, fetchDistrictFeatures } from '@/features/map';
 import { fetchRecentAlerts } from '@/features/alerts/services';
 import {
   DistrictOverviewGrid,
+  DecisionToolsShowcase,
   LiveCounters,
   MapStage,
   QuickAccessGrid,
@@ -131,6 +132,10 @@ export default async function HomePage() {
 
                 <div className="pp-rise" style={{ '--pp-delay': '120ms' } as React.CSSProperties}>
                   <StateOverviewCard data={overview} />
+                </div>
+
+                <div className="pp-rise" style={{ '--pp-delay': '180ms' } as React.CSSProperties}>
+                  <DecisionToolsShowcase />
                 </div>
 
                 <div className="pp-rise" style={{ '--pp-delay': '200ms' } as React.CSSProperties}>

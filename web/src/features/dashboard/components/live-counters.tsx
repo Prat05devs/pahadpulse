@@ -1,17 +1,9 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import {
-  AlertTriangle,
-  ArrowUpRight,
-  BadgeIndianRupee,
-  Landmark,
-  MountainSnow,
-  Route,
-  Signal,
-  type LucideIcon,
-} from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 
 import { formatCrore } from '@/features/governance/format';
 import type { LiveCounters } from '../types';
@@ -29,10 +21,28 @@ interface Counter {
   href: string;
   linkLabel: string;
   badge: string;
-  icon: LucideIcon;
-  tone: string;
-  iconTone: string;
+  image: string;
+  /** Text colour for the glass panel, chosen per photo: dark ink over bright images, light over dark. */
+  ink: 'dark' | 'light';
+  /** A faint tint on the glass, so each signal keeps its own identity. */
+  glassTone: string;
+  periodTone: string;
 }
+
+const INK = {
+  dark: {
+    label: 'text-slate-700',
+    value: 'text-slate-950',
+    context: 'text-slate-800',
+    shadow: '[text-shadow:0_1px_1px_rgb(255_255_255/0.5)]',
+  },
+  light: {
+    label: 'text-white/85',
+    value: 'text-white',
+    context: 'text-white/90',
+    shadow: '[text-shadow:0_1px_2px_rgb(0_0_0/0.45)]',
+  },
+} as const;
 
 function quarter(value: string | null): string {
   if (value === null) return 'Quarter unavailable';
@@ -62,9 +72,10 @@ export function LiveCounters({ data, loading }: LiveCountersProps) {
       href: '/tourism',
       linkLabel: 'Tourism history',
       badge: 'Annual',
-      icon: MountainSnow,
-      tone: 'bg-info-soft',
-      iconTone: 'text-info',
+      image: '/cards/tourism.webp',
+      ink: 'dark',
+      glassTone: 'bg-sky-50/40',
+      periodTone: 'text-sky-800',
     },
     {
       label: 'Active public alerts',
@@ -79,9 +90,10 @@ export function LiveCounters({ data, loading }: LiveCountersProps) {
       href: '/alerts',
       linkLabel: 'Open alerts',
       badge: 'Live',
-      icon: AlertTriangle,
-      tone: 'bg-danger-soft',
-      iconTone: 'text-danger',
+      image: '/cards/alerts.webp',
+      ink: 'light',
+      glassTone: 'bg-slate-900/20',
+      periodTone: 'text-rose-200',
     },
     {
       label: 'Road closure coverage',
@@ -91,9 +103,10 @@ export function LiveCounters({ data, loading }: LiveCountersProps) {
       href: '/roads',
       linkLabel: 'Road network',
       badge: 'Coverage gap',
-      icon: Route,
-      tone: 'bg-warning-soft',
-      iconTone: 'text-warning',
+      image: '/cards/roads.jpg',
+      ink: 'dark',
+      glassTone: 'bg-amber-50/40',
+      periodTone: 'text-amber-900',
     },
     {
       label: 'Mobile download',
@@ -109,9 +122,10 @@ export function LiveCounters({ data, loading }: LiveCountersProps) {
       href: '/connectivity',
       linkLabel: 'Compare speeds',
       badge: 'Quarterly',
-      icon: Signal,
-      tone: 'bg-success-soft',
-      iconTone: 'text-success',
+      image: '/cards/connectivity.webp',
+      ink: 'light',
+      glassTone: 'bg-slate-900/15',
+      periodTone: 'text-teal-200',
     },
     {
       label: 'State budget estimate',
@@ -127,9 +141,10 @@ export function LiveCounters({ data, loading }: LiveCountersProps) {
       href: '/governance#budget-allocation-heading',
       linkLabel: 'Explore budget',
       badge: 'Estimate',
-      icon: Landmark,
-      tone: 'bg-info-soft',
-      iconTone: 'text-info',
+      image: '/cards/budget.jpeg',
+      ink: 'light',
+      glassTone: 'bg-fuchsia-950/15',
+      periodTone: 'text-violet-200',
     },
     {
       label: 'Startup support schemes',
@@ -148,9 +163,10 @@ export function LiveCounters({ data, loading }: LiveCountersProps) {
       href: '/compare#schemes',
       linkLabel: 'Find support',
       badge: 'Verified',
-      icon: BadgeIndianRupee,
-      tone: 'bg-success-soft',
-      iconTone: 'text-success',
+      image: '/cards/schemes.avif',
+      ink: 'dark',
+      glassTone: 'bg-emerald-50/40',
+      periodTone: 'text-emerald-800',
     },
   ];
 
@@ -166,51 +182,74 @@ export function LiveCounters({ data, loading }: LiveCountersProps) {
           </h2>
         </div>
         <p className="max-w-lg text-xs leading-relaxed text-muted-foreground sm:text-right">
-          Every card states its period and scope. Annual totals are never presented as live occupancy.
+          Every card states its period and scope. Annual totals are never presented as live
+          occupancy.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {counters.map((counter, index) => {
-          const Icon = counter.icon;
-
           return (
             <Link
               key={counter.label}
               href={counter.href}
-              className="surface-card pp-rise group flex min-h-60 flex-col overflow-hidden p-5 transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+              className="pp-rise group relative isolate flex min-h-64 flex-col overflow-hidden rounded-2xl border border-white/70 bg-muted p-2 shadow-[0_6px_24px_rgb(15_23_42/0.08)] transition-[transform,box-shadow] duration-200 active:scale-[0.985] hover:shadow-[0_12px_32px_rgb(15_23_42/0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
               style={{ '--pp-delay': `${index * 45}ms` } as React.CSSProperties}
             >
-              {loading ? (
-                <div className="animate-pulse space-y-3" aria-label={`Loading ${counter.label}`}>
-                  <div className="h-10 w-10 rounded-lg bg-muted" />
-                  <div className="h-8 w-3/4 rounded bg-muted" />
-                  <div className="h-4 w-1/2 rounded bg-muted" />
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-start justify-between gap-3">
-                    <span className={`flex size-10 items-center justify-center rounded-lg ${counter.tone} ${counter.iconTone}`}>
-                      <Icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                    </span>
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                      {counter.badge}
-                    </span>
+              <Image
+                src={counter.image}
+                alt=""
+                fill
+                sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw"
+                className="-z-10 object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              />
+              <div className="flex items-start justify-between gap-2">
+                <span className="rounded-full border border-white/60 bg-white/75 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-slate-900 shadow-sm backdrop-blur-md">
+                  {counter.badge}
+                </span>
+                <span className="flex size-8 items-center justify-center rounded-full border border-white/60 bg-white/75 text-slate-900 shadow-sm backdrop-blur-md transition-colors group-hover:bg-white">
+                  <ArrowUpRight
+                    className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only">{counter.linkLabel}</span>
+                </span>
+              </div>
+              {/* The photo is the card; the glass is only a slim caption strip along the bottom,
+                  with ink matched to each photo's brightness so the text stays readable. */}
+              <div
+                className={`mt-auto rounded-xl px-3.5 py-2.5 ring-1 ring-inset ring-white/40 backdrop-blur-lg backdrop-saturate-150 ${counter.glassTone} ${INK[counter.ink].shadow}`}
+              >
+                {loading ? (
+                  <div className="animate-pulse space-y-2" aria-label={`Loading ${counter.label}`}>
+                    <div className="h-3 w-28 rounded bg-white/60" />
+                    <div className="h-6 w-3/4 rounded bg-white/60" />
                   </div>
-                  <p className="mt-5 font-mono text-2xl font-semibold tracking-tight tabular-nums text-text-light">
-                    {counter.value}
-                  </p>
-                  <h3 className="mt-1 text-sm font-semibold text-text-light">{counter.label}</h3>
-                  <p className="mt-1 text-xs font-medium text-accent">{counter.period}</p>
-                  <p className="mt-2 flex-1 text-xs leading-relaxed text-muted-foreground">
-                    {counter.context}
-                  </p>
-                  <span className="mt-4 inline-flex min-h-11 items-center gap-1.5 border-t border-border pt-3 text-sm font-semibold text-accent">
-                    {counter.linkLabel}
-                    <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
-                  </span>
-                </>
-              )}
+                ) : (
+                  <>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <h3
+                        className={`truncate text-[0.68rem] font-semibold uppercase tracking-[0.12em] ${INK[counter.ink].label}`}
+                      >
+                        {counter.label}
+                      </h3>
+                      <p className={`shrink-0 text-[0.68rem] font-semibold ${counter.periodTone}`}>
+                        {counter.period}
+                      </p>
+                    </div>
+                    <p
+                      className={`mt-0.5 font-mono text-xl font-semibold tracking-tight tabular-nums ${INK[counter.ink].value}`}
+                    >
+                      {counter.value}
+                    </p>
+                    <p
+                      className={`mt-0.5 line-clamp-2 text-[0.7rem] leading-4 ${INK[counter.ink].context}`}
+                    >
+                      {counter.context}
+                    </p>
+                  </>
+                )}
+              </div>
             </Link>
           );
         })}

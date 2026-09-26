@@ -6,7 +6,6 @@ import { AlertTriangle, ArrowRight, CloudSun, Landmark } from 'lucide-react';
 import { TerrainMap } from '@/features/map';
 import type { AlertCollection, DistrictCollection } from '@/features/map/schemas';
 import type { LiveCounters as LiveCountersData, StateOverview } from '../types';
-import NumberFlow from '@number-flow/react';
 
 interface MapStageProps {
   districts: DistrictCollection | null;
@@ -45,31 +44,22 @@ function Figure({
   year?: string | null;
   isNumeric?: boolean;
 }) {
-  const isPop = label === 'Population';
   const isPercent = label === 'Forest cover' || label === 'Literacy';
   const isCompact = label === 'Population';
 
+  const formattedValue = (() => {
+    if (value === null) return '—';
+    if (!isNumeric || typeof value !== 'number') return value;
+    return new Intl.NumberFormat('en-IN', {
+      notation: isCompact ? 'compact' : 'standard',
+      maximumFractionDigits: isCompact || isPercent ? 1 : 0,
+      style: isPercent ? 'percent' : 'decimal',
+    }).format(value);
+  })();
+
   return (
     <div>
-      <p className="font-mono text-base font-semibold tabular-nums sm:text-xl">
-        {isNumeric && typeof value === 'number' ? (
-          <NumberFlow
-            value={value}
-            trend={1}
-            format={{
-              notation: isCompact ? 'compact' : 'standard',
-              maximumFractionDigits: isPop ? 1 : isPercent ? 1 : 0,
-              style: isPercent ? 'percent' : 'decimal',
-            }}
-            transformTiming={{ duration: 600, easing: 'ease-out' }}
-            spinTiming={{ duration: 600, easing: 'ease-out' }}
-          />
-        ) : value === null ? (
-          '—'
-        ) : (
-          value
-        )}
-      </p>
+      <p className="font-mono text-base font-semibold tabular-nums sm:text-xl">{formattedValue}</p>
       <p className="text-[0.62rem] leading-tight text-muted-foreground sm:text-[0.7rem]">{label}</p>
       {/* The vintage is dropped on a phone: four columns in 390px leaves ~80px each, and the
           year is the least load-bearing of the three lines. It returns from `sm`. */}

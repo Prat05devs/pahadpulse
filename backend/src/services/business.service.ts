@@ -5,7 +5,11 @@ import {
   type BusinessWeights,
 } from '../models/business-scenarios.js';
 import type { BusinessScheme } from '../models/business-scheme.model.js';
+import { describeError } from '../utils/describe-error.js';
+import createLogger from '../utils/logger.js';
 import { recommendBusinessSchemes } from './business-scheme.service.js';
+
+const logger = createLogger('@business.service');
 
 type MetricKey = keyof BusinessWeights;
 type Confidence = 'low' | 'medium' | 'high';
@@ -62,6 +66,28 @@ interface ComparisonDistrict {
   metricDetails: Record<MetricKey, MetricDetail>;
 }
 
+interface PublicInvestmentDepartment {
+  demandNo: number;
+  name: string;
+  total: number;
+  capital: number;
+  previousTotal: number | null;
+}
+
+interface PublicInvestmentContext {
+  scope: 'statewide';
+  fiscalYear: string;
+  previousFiscalYear: string | null;
+  unit: 'thousand_inr';
+  total: number;
+  capital: number;
+  changePct: number | null;
+  departments: PublicInvestmentDepartment[];
+  source: string;
+  sourceUrl: string | null;
+  note: string;
+}
+
 export interface ComparisonReport {
   winner: string;
   districtA: ComparisonDistrict;
@@ -78,6 +104,7 @@ export interface ComparisonReport {
     note: string;
   };
   recommendedSchemes: BusinessScheme[];
+  publicInvestmentContext: PublicInvestmentContext | null;
 }
 
 interface AreaRow {
@@ -116,6 +143,18 @@ interface IndicatorRow {
   source_url: string | null;
 }
 
+interface BudgetContextRow {
+  current_year: string;
+  previous_year: string | null;
+  demand_no: number;
+  name_en: string;
+  current_total: string;
+  current_capital: string;
+  previous_total: string | null;
+  source: string;
+  source_url: string | null;
+}
+
 const METRIC_LABELS: Record<MetricKey, string> = {
   connectivity: 'digital readiness',
   tourism: 'tourism demand and visitor infrastructure',
@@ -138,6 +177,19 @@ const INDICATOR_KEYS = [
   'pilgrim_shelter_capacity',
   'govt_accommodation_beds',
 ] as const;
+
+const BUDGET_DEMANDS_BY_CATEGORY: Readonly<Record<string, readonly number[]>> = {
+  Tourism: [26, 24, 22],
+  'IT & Services': [21, 23, 16],
+  Manufacturing: [23, 21, 22, 24],
+  'Retail & Services': [13, 16, 23, 24],
+  Agriculture: [17, 18, 28, 29],
+  Other: [13, 16, 21, 22, 23, 24],
+};
+
+export function budgetDemandsForCategory(category: string): readonly number[] {
+  return BUDGET_DEMANDS_BY_CATEGORY[category] ?? BUDGET_DEMANDS_BY_CATEGORY.Other ?? [];
+}
 
 /** Missing values remain missing; they never become a false zero or neutral 50. */
 export function normalizeAvailable(
@@ -210,6 +262,80 @@ export class BusinessService {
 
   async getScenarioById(id: string) {
     return BUSINESS_SCENARIOS.find((scenario) => scenario.id === id);
+  }
+
+  /**
+   * State budget context for the scenario's sector. This is deliberately not a district
+   * metric: the source publishes demand-wise state allocations, not district allocations.
+   */
+  async fetchPublicInvestmentContext(category: string): Promise<PublicInvestmentContext | null> {
+    const demandNos = budgetDemandsForCategory(category);
+    if (demandNos.length === 0) return null;
+
+    const { rows } = await db.query<BudgetContextRow>(
+      `WITH latest AS (
+         SELECT MAX(fiscal_year) AS fiscal_year FROM department_budgets
+       ), previous AS (
+         SELECT MAX(b.fiscal_year) AS fiscal_year
+           FROM department_budgets b
+           JOIN latest l ON b.fiscal_year < l.fiscal_year
+       )
+       SELECT current.fiscal_year AS current_year,
+              previous.fiscal_year AS previous_year,
+              current.demand_no,
+              current.name_en,
+              current.total::text AS current_total,
+              (current.capital_voted + current.capital_charged)::text AS current_capital,
+              prior.total::text AS previous_total,
+              source.department_en AS source,
+              source.url AS source_url
+         FROM department_budgets current
+         JOIN latest ON current.fiscal_year = latest.fiscal_year
+         CROSS JOIN previous
+         JOIN sources source ON source.id = current.source_id
+         LEFT JOIN department_budgets prior
+           ON prior.fiscal_year = previous.fiscal_year
+          AND prior.demand_no = current.demand_no
+        WHERE current.demand_no = ANY($1::smallint[])
+        ORDER BY current.total DESC`,
+      [[...demandNos]],
+    );
+
+    const first = rows[0];
+    if (first === undefined) return null;
+
+    const departments = rows.map((row) => ({
+      demandNo: row.demand_no,
+      name: row.name_en,
+      total: Number(row.current_total),
+      capital: Number(row.current_capital),
+      previousTotal: row.previous_total === null ? null : Number(row.previous_total),
+    }));
+    const total = departments.reduce((sum, department) => sum + department.total, 0);
+    const capital = departments.reduce((sum, department) => sum + department.capital, 0);
+    const hasCompletePrevious = departments.every(
+      (department) => department.previousTotal !== null,
+    );
+    const previousTotal = hasCompletePrevious
+      ? departments.reduce((sum, department) => sum + (department.previousTotal ?? 0), 0)
+      : null;
+
+    return {
+      scope: 'statewide',
+      fiscalYear: first.current_year,
+      previousFiscalYear: first.previous_year,
+      unit: 'thousand_inr',
+      total,
+      capital,
+      changePct:
+        previousTotal === null || previousTotal === 0
+          ? null
+          : Math.round(((total - previousTotal) / previousTotal) * 1000) / 10,
+      departments,
+      source: first.source,
+      sourceUrl: first.source_url,
+      note: 'Statewide budget estimates for scenario-relevant departments. They describe the public investment environment and are not district allocations, expenditure, or part of the district suitability score.',
+    };
   }
 
   /** Fetches only district evidence with complete, attributable coverage. */
@@ -331,7 +457,24 @@ export class BusinessService {
     const scenario = await this.getScenarioById(scenarioId);
     if (scenario === undefined) throw new Error('Scenario not found');
 
-    const raw = await this.fetchRawMetrics();
+    const [rawResult, publicInvestmentResult] = await Promise.allSettled([
+      this.fetchRawMetrics(),
+      this.fetchPublicInvestmentContext(scenario.category),
+    ]);
+
+    // District evidence is the comparison's required input; state budget context is an
+    // optional enhancement and must not make the decision tool unavailable during a
+    // budget-table deployment or a transient database failure.
+    if (rawResult.status === 'rejected') throw rawResult.reason;
+    const raw = rawResult.value;
+    const publicInvestmentContext =
+      publicInvestmentResult.status === 'fulfilled' ? publicInvestmentResult.value : null;
+    if (publicInvestmentResult.status === 'rejected') {
+      logger.warn('state budget context unavailable for business comparison', {
+        category: scenario.category,
+        error: describeError(publicInvestmentResult.reason),
+      });
+    }
     const districtA = raw.find((district) => district.slug === slugA);
     const districtB = raw.find((district) => district.slug === slugB);
     if (districtA === undefined || districtB === undefined) {
@@ -676,6 +819,7 @@ export class BusinessService {
         note: 'Scores are relative positions among Uttarakhand’s 13 districts. Missing evidence is excluded rather than converted into a zero or a neutral score.',
       },
       recommendedSchemes: recommendBusinessSchemes(scenario.category),
+      publicInvestmentContext,
     };
   }
 }

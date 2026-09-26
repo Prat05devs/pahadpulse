@@ -158,19 +158,9 @@ export function TerrainMap({
 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
-  /*
-   * Starts flat, on the server and in the browser alike.
-   *
-   * This used to read `sessionStorage` in the initialiser, which a server render cannot do:
-   * the server always produced "Switch to 3D" while a first-visit browser produced
-   * "Switch to 2D", so hydration failed (React #418) and the whole page was re-rendered on
-   * every load.
-   *
-   * Relief now arrives when the cinematic intro lands, where `moveend` leaves the globe
-   * projection and turns it on. That ordering is also why MapLibre no longer warns that
-   * `calculateFogMatrix is not supported on globe projection`: terrain and the globe are
-   * never on at the same time.
-   */
+  /* Starts flat and deterministic on both server and client. 3D is opt-in: automatically
+   * animating globe projection and DEM terrain on every dashboard visit caused sustained GPU
+   * readback warnings on Chromium and spent work before the user interacted with the map. */
   const [terrainOn, setTerrainOn] = useState(false);
   /*
    * Everywhere except the dashboard stage, relief comes on as soon as the map is ready —
@@ -242,21 +232,16 @@ export function TerrainMap({
          * `bounds` asks MapLibre to compute whatever zoom actually fits, which is correct
          * at any size and needs no per-device guessing. The desktop path is untouched.
          */
-        ...(stage
-          ? { center: UTTARAKHAND_CENTER, zoom: 1 } // Start in space for cinematic dive
-          : isNarrow
+        ...(isNarrow
             ? { bounds: UTTARAKHAND_BOUNDS, fitBoundsOptions: { padding: fitPadding() } }
             : { center: UTTARAKHAND_CENTER, zoom: DEFAULT_VIEW.zoom }),
         // Flat and north-up on load, to match the 2D default above.
         pitch: 0,
         bearing: 0,
-        // Keeps the map on Uttarakhand unless in stage mode where we fly in from space
-        maxBounds: stage
-          ? undefined
-          : [
-              [UTTARAKHAND_BOUNDS[0] - 1.5, UTTARAKHAND_BOUNDS[1] - 1.5],
-              [UTTARAKHAND_BOUNDS[2] + 1.5, UTTARAKHAND_BOUNDS[3] + 1.5],
-            ],
+        maxBounds: [
+          [UTTARAKHAND_BOUNDS[0] - 1.5, UTTARAKHAND_BOUNDS[1] - 1.5],
+          [UTTARAKHAND_BOUNDS[2] + 1.5, UTTARAKHAND_BOUNDS[3] + 1.5],
+        ],
         maxZoom: 15,
         attributionControl: false,
         cooperativeGestures: true,
@@ -291,45 +276,6 @@ export function TerrainMap({
     });
 
     map.on('load', () => {
-      // God's Eye View Intro
-      if (stage) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).__pp_doing_intro = true;
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (typeof (map as any).setProjection === 'function') {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (map as any).setProjection({ type: 'globe' });
-        }
-
-        // Trigger the cinematic dive immediately upon load
-        map.flyTo({
-          ...(isNarrow
-            ? { center: UTTARAKHAND_CENTER, zoom: 6 }
-            : { center: UTTARAKHAND_CENTER, zoom: DEFAULT_VIEW.zoom }),
-          pitch: DEFAULT_VIEW.pitch,
-          bearing: DEFAULT_VIEW.bearing,
-          speed: 1.5,
-          curve: 1.5,
-          essential: true,
-        });
-
-        map.once('moveend', () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (window as any).__pp_doing_intro = false;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (typeof (map as any).setProjection === 'function') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (map as any).setProjection({ type: 'mercator' });
-          }
-          map.setMaxBounds([
-            [UTTARAKHAND_BOUNDS[0] - 1.5, UTTARAKHAND_BOUNDS[1] - 1.5],
-            [UTTARAKHAND_BOUNDS[2] + 1.5, UTTARAKHAND_BOUNDS[3] + 1.5],
-          ]);
-          setTerrainOn(true);
-        });
-      }
-
       map.addSource(TERRAIN_SOURCE, {
         type: 'raster-dem',
         tiles: [TERRAIN_TILES],
@@ -842,11 +788,8 @@ export function TerrainMap({
       map.setLayoutProperty('pp-hillshade', 'visibility', terrainOn ? 'visible' : 'none');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(window as any).__pp_doing_intro) {
-      if (!terrainOn) map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
-      else map.easeTo({ pitch: DEFAULT_VIEW.pitch, bearing: DEFAULT_VIEW.bearing, duration: 400 });
-    }
+    if (!terrainOn) map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+    else map.easeTo({ pitch: DEFAULT_VIEW.pitch, bearing: DEFAULT_VIEW.bearing, duration: 400 });
   }, [terrainOn, ready]);
 
   useEffect(() => {

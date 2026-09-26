@@ -68,7 +68,7 @@ export function IndicatorCatalogue({ rows, filters }: IndicatorCatalogueProps) {
       <form
         action="/intelligence"
         method="get"
-        className="surface-card grid gap-3 p-4 md:grid-cols-[minmax(14rem,1fr)_minmax(10rem,0.45fr)_minmax(12rem,0.55fr)_auto] md:items-end"
+        className="surface-card grid gap-3 p-4 md:grid-cols-2 md:items-end xl:grid-cols-[minmax(14rem,1fr)_minmax(10rem,0.45fr)_minmax(12rem,0.55fr)_auto]"
       >
         <div>
           <label htmlFor="indicator-search" className="text-xs font-semibold text-text-light">
@@ -128,7 +128,7 @@ export function IndicatorCatalogue({ rows, filters }: IndicatorCatalogueProps) {
           </select>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 md:col-span-2 xl:col-span-1 xl:flex-nowrap">
           <button
             type="submit"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent/90"

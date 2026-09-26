@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { BusinessService } from '../services/business.service.js';
+import { ERRORS } from '../utils/errors.js';
 import { successResponse } from '../utils/response.js';
 import { z } from 'zod';
 import { listBusinessSchemes } from '../services/business-scheme.service.js';
@@ -13,6 +14,17 @@ const SchemeQuerySchema = z.object({
   status: z.string().trim().max(80).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(69),
 });
+
+const CompareQuerySchema = z
+  .object({
+    districtA: z.string().trim().min(1).max(80),
+    districtB: z.string().trim().min(1).max(80),
+    scenarioId: z.string().trim().min(1).max(40),
+  })
+  .refine(({ districtA, districtB }) => districtA !== districtB, {
+    message: 'Choose two different districts',
+    path: ['districtB'],
+  });
 
 export async function getSchemes(req: Request, res: Response, next: NextFunction) {
   try {
@@ -41,18 +53,14 @@ export async function getScenarios(_req: Request, res: Response, next: NextFunct
 
 export async function compareDistricts(req: Request, res: Response, next: NextFunction) {
   try {
-    const { districtA, districtB, scenarioId } = req.query;
-
-    if (!districtA || !districtB || !scenarioId) {
-      res.status(400).json({ status: 'error', message: 'Missing required query parameters' });
+    const query = CompareQuerySchema.safeParse(req.query);
+    if (!query.success) {
+      next(ERRORS.INVALID_QUERY_PARAMETER);
       return;
     }
+    const { districtA, districtB, scenarioId } = query.data;
 
-    const report = await businessService.compareDistricts(
-      String(districtA),
-      String(districtB),
-      String(scenarioId),
-    );
+    const report = await businessService.compareDistricts(districtA, districtB, scenarioId);
 
     res.json(successResponse(report, 'Comparison report generated successfully'));
   } catch (error: unknown) {

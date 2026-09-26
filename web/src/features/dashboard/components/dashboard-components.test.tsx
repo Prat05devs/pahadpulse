@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { LiveCounters } from './live-counters';
 import { QuickAccessGrid } from './quick-access-grid';
+import { DecisionToolsShowcase } from './decision-tools-showcase';
 import { SourceStatusPanel } from './source-status-panel';
 
 describe('dashboard overview components', () => {
@@ -49,6 +50,25 @@ describe('dashboard overview components', () => {
       'href',
       '/governance'
     );
+  });
+
+  it('showcases decision tools with direct comparison entry points', () => {
+    render(<DecisionToolsShowcase />);
+
+    expect(
+      screen.getByRole('heading', { name: /Move from published figures/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Compare two districts/i })).toHaveAttribute(
+      'href',
+      '/compare'
+    );
+    expect(screen.getAllByRole('link', { name: /business/i })[0]).toHaveAttribute(
+      'href',
+      '/compare#business'
+    );
+    expect(
+      screen.getByRole('link', { name: /Discover support for a new enterprise/i })
+    ).toHaveAttribute('href', '/compare#schemes');
   });
 
   it('shows a source as connected only when live status data is present', () => {

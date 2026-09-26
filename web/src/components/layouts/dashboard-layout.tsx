@@ -119,8 +119,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }, [isMenuOpen]);
 
   return (
-    <div className="min-h-screen bg-bg-light lg:flex lg:h-screen">
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 text-text-light backdrop-blur lg:hidden">
+    <div className="min-h-dvh bg-bg-light lg:flex">
+      <header className="pp-material sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border px-4 text-text-light lg:hidden">
         <Link href="/" className="flex min-h-11 items-center gap-3 rounded-md px-1">
           <span className="flex size-9 items-center justify-center overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -190,7 +190,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           }
         }}
         className={clsx(
-          'fixed inset-y-0 left-0 z-50 flex w-rail flex-col overflow-y-auto border-r border-border bg-bg-dark text-text-light transition-[transform,width] duration-200 ease-out lg:z-40 lg:translate-x-0',
+          'pp-structural-material fixed inset-y-0 left-0 z-50 flex w-rail flex-col overflow-y-auto border-r border-border text-text-light transition-[transform,width] duration-200 ease-out lg:z-40 lg:translate-x-0',
           isMenuOpen ? 'translate-x-0' : '-translate-x-full',
           // Collapsing is desktop-only: on mobile the rail is an overlay that is either
           // open or shut, so an icon-only width there would be a third state with no use.
@@ -227,7 +227,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             type="button"
             aria-label="Close navigation"
             onClick={() => setIsMenuOpen(false)}
-            className="ml-auto flex size-11 items-center justify-center rounded-lg text-white/70 hover:text-white lg:hidden"
+            className="ml-auto flex size-11 shrink-0 items-center justify-center rounded-lg text-white/70 hover:text-white lg:hidden"
           >
             <X className="size-5" aria-hidden="true" />
           </button>
@@ -262,7 +262,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       title={showLabels ? undefined : item.label}
                       aria-label={showLabels ? undefined : item.label}
                       className={clsx(
-                        'group flex min-h-10 items-center gap-3 rounded-lg text-[0.8125rem] font-medium transition-colors duration-150 active:scale-[0.98]',
+                        'group flex min-h-11 items-center gap-3 rounded-lg text-[0.8125rem] font-medium transition-colors duration-150 active:scale-[0.98]',
                         showLabels ? 'px-3' : 'px-3 lg:justify-center lg:px-0',
                         isActive
                           ? 'bg-white/[0.12] text-white'
@@ -312,7 +312,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 overflow-auto bg-bg-light">
+      <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 bg-bg-light">
         {children}
       </main>
     </div>

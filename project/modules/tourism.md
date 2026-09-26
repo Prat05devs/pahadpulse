@@ -132,6 +132,8 @@ Accommodation tables are deliberately not in the initial migration — see §9.
 | Method | Path | Auth | Cache | Paginated | Status |
 |---|---|---|---|---|---|
 | GET | `/api/tourism/pilgrim-arrivals` | none | 24h | no | **built** |
+| GET | `/api/tourism/guide` | none | 24h | no | **built** |
+| GET | `/api/tourism/overview` | none | 24h | no | **built** |
 | GET | `/api/tourism/summary` | none | 15m | no | planned |
 | GET | `/api/tourism/destinations` | none | 15m | no | planned |
 | GET | `/api/tourism/destinations/:slug` | none | 15m | — | planned |
@@ -141,6 +143,18 @@ Accommodation tables are deliberately not in the initial migration — see §9.
 Everything marked planned needs a daily visitor feed, which does not exist yet. The web app
 called `/tourism/char-dham` and `/destinations` before either was built, so the tourism page
 rendered its error state on every visit; it now reads `pilgrim-arrivals`.
+
+### `GET /api/tourism/guide` and `GET /api/tourism/overview`
+
+`guide` serves the curated travel guide bundled in `backend/src/data/tourism-guide.json`: the
+four dhams, further pilgrimage places and destinations (name, district, coordinates, image,
+official Uttarakhand Tourism page, map destination), official links, travel guidelines and
+helplines. It is validated with Zod at process start. `overview` returns `{ guide, arrivals }`
+in one response for the `/tourism` page. The web app appends `?guideVersion=` so a content
+change to the guide busts both caches on deploy; bump `TOURISM_GUIDE_VERSION` in
+`web/src/features/tourism/services.ts` whenever the JSON changes. Most photographs are from
+Uttarakhand Tourism; Kedarnath and Gangotri currently use Unsplash photographs, and the page
+credits both.
 
 ### `GET /api/tourism/pilgrim-arrivals`
 

@@ -4,8 +4,29 @@ import { CACHE_TTL } from '../config/constants.js';
 import * as destinationController from '../controllers/destination.controller.js';
 import { cacheMiddleware } from '../middleware/cache.middleware.js';
 import { successResponse } from '../utils/response.js';
+import { getTourismGuide } from '../services/tourism-guide.service.js';
 
 const tourismRouter = Router();
+
+tourismRouter.get('/guide', cacheMiddleware(CACHE_TTL.STATIC), (_req: Request, res: Response) => {
+  res.json(successResponse(getTourismGuide(), 'Official tourism guide fetched successfully'));
+});
+
+tourismRouter.get(
+  '/overview',
+  cacheMiddleware(CACHE_TTL.STATIC),
+  async (_req: Request, res: Response, next: NextFunction) => {
+    const result = await destinationController.getTourismOverview();
+    result.match(
+      (data) => {
+        res.json(successResponse(data, 'Tourism overview fetched successfully'));
+      },
+      (error) => {
+        next(error);
+      },
+    );
+  },
+);
 
 /**
  * Yearly pilgrim arrivals at the Char Dham shrines and Hemkund Sahib.

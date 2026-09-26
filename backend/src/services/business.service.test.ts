@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { normalizeAvailable, weightedScore } from './business.service.js';
+import { budgetDemandsForCategory, normalizeAvailable, weightedScore } from './business.service.js';
 
 describe('business evidence scoring', () => {
   it('preserves missing values instead of turning them into a score', () => {
@@ -61,5 +61,11 @@ describe('business evidence scoring', () => {
         new Set(),
       ),
     ).toBeNull();
+  });
+
+  it('maps venture categories to relevant state budget demands without district attribution', () => {
+    expect(budgetDemandsForCategory('Tourism')).toEqual([26, 24, 22]);
+    expect(budgetDemandsForCategory('Agriculture')).toEqual([17, 18, 28, 29]);
+    expect(budgetDemandsForCategory('unknown')).toEqual([13, 16, 21, 22, 23, 24]);
   });
 });
