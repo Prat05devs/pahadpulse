@@ -194,9 +194,9 @@ Google's terms change. Verify the current terms before building either path.
 
 ## 9. Open questions
 
-- [ ] Does any Uttarakhand authority publish machine-readable road closures — PWD, BRO, district
-      administration? Without one, closures are manual entry and RD-1's `unknown` state covers
-      most of the network. This is the module's blocking unknown. — *owner:* `<TBD>`
+- [x] Does any Uttarakhand authority publish road closures? **Yes — PWD's MISPWD dashboard**
+      (2026-09-26). It is a web page, not an API; see §10. Reproduction permission from PWD is
+      the remaining blocker. — *owner:* `<TBD>`
 - [ ] Which segments are in v1? Full OSM highway extract, or a curated set of the routes that
       matter (Char Dham routes, NH-7, NH-34)? Recommend curated — a complete network with no
       status data is noise. — *owner:* `<TBD>`
@@ -205,3 +205,48 @@ Google's terms change. Verify the current terms before building either path.
 - [ ] Are alternative-route suggestions in scope? The specification mentions them; they imply a
       routing engine, which is a much larger commitment than a status board. Recommend out of
       v1. — *owner:* `<TBD>`
+
+
+## 10. PWD road closures (collecting; not displayed until permission)
+
+**Source.** `pwd-uk-road-closures` — https://mis.pwduk.in/pwd/roadClosure, the PWD dashboard
+where PWD, PMGSY, BRO, NHIDCL and NHAI divisions report closures: road name and PWD road id,
+kilometre markers, time closed, the division's expected reopening, status, division, district,
+road type. Verified 2026-09-26: 2,328 closures since 1 April, 54 closed, 6 partially opened.
+
+**Permission.** PWD's website policy: material "may be reproduced free of charge after taking
+proper permission by sending a mail to us", accurately and with the source prominently
+acknowledged. Migration 064 seeds the source `is_enabled = TRUE` (collected every 10 minutes,
+so the reader is proven on real data — product owner's decision, 2026-09-26) and
+`may_redistribute = FALSE` (never served, as for IMD alerts). After written permission, one
+migration sets `may_redistribute = TRUE` and records who granted it and when. Contacts: `eicpwduk@nic.in`, `cehq.pwduk@gov.in`.
+
+**Design change from §3–§5.** The planned model was segments with geometry and appended status
+history. PWD reports closures of *its own road register* (PWD road ids, km markers) with no
+geometry, so they are stored as `road_closures` — one row per PWD closure, upserted — rather
+than forced onto OSM segments. Linking closures to `road_routes`/segments is future work. RD-4's
+full history is partial: a row keeps its current status plus `status_changed_at`.
+
+**Freshness — the rule this reader exists to keep.** A reopened road shown as closed is
+misinformation, as much as the reverse. So:
+
+- Polled every **10 minutes**. Each fetch reaches back to the **oldest road still not open**
+  (at least 7 days, at most a year), so a long-running closure's reopening is seen on the next
+  poll. A season is ~300 KB gzipped on the wire.
+- The API serves closures only while the last successful check is **under 30 minutes old**;
+  otherwise `available: false, unavailableReason: 'stale'` and the UI must not show a list.
+- A closure is current only if the **latest** check saw it; one that disappears from PWD's
+  dashboard stops being shown and is never flipped to open (RD-1).
+- Roads that **reopened in the last 24 hours** are listed as reopened, with the time Pahad Pulse
+  first saw the change (PWD publishes no reopening time), so someone who saw the closure earlier
+  sees it clear.
+- The division's expected reopening is shown as their estimate (RD-7), flagged when it has passed.
+- Every surface states that statuses are as reported to PWD and a road can reopen before the
+  report is updated.
+
+**Personal data.** The dashboard's "Informed By" column (officials' names and ID numbers) is
+never parsed or stored; the test fixture is redacted.
+
+**API.** `GET /api/roads/closures?district=<slug>` → `{ available, unavailableReason
+('not_permitted' | 'never_checked' | 'stale' | null), checkedAt, closures, recentlyReopened,
+source }`. Cached 2 minutes.

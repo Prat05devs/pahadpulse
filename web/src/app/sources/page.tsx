@@ -16,6 +16,49 @@ export const metadata = buildPageMetadata({
 /** The registry changes when a dataset is added or its terms are confirmed, not hourly. */
 export const revalidate = 3600;
 
+/**
+ * References that are not ingested data sources — photographs, definitions, map credits and
+ * official links a feature points to. Listed so that everything the site relies on is
+ * credited on this one page, not only what the registry holds.
+ */
+const OTHER_REFERENCES: readonly { title: string; use: string; url: string }[] = [
+  {
+    title: 'Uttarakhand Tourism (Uttarakhand Tourism Development Board)',
+    use: 'Destination pages, circuits, travel guidance, helplines and most place photographs in the tourism guide and trip check.',
+    url: 'https://www.uttarakhandtourism.gov.in/',
+  },
+  {
+    title: 'Registration & Tourist Care Portal, Government of Uttarakhand',
+    use: 'The official Char Dham pilgrim and vehicle registration portal that the tourism guide and trip check link to.',
+    url: 'https://registrationandtouristcare.uk.gov.in/',
+  },
+  {
+    title: 'Unsplash',
+    use: 'Photographs of Kedarnath and Gangotri in the tourism guide, used under the Unsplash licence.',
+    url: 'https://unsplash.com/license',
+  },
+  {
+    title: 'India Meteorological Department — rainfall intensity terms',
+    use: 'The trip check describes forecast rain with IMD’s 24-hour categories (heavy from 64.5 mm, very heavy from 115.6 mm, extremely heavy above 204.4 mm). The forecast itself is Open-Meteo’s, not IMD’s.',
+    url: 'https://mausam.imd.gov.in/',
+  },
+  {
+    title: 'NDMA SACHET portal',
+    use: 'Where the trip check sends people if official warnings cannot be loaded.',
+    url: 'https://sachet.ndma.gov.in/',
+  },
+  {
+    title: 'Google Maps',
+    use: 'Directions links open Google Maps in a new tab. No Google data is stored or shown on this site.',
+    url: 'https://www.google.com/maps',
+  },
+  {
+    title: 'OpenStreetMap contributors, OpenFreeMap, Mapzen / AWS Terrain Tiles, MapLibre',
+    use: 'Map data (ODbL), the vector basemap, terrain relief and the map renderer on every map surface.',
+    url: 'https://www.openstreetmap.org/copyright',
+  },
+];
+
 const PUBLIC_SOURCE_NOTES: Readonly<Record<string, string>> = {
   'mopr-lgd-villages':
     'Canonical directory for village names, LGD codes and administrative relationships. It does not contain village boundary polygons.',
@@ -27,6 +70,8 @@ const PUBLIC_SOURCE_NOTES: Readonly<Record<string, string>> = {
     'A sample-survey literacy estimate for people aged seven and above; methodology differs from a decennial Census.',
   'uk-budget-directorate':
     'Budget estimates describe planned allocations, not actual expenditure. Each year remains linked to its primary Budget Directorate document.',
+  'pwd-uk-road-closures':
+    'Closures as reported by PWD, PMGSY, BRO, NHIDCL and NHAI divisions to the PWD dashboard. A road can reopen before its report is updated, and the expected opening time is the division’s own estimate. Shown only after PWD grants reproduction permission.',
   'ookla-open-data':
     'Observed speed-test performance from participating devices, not advertised speed or a complete network-coverage map.',
 };
@@ -186,6 +231,38 @@ export default async function SourcesPage() {
               </ul>
             </section>
           )}
+
+          <section aria-labelledby="other-references-heading">
+            <div className="mb-3 flex items-center gap-2">
+              <BookOpenCheck className="size-5 text-accent" aria-hidden="true" />
+              <h2 id="other-references-heading" className="font-semibold text-text-light">
+                Also used on this site ({OTHER_REFERENCES.length})
+              </h2>
+            </div>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Photographs, definitions, map credits and official services that pages link to. These
+              are not ingested data sources, so they are listed here separately.
+            </p>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {OTHER_REFERENCES.map((reference) => (
+                <li key={reference.title} className="surface-card p-4">
+                  <h3 className="text-sm font-semibold text-text-light">{reference.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {reference.use}
+                  </p>
+                  <a
+                    href={reference.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline"
+                  >
+                    Open
+                    <ExternalLink className="size-3.5" aria-hidden="true" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
       </div>
     </DashboardLayout>

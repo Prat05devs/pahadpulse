@@ -95,6 +95,8 @@ export const INGESTION_SCHEDULE = {
   WEATHER_MS: 60 * 60 * 1000,
   AIR_QUALITY_MS: 60 * 60 * 1000,
   SEISMIC_MS: 60 * 60 * 1000,
+  // A road can reopen within the hour; a slower poll would keep showing it closed.
+  ROAD_CLOSURES_MS: 10 * 60 * 1000,
   ROLLUP_MS: 24 * 60 * 60 * 1000,
 } as const;
 
@@ -127,6 +129,32 @@ export const IMD_CAP = {
   MAX_ITEMS_PER_RUN: 30,
   FETCH_TIMEOUT_MS: 10_000,
   FETCH_RETRIES: 2,
+} as const;
+
+export const PWD_ROAD_CLOSURES = {
+  /** The public MISPWD dashboard. Filtered by `base_date`/`current_date` (IST dates). */
+  URL: 'https://mis.pwduk.in/pwd/roadClosure',
+  /**
+   * First run, or a table with nothing still closed: reach back this far. The dashboard's own
+   * default starts on 1 April; half a year covers a whole monsoon season.
+   */
+  INITIAL_WINDOW_DAYS: 180,
+  /** Never fetch less than a week, so a status change on a recent closure is always seen. */
+  MIN_WINDOW_DAYS: 7,
+  /** A hard ceiling on how far back a still-closed road can pull the window. */
+  MAX_WINDOW_DAYS: 365,
+  // ~6 MB of HTML for a full season, ~300 KB gzipped on the wire.
+  FETCH_TIMEOUT_MS: 45_000,
+  FETCH_RETRIES: 1,
+  USER_AGENT: 'PahadPulse/1.0 (+https://www.pahadpulse.live; public road information)',
+  /**
+   * The public API serves closures only while the last successful check is younger than
+   * this. Older than that, a "closed" road may already be open: the API says the data is
+   * stale instead of showing it as current.
+   */
+  MAX_DISPLAY_AGE_MS: 30 * 60 * 1000,
+  /** How long a reopened road stays listed as "reopened", so earlier visitors see it clear. */
+  REOPENED_LOOKBACK_MS: 24 * 60 * 60 * 1000,
 } as const;
 
 export const SACHET = {

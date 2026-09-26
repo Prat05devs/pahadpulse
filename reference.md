@@ -69,7 +69,7 @@ why there is no login anywhere in the product today.
 
 ## 3. Where the data comes from
 
-20 sources are defined (including the budget source added by migration 056). The registry is a
+25 sources are defined: the 20 registered up to migration 061, four Uttarakhand Tourism Development Board statistics reports (migration 062) and PWD road closures (migration 064). The registry is a
 database table, served at `/api/sources`, and it is
 the single place a source's department, link, licence and cadence are defined — the same row
 that stamps every figure derived from it. The web page `/sources` and the app's Credits screen
@@ -88,11 +88,20 @@ with its link.
 | `openstreetmap`          | OpenStreetMap contributors                             | openstreetmap.org   | ODbL 1.0                            | monthly, run by hand |
 | `openstreetmap-roads`    | OpenStreetMap contributors                             | openstreetmap.org   | ODbL 1.0                            | monthly, run by hand |
 | `imd-cap-alerts`         | India Meteorological Department                        | mausam.imd.gov.in   | **Not confirmed**                   | 15 min, ingest-only  |
+| `pwd-uk-road-closures`   | Public Works Department, Uttarakhand (MISPWD)          | mis.pwduk.in        | **Permission required, not yet granted** | 10 min, ingest-only |
 
 **`imd-cap-alerts` is ingested but never displayed.** IMD's redistribution terms are
 unconfirmed, so the source is flagged `may_redistribute = false` and the API filters its rows
 out of every public response. This is the clearest illustration of the provenance rule: the data
 is collected so that the day terms are confirmed it appears, and until then no user sees it.
+
+**`pwd-uk-road-closures` is collected but not displayed.** PWD's road closure dashboard is a public
+web page (not an API) listing every closure reported by PWD, PMGSY, BRO, NHIDCL and NHAI
+divisions. PWD's website policy requires permission by email before its material is reproduced,
+so, like IMD, the source is ingested every 10 minutes with `may_redistribute = false`: the API
+reports road closures as unavailable — never as "no closures" — until permission is recorded. The
+dashboard's "Informed By" column (officials' names and ID numbers) is never read or stored. See
+`project/modules/roads.md`.
 
 ### 3.2 Government statistics, transcribed by hand
 
@@ -107,6 +116,7 @@ totals that report states for itself. Each row records the page it came from.
 | `uk-district-composite-index` | Uttarakhand State SDG Composite Index              | palayanayog.uk.gov.in     | District SDG score and rank                                       |
 | `uk-migration-commission`     | Rural Development and Migration Commission         | palayanayog.uk.gov.in     | Out-migration, 2008–2022                                          |
 | `uk-tourism-capacity`         | Uttarakhand Tourism Department                     | uttarakhandtourism.gov.in | Accommodation capacity, Char Dham arrivals                        |
+| `uk-tourism-statistics-*`     | Uttarakhand Tourism Development Board              | uttarakhandtourism.gov.in | Published pilgrim arrivals 2019–2025, four reports (migration 062)  |
 | `uk-dairy-federation`         | Uttarakhand Co-operative Dairy Federation          | uttarakhandmilk.com       | Dairy societies, milk production                                  |
 | `forest-survey-india`         | Forest Survey of India                             | fsi.nic.in                | State forest cover                                                |
 | `uk-budget-directorate`       | Budget Directorate, Government of Uttarakhand      | budget.uk.gov.in          | 2026-27 demand-wise estimates; display blocked pending permission |
@@ -123,14 +133,23 @@ the connectivity figures. `pahad-pulse-project-register` is the one hand-curated
 platform owns: infrastructure projects, each row linked to the government page supporting it and
 dated by when a human last checked it.
 
-### 3.4 Map and rendering
+### 3.4 References that are not data sources
+
+Listed on `/sources` under "Also used on this site", because the product relies on them without
+ingesting them: Uttarakhand Tourism destination pages and photographs, and the curated guide in
+`backend/src/data/tourism-guide.json`; the official Registration & Tourist Care portal; two
+Unsplash photographs (Kedarnath, Gangotri); IMD's 24-hour rainfall intensity terms, which the
+trip check applies to Open-Meteo's forecast; the NDMA SACHET portal; and Google Maps, which
+directions links open in a new tab without any Google data being stored.
+
+### 3.5 Map and rendering
 
 OpenStreetMap data under ODbL, vector basemap from OpenFreeMap, terrain from Mapzen / AWS
 Terrain Tiles, rendered with MapLibre GL. Attribution is required by those licences and is shown
 on every map surface, reachable from the ⓘ control and in full on `/sources` and the Credits
 screen.
 
-### 3.5 How freshness is judged
+### 3.6 How freshness is judged
 
 Each source declares a cadence. Freshness is computed from the last _successful_ run against
 that cadence: within 1× the interval it is **fresh**, up to 3× **stale**, beyond that
@@ -387,8 +406,9 @@ Recorded here because a reviewer will find them anyway, and they are tracked in 
 - **data.gov.in API key not obtained**, which gates several indicator sets.
 - **Several statistics are transcribed by hand** from PDFs and are annual at best; each shows its
   vintage, and Census figures are 15 years old and labelled as such.
-- **Roads data is OpenStreetMap-derived** and reflects what mappers have tagged. It is not a road
-  _status_ feed: closures have no upstream source and are not claimed.
+- **Roads data is OpenStreetMap-derived** and reflects what mappers have tagged. Road _status_
+  comes only from PWD's closure dashboard, which is collected but not displayed until PWD grants
+  reproduction permission; until then closures are shown as not tracked.
 - **`accounts` is deferred**, so there are no logins, subscriptions or saved districts on the web.
 - **`ingestion_runs` has no retention policy** and grows without bound.
 - **Single instance:** the scheduler assumes exactly one API instance; scaling out needs the flag

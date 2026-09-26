@@ -51,6 +51,13 @@ export const SCHEDULED_JOBS: readonly ScheduledJob[] = [
     intervalMs: INGESTION_SCHEDULE.SEISMIC_MS,
     sourceKey: 'usgs-earthquakes',
   },
+  // Road closures change within the hour, and a reopened road shown as closed is its own
+  // misinformation. Skipped by the runner while the source is disabled (migration 064).
+  {
+    name: 'pwd-uk-road-closures',
+    intervalMs: INGESTION_SCHEDULE.ROAD_CLOSURES_MS,
+    sourceKey: 'pwd-uk-road-closures',
+  },
   // Open-Meteo refreshes its model hourly; faster polling re-reads unchanged numbers.
   { name: 'open-meteo', intervalMs: INGESTION_SCHEDULE.WEATHER_MS, sourceKey: 'open-meteo' },
   {

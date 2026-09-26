@@ -6,6 +6,7 @@ import { openMeteoAirConnector } from './connectors/open-meteo-air.connector.js'
 import { openMeteoConnector } from './connectors/open-meteo.connector.js';
 import { openStreetMapConnector } from './connectors/openstreetmap.connector.js';
 import { osmRoadsConnector } from './connectors/osm-roads.connector.js';
+import { pwdRoadClosuresConnector } from './connectors/pwd-road-closures.connector.js';
 import { sachetConnector } from './connectors/sachet.connector.js';
 import { usgsConnector } from './connectors/usgs.connector.js';
 
@@ -23,6 +24,7 @@ registerConnector(openMeteoAirConnector);
 registerConnector(openMeteoConnector);
 registerConnector(openStreetMapConnector);
 registerConnector(osmRoadsConnector);
+registerConnector(pwdRoadClosuresConnector);
 registerConnector(sachetConnector);
 registerConnector(usgsConnector);
 
