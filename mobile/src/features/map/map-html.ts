@@ -6,6 +6,7 @@ import {
   DISTRICT_BORDER_CASING,
   DISTRICT_FILL_OPACITY,
   DIVISION_COLORS,
+  FIRE_COLORS,
   HILLSHADE,
   ROAD_CASING,
   ROAD_COLORS,
@@ -20,7 +21,7 @@ import {
   UTTARAKHAND_BOUNDS,
   UTTARAKHAND_CENTER,
 } from './constants';
-import type { AlertCollection, DistrictCollection } from './schemas';
+import type { AlertCollection, DistrictCollection, FireCollection } from './schemas';
 
 /**
  * Serialise a value for embedding inside a `<script>` tag.
@@ -40,6 +41,7 @@ function toScriptJson(value: unknown): string {
 export interface BuildMapHtmlOptions {
   districts: DistrictCollection | null;
   alerts: AlertCollection | null;
+  fires?: FireCollection | null;
   language?: 'en' | 'hi';
   palette?: MapDocumentPalette;
 }
@@ -69,14 +71,17 @@ const DEFAULT_DOCUMENT_PALETTE: MapDocumentPalette = {
  *
  * `districts` and `alerts` are the two the API's own layer registry reports as available;
  * highways are drawn from the basemap, so they are offered here without waiting on a new endpoint.
+ * Fires are NASA FIRMS satellite detections, on by default: in fire season they are the
+ * reason many readers open the map at all.
  */
-export const MAP_LAYERS = ['districts', 'alerts', 'highways'] as const;
+export const MAP_LAYERS = ['districts', 'alerts', 'fires', 'highways'] as const;
 export type MapLayerKey = (typeof MAP_LAYERS)[number];
 export type MapLayerState = Record<MapLayerKey, boolean>;
 
 export const DEFAULT_LAYERS: MapLayerState = {
   districts: true,
   alerts: true,
+  fires: true,
   highways: false,
 };
 
@@ -96,11 +101,13 @@ export const DEFAULT_LAYERS: MapLayerState = {
 export function buildMapHtml({
   districts,
   alerts,
+  fires = null,
   language = 'en',
   palette = DEFAULT_DOCUMENT_PALETTE,
 }: BuildMapHtmlOptions): string {
   const districtJson = toScriptJson(districts ?? { type: 'FeatureCollection', features: [] });
   const alertJson = toScriptJson(alerts ?? { type: 'FeatureCollection', features: [] });
+  const fireJson = toScriptJson(fires ?? { type: 'FeatureCollection', features: [] });
 
   return `<!doctype html>
 <html>
@@ -156,6 +163,7 @@ export function buildMapHtml({
 
   var districts = ${districtJson};
   var alerts = ${alertJson};
+  var fires = ${fireJson};
   var terrainOn = false;
 
   var map = new maplibregl.Map({
@@ -200,6 +208,7 @@ export function buildMapHtml({
 
     map.addSource('districts', { type: 'geojson', data: districts });
     map.addSource('alerts', { type: 'geojson', data: alerts });
+    map.addSource('fires', { type: 'geojson', data: fires });
 
     /*
      * Highways, drawn by restyling the BASEMAP's own vector roads rather than from our API.
@@ -368,6 +377,51 @@ export function buildMapHtml({
     });
 
     /*
+     * Fire detections, above the alerts so a hotspot inside a warning area stays tappable.
+     *
+     * Size follows fire radiative power, the satellite's measure of how much heat the fire
+     * gives off, so a large fire reads larger than a smouldering one. The halo is what
+     * keeps a small point visible over hillshade and a district tint.
+     */
+    var fireColor = [
+      'match', ['get', 'confidence'],
+      'high', ${toScriptJson(FIRE_COLORS.high)},
+      'nominal', ${toScriptJson(FIRE_COLORS.nominal)},
+      ${toScriptJson(FIRE_COLORS.low)}
+    ];
+    var fireRadius = [
+      'interpolate', ['linear'], ['coalesce', ['get', 'frpMw'], 0],
+      0, 4.5,
+      20, 6.5,
+      100, 9
+    ];
+
+    map.addLayer({
+      id: 'fire-halo',
+      type: 'circle',
+      source: 'fires',
+      paint: {
+        'circle-radius': ['+', fireRadius, 6],
+        'circle-color': fireColor,
+        'circle-opacity': ['match', ['get', 'confidence'], 'low', 0.12, 0.28],
+        'circle-blur': 0.8
+      }
+    });
+
+    map.addLayer({
+      id: 'fire-point',
+      type: 'circle',
+      source: 'fires',
+      paint: {
+        'circle-radius': fireRadius,
+        'circle-color': fireColor,
+        'circle-opacity': ['match', ['get', 'confidence'], 'low', 0.7, 1],
+        'circle-stroke-color': '#FFFFFF',
+        'circle-stroke-width': 1.2
+      }
+    });
+
+    /*
      * District names are DOM markers so terrain and data fills can never bury them. With
      * only thirteen labels this has negligible cost and is more reliable than a symbol
      * layer, whose collision system can discard the names on a narrow phone viewport.
@@ -445,6 +499,17 @@ export function buildMapHtml({
     window.addEventListener('resize', frameState);
 
     map.on('click', function (event) {
+      // A generous hit box: a 9px dot is far below a fingertip.
+      var fireFeatures = map.queryRenderedFeatures(
+        [[event.point.x - 14, event.point.y - 14], [event.point.x + 14, event.point.y + 14]],
+        { layers: ['fire-point'] }
+      );
+      var fireFeature = fireFeatures && fireFeatures[0];
+      if (fireFeature && fireFeature.properties && fireFeature.properties.detectionId) {
+        post({ type: 'fire', detectionId: Number(fireFeature.properties.detectionId) });
+        return;
+      }
+
       var alertFeatures = map.queryRenderedFeatures(event.point, {
         layers: ['alert-point', 'alert-outline', 'alert-fill']
       });
@@ -480,6 +545,9 @@ export function buildMapHtml({
       setVisible('alert-casing', !!state.alerts);
       setVisible('alert-outline', !!state.alerts);
       setVisible('alert-point', !!state.alerts);
+
+      setVisible('fire-halo', !!state.fires);
+      setVisible('fire-point', !!state.fires);
 
       setVisible('road-casing', !!state.highways);
       setVisible('road-sh', !!state.highways);

@@ -91,3 +91,9 @@ services:
       # keeping the value in Render prevents it from ever entering source or a mobile bundle.
       - key: EXPO_ACCESS_TOKEN
         sync: false
+
+      # NASA FIRMS map key for satellite fire detections. It travels in the request path,
+      # so the connector redacts it from logs. Unset: the nasa-firms source reports itself
+      # unavailable and the map's fire layer stays empty.
+      - key: FIRMS_MAP_KEY
+        sync: false

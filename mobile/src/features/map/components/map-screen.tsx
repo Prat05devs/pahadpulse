@@ -18,11 +18,12 @@ import {
 import { ErrorState, LoadingState } from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { useT, type TranslationKey } from '@/i18n';
+import { formatRelative, formatTime } from '@/lib/format';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
 
-import { DIVISION_COLORS, ROAD_COLORS, SEVERITY_COLORS } from '../constants';
-import { useAlertFeatures, useDistrictFeatures } from '../hooks';
+import { DIVISION_COLORS, FIRE_COLORS, ROAD_COLORS, SEVERITY_COLORS } from '../constants';
+import { useAlertFeatures, useDistrictFeatures, useFireFeatures } from '../hooks';
 import {
   DEFAULT_LAYERS,
   MAP_ATTRIBUTION,
@@ -31,18 +32,20 @@ import {
   type MapLayerKey,
   type MapLayerState,
 } from '../map-html';
-import { MapMessageSchema } from '../schemas';
+import { MapMessageSchema, type FireFeature } from '../schemas';
 
 /** What each toggle says, and the one-line reason it is worth turning on. */
 const LAYER_LABELS: Record<MapLayerKey, TranslationKey> = {
   districts: 'map.layer.districts',
   alerts: 'map.layer.alerts',
+  fires: 'map.layer.fires',
   highways: 'map.layer.highways',
 };
 
 const LAYER_ICONS: Record<MapLayerKey, IconName> = {
   districts: 'map-outline',
   alerts: 'warning-outline',
+  fires: 'flame-outline',
   highways: 'car-outline',
 };
 
@@ -66,10 +69,12 @@ export function MapScreen() {
   const [terrain, setTerrain] = useState(false);
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [selectedDistrictSlug, setSelectedDistrictSlug] = useState<string | null>(null);
+  const [selectedFireId, setSelectedFireId] = useState<number | null>(null);
   const webRef = useRef<WebView>(null);
 
   const districts = useDistrictFeatures();
   const alerts = useAlertFeatures();
+  const fires = useFireFeatures();
 
   /*
    * Rebuilt only when the data changes. The document embeds ~100 KB of GeoJSON, and
@@ -81,6 +86,7 @@ export function MapScreen() {
       buildMapHtml({
         districts: districts.data ?? null,
         alerts: alerts.data ?? null,
+        fires: fires.data ?? null,
         language,
         palette: {
           background: theme.colors.surfaceMuted,
@@ -92,7 +98,7 @@ export function MapScreen() {
           selectionCasing: theme.colors.hero.ink,
         },
       }),
-    [districts.data, alerts.data, language, theme]
+    [districts.data, alerts.data, fires.data, language, theme]
   );
 
   /*
@@ -131,12 +137,14 @@ export function MapScreen() {
 
   const clearDistrictSelection = useCallback(() => {
     setSelectedDistrictSlug(null);
+    setSelectedFireId(null);
     webRef.current?.injectJavaScript(
       'window.ppSelectDistrict && window.ppSelectDistrict(null); true;'
     );
   }, []);
 
   const selectDistrict = useCallback((slug: string) => {
+    setSelectedFireId(null);
     setSelectedDistrictSlug(slug);
     webRef.current?.injectJavaScript(
       `window.ppSelectDistrict && window.ppSelectDistrict(${JSON.stringify(slug)}); true;`
@@ -172,6 +180,14 @@ export function MapScreen() {
         router.push(`/alerts/${message.alertId}`);
         return;
       }
+      if (message.type === 'fire') {
+        setSelectedDistrictSlug(null);
+        webRef.current?.injectJavaScript(
+          'window.ppSelectDistrict && window.ppSelectDistrict(null); true;'
+        );
+        setSelectedFireId(message.detectionId);
+        return;
+      }
       if (message.type === 'clear') {
         clearDistrictSelection();
         return;
@@ -189,6 +205,14 @@ export function MapScreen() {
             (feature) => feature.properties.slug === selectedDistrictSlug
           ) ?? null),
     [districts.data?.features, selectedDistrictSlug]
+  );
+
+  const selectedFire = useMemo(
+    () =>
+      selectedFireId === null
+        ? null
+        : (fires.data?.features.find((feature) => feature.id === selectedFireId) ?? null),
+    [fires.data?.features, selectedFireId]
   );
 
   const selectedAlertCount = useMemo(
@@ -225,6 +249,13 @@ export function MapScreen() {
     : alerts.isError
       ? t('map.status.alertsUnavailable')
       : t('map.status.alerts', { count: alerts.data?.features.length ?? 0 });
+
+  // Fires are an extra layer: while loading, the legend just leaves them out.
+  const fireSummary = fires.isError
+    ? t('map.legend.firesUnavailable')
+    : fires.data === undefined
+      ? null
+      : t('map.legend.fires', { count: fires.data.features.length });
 
   if (districts.isPending) {
     return (
@@ -377,7 +408,9 @@ export function MapScreen() {
               count={
                 key === 'alerts' && !alerts.isPending && !alerts.isError
                   ? (alerts.data?.features.length ?? 0)
-                  : undefined
+                  : key === 'fires' && fires.data !== undefined
+                    ? fires.data.features.length
+                    : undefined
               }
               onPress={() => toggleLayer(key)}
             />
@@ -396,7 +429,10 @@ export function MapScreen() {
         style={{
           position: 'absolute',
           right: theme.spacing.md,
-          bottom: insets.bottom + theme.spacing.sm + (selectedDistrict === null ? 76 : 144),
+          bottom:
+            insets.bottom +
+            theme.spacing.sm +
+            (selectedFire !== null ? 212 : selectedDistrict === null ? 76 : 144),
         }}
       >
         <Card tone="glass" elevation="medium" padding="xxs" radius="md">
@@ -410,8 +446,18 @@ export function MapScreen() {
         </Card>
       </View>
 
-      {selectedDistrict === null ? (
-        <MapLegend alertSummary={mapAlertSummary} bottom={insets.bottom + theme.spacing.sm} />
+      {selectedFire !== null ? (
+        <FirePreview
+          fire={selectedFire}
+          bottom={insets.bottom + theme.spacing.sm}
+          onClose={clearDistrictSelection}
+        />
+      ) : selectedDistrict === null ? (
+        <MapLegend
+          alertSummary={mapAlertSummary}
+          fireSummary={fireSummary}
+          bottom={insets.bottom + theme.spacing.sm}
+        />
       ) : (
         <DistrictPreview
           name={selectedDistrictName}
@@ -562,7 +608,15 @@ function MapModeButton({
   );
 }
 
-function MapLegend({ alertSummary, bottom }: { alertSummary: string; bottom: number }) {
+function MapLegend({
+  alertSummary,
+  fireSummary,
+  bottom,
+}: {
+  alertSummary: string;
+  fireSummary: string | null;
+  bottom: number;
+}) {
   const theme = useTheme();
   const t = useT();
   return (
@@ -586,6 +640,9 @@ function MapLegend({ alertSummary, bottom }: { alertSummary: string; bottom: num
             <LegendItem color={DIVISION_COLORS.garhwal} label={t('districts.garhwal')} />
             <LegendItem color={DIVISION_COLORS.kumaon} label={t('districts.kumaon')} />
             <LegendItem color={SEVERITY_COLORS.severe} label={alertSummary} />
+            {fireSummary !== null ? (
+              <LegendItem color={FIRE_COLORS.high} label={fireSummary} />
+            ) : null}
             <LegendItem color={ROAD_COLORS.NH} label={t('map.legend.highway')} line />
           </HStack>
         </VStack>
@@ -713,6 +770,98 @@ function DistrictPreview({
             </Text>
             <Icon name="arrow-forward" size={18} tone="textInverse" />
           </Pressable>
+        </VStack>
+      </Card>
+    </View>
+  );
+}
+
+/**
+ * What one detection is, in the reader's terms.
+ *
+ * The caveat is not optional and is not behind a tap. A reader who sees a red dot near
+ * their village needs to know, on the same card, that it is a heat signature from orbit
+ * and not a confirmed fire (WLD-2).
+ */
+function FirePreview({
+  fire,
+  bottom,
+  onClose,
+}: {
+  fire: FireFeature;
+  bottom: number;
+  onClose: () => void;
+}) {
+  const theme = useTheme();
+  const t = useT();
+  const language = useLanguage();
+  const { properties } = fire;
+  const districtName =
+    language === 'hi'
+      ? (properties.districtNameHi ?? properties.districtNameEn)
+      : properties.districtNameEn;
+  const details = [
+    t(`map.fire.confidence.${properties.confidence}`),
+    properties.frpMw === null
+      ? null
+      : t('map.fire.power', { value: properties.frpMw.toFixed(1) }),
+    `${properties.instrument} · ${properties.satellite}`,
+  ].filter((part): part is string => part !== null);
+
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        left: theme.spacing.md,
+        right: theme.spacing.md,
+        bottom,
+      }}
+    >
+      <Card tone="glass" elevation="medium" padding="sm">
+        <VStack gap="sm">
+          <HStack align="center" gap="sm">
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: theme.radius.md,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme.colors.errorSubtle,
+              }}
+            >
+              <Icon name="flame" size={20} tone="danger" />
+            </View>
+            <VStack grow gap="xxs">
+              <Eyebrow color="danger">{t('map.fire.eyebrow')}</Eyebrow>
+              <Text variant="heading">{t('map.fire.district', { name: districtName })}</Text>
+              <Text variant="footnote" color="textMuted">
+                {t('map.fire.seen', {
+                  when: formatRelative(properties.acquiredAt),
+                  time: formatTime(properties.acquiredAt),
+                })}
+              </Text>
+            </VStack>
+            <Pressable
+              onPress={onClose}
+              accessibilityLabel={t('map.fire.close')}
+              style={{
+                width: 48,
+                height: 48,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: theme.radius.pill,
+              }}
+            >
+              <Icon name="close" size={20} tone="textMuted" />
+            </Pressable>
+          </HStack>
+          <Text variant="footnote" weight="bold" color="text">
+            {details.join(' · ')}
+          </Text>
+          <Text variant="caption" color="textMuted">
+            {t('map.fire.caveat')}
+          </Text>
         </VStack>
       </Card>
     </View>

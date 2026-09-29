@@ -3,8 +3,10 @@ import { apiClient } from '@/lib/api';
 import {
   AlertCollectionSchema,
   DistrictCollectionSchema,
+  FireCollectionSchema,
   type AlertCollection,
   type DistrictCollection,
+  type FireCollection,
 } from './schemas';
 
 /** The district layer: 13 simplified boundaries, one request. */
@@ -21,4 +23,9 @@ export function fetchDistrictFeatures(signal?: AbortSignal): Promise<DistrictCol
  */
 export function fetchAlertFeatures(signal?: AbortSignal): Promise<AlertCollection> {
   return apiClient.get('/map/alerts', AlertCollectionSchema, { signal });
+}
+
+/** NASA FIRMS fire detections from the last 48 hours, already limited to the state. */
+export function fetchFireFeatures(signal?: AbortSignal): Promise<FireCollection> {
+  return apiClient.get('/map/fires', FireCollectionSchema, { signal });
 }

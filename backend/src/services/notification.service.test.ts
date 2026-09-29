@@ -6,7 +6,9 @@ import type {
   PendingAlertRow,
   PushNotificationTicketRow,
 } from '../models/device.model.js';
+import type { PendingFireDistrictRow } from '../models/fire.model.js';
 import type { IDeviceRepository } from '../repositories/device.repository.js';
+import type { IFireRepository } from '../repositories/fire.repository.js';
 
 const mockRepo: jest.Mocked<IDeviceRepository> = {
   register: jest.fn(),
@@ -22,12 +24,29 @@ const mockRepo: jest.Mocked<IDeviceRepository> = {
   settleUnnotifiable: jest.fn(),
 };
 
+const mockFireRepo: jest.Mocked<IFireRepository> = {
+  upsertMany: jest.fn(),
+  listRecent: jest.fn(),
+  settleUnannounced: jest.fn(),
+  listPendingDistricts: jest.fn(),
+  recordNotice: jest.fn(),
+};
+
 jest.unstable_mockModule('../repositories/device.repository.js', () => ({
   DeviceRepository: mockRepo,
 }));
 
-const { buildMessage, dispatchNewAlerts, reconcilePushReceipts } =
-  await import('./notification.service.js');
+jest.unstable_mockModule('../repositories/fire.repository.js', () => ({
+  FireRepository: mockFireRepo,
+}));
+
+const {
+  buildFireMessage,
+  buildMessage,
+  dispatchFireNotifications,
+  dispatchNewAlerts,
+  reconcilePushReceipts,
+} = await import('./notification.service.js');
 
 const fetchMock = jest.fn<typeof fetch>();
 
@@ -78,8 +97,23 @@ function expoReplies(tickets: { status: 'ok' | 'error'; details?: { error: strin
   } as Response);
 }
 
+function fireDistrict(overrides: Partial<PendingFireDistrictRow> = {}): PendingFireDistrictRow {
+  return {
+    area_id: 7,
+    slug: 'pauri-garhwal',
+    name_en: 'Pauri Garhwal',
+    name_hi: 'पौड़ी गढ़वाल',
+    detections: 3,
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   for (const fn of Object.values(mockRepo)) fn.mockReset();
+  for (const fn of Object.values(mockFireRepo)) fn.mockReset();
+  mockFireRepo.settleUnannounced.mockResolvedValue(ok(0));
+  mockFireRepo.listPendingDistricts.mockResolvedValue(ok([fireDistrict()]));
+  mockFireRepo.recordNotice.mockResolvedValue(ok(undefined));
   fetchMock.mockReset();
   global.fetch = fetchMock;
 
@@ -290,5 +324,76 @@ describe('reconcilePushReceipts', () => {
 
     expect(mockRepo.deletePushTickets).not.toHaveBeenCalled();
     expect(result._unsafeUnwrap().resolved).toBe(0);
+  });
+});
+
+describe('buildFireMessage', () => {
+  it('names the district and the count, and says it is not confirmed on the ground', () => {
+    const message = buildFireMessage(fireDistrict(), 'en');
+    expect(message.title).toBe('Satellite fire detection · Pauri Garhwal');
+    expect(message.body).toContain('3 heat signatures');
+    expect(message.body).toContain('not confirmed on the ground');
+  });
+
+  it('uses the singular for one detection', () => {
+    expect(buildFireMessage(fireDistrict({ detections: 1 }), 'en').body).toContain(
+      '1 heat signature.',
+    );
+  });
+
+  it('writes Hindi with the Hindi district name, falling back to English', () => {
+    expect(buildFireMessage(fireDistrict(), 'hi').title).toContain('पौड़ी गढ़वाल');
+    expect(buildFireMessage(fireDistrict({ name_hi: null }), 'hi').title).toContain(
+      'Pauri Garhwal',
+    );
+  });
+});
+
+describe('dispatchFireNotifications', () => {
+  it('settles with the configured window, cooldown and confidences before reading', async () => {
+    await dispatchFireNotifications();
+
+    expect(mockFireRepo.settleUnannounced).toHaveBeenCalledWith(12, 24, ['nominal', 'high']);
+  });
+
+  it('sends one message per district and starts that district’s cooldown', async () => {
+    const result = await dispatchFireNotifications();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result._unsafeUnwrap()).toMatchObject({ districts: 1, accepted: 1 });
+    expect(mockFireRepo.recordNotice).toHaveBeenCalledWith(7, 3);
+    const request = fetchMock.mock.calls[0]?.[1];
+    const messages = JSON.parse(String(request?.body)) as Record<string, unknown>[];
+    expect(messages[0]).toMatchObject({
+      channelId: 'alerts',
+      data: { fireDistrict: 'pauri-garhwal', url: '/map' },
+    });
+  });
+
+  it('does nothing when no district has news', async () => {
+    mockFireRepo.listPendingDistricts.mockResolvedValue(ok([]));
+
+    const result = await dispatchFireNotifications();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result._unsafeUnwrap().districts).toBe(0);
+  });
+
+  it('leaves the district pending when the push service cannot be reached', async () => {
+    fetchMock.mockRejectedValue(new TypeError('fetch failed'));
+
+    const result = await dispatchFireNotifications();
+
+    expect(result._unsafeUnwrap().districts).toBe(0);
+    expect(mockFireRepo.recordNotice).not.toHaveBeenCalled();
+  });
+
+  it('still starts the cooldown when no device is registered', async () => {
+    mockRepo.listActiveTokens.mockResolvedValue(ok([]));
+
+    await dispatchFireNotifications();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mockFireRepo.recordNotice).toHaveBeenCalledWith(7, 3);
   });
 });

@@ -2,7 +2,10 @@ import { err, ok, type Result } from 'neverthrow';
 
 import type { Geometry } from '../utils/geojson.js';
 import type { RequestError } from '../utils/errors.js';
+import { FIRMS } from '../config/constants.js';
 import { AreaRepository } from '../repositories/area.repository.js';
+import { FireRepository } from '../repositories/fire.repository.js';
+import type { FireConfidence } from '../models/fire.model.js';
 import type { AlertOut } from '../models/alert.model.js';
 import type { DistrictBoundary } from '../models/area.model.js';
 import type { Division } from '../types/area.js';
@@ -71,7 +74,7 @@ export interface PointGeometry {
   coordinates: [number, number];
 }
 
-/** What a feature on this map may carry. A Point only ever appears on an alert — see
+/** What a feature on this map may carry. A Point appears on a fire detection, and on an alert — see
  *  `toGeometry` for when and why. */
 export type MapGeometry = Geometry | PointGeometry;
 
@@ -260,4 +263,55 @@ function mergeDistrictBoundaries(
   if (polygons.length === 0) return null;
 
   return { type: 'MultiPolygon', coordinates: polygons } as MapGeometry;
+}
+
+export interface FireFeatureProperties {
+  detectionId: number;
+  /** ISO-8601 UTC: when the satellite passed over, not when we fetched it. */
+  acquiredAt: string;
+  confidence: FireConfidence;
+  frpMw: number | null;
+  satellite: string;
+  instrument: string;
+  dayNight: 'D' | 'N' | null;
+  districtSlug: string;
+  districtNameEn: string;
+  districtNameHi: string | null;
+}
+
+/**
+ * Satellite fire detections from the last FIRMS.MAP_WINDOW_HOURS, as points.
+ *
+ * Low-confidence detections are included and labelled. Hiding them would be this product
+ * deciding what counts as a fire; the renderer shows them fainter instead (WLD-3).
+ */
+export async function getFireFeatures(): Promise<
+  Result<GeoFeatureCollection<FireFeatureProperties>, RequestError>
+> {
+  const detections = await FireRepository.listRecent(FIRMS.MAP_WINDOW_HOURS);
+  if (detections.isErr()) return err(detections.error);
+
+  const attribution = new Set<string>();
+  const features = detections.value.map<GeoFeature<FireFeatureProperties>>((detection) => {
+    attribution.add(detection.attribution);
+    return {
+      type: 'Feature',
+      id: detection.id,
+      geometry: { type: 'Point', coordinates: [detection.lng, detection.lat] },
+      properties: {
+        detectionId: detection.id,
+        acquiredAt: detection.acquiredAt,
+        confidence: detection.confidence,
+        frpMw: detection.frpMw,
+        satellite: detection.satellite,
+        instrument: detection.instrument,
+        dayNight: detection.dayNight,
+        districtSlug: detection.district.slug,
+        districtNameEn: detection.district.nameEn,
+        districtNameHi: detection.district.nameHi,
+      },
+    };
+  });
+
+  return ok({ type: 'FeatureCollection', features, attribution: [...attribution] });
 }

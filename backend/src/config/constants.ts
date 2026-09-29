@@ -104,6 +104,8 @@ export const INGESTION_SCHEDULE = {
   SEISMIC_MS: 60 * 60 * 1000,
   // A road can reopen within the hour; a slower poll would keep showing it closed.
   ROAD_CLOSURES_MS: 10 * 60 * 1000,
+  // FIRMS publishes each satellite pass as it is processed, a few times an hour.
+  FIRES_MS: 30 * 60 * 1000,
   ROLLUP_MS: 24 * 60 * 60 * 1000,
 } as const;
 
@@ -359,6 +361,60 @@ export const USGS = {
 
 /** Seismic history is append-mostly and changes on ingestion, not on read. */
 export const CACHE_TTL_SEISMIC = 5 * 60;
+
+/**
+ * NASA FIRMS active-fire detections (project/modules/wildfire.md).
+ *
+ * A detection is a satellite pixel hotter than its surroundings. It is usually a forest
+ * fire in this state, but it can also be a crop-residue burn, a controlled burn or an
+ * industrial heat source. It is never a report from the ground, and the product never
+ * describes it as one (WLD-2).
+ */
+export const FIRMS = {
+  AREA_URL: 'https://firms.modaps.eosdis.nasa.gov/api/area/csv',
+  /**
+   * The near-real-time products this polls. VIIRS on NOAA-20 and NOAA-21 resolve a 375 m
+   * pixel, fine enough to separate two fires on one hillside. MODIS is 1 km, and it is kept
+   * because Terra and Aqua cross at different times of day and fill gaps between VIIRS passes.
+   */
+  SOURCES: ['VIIRS_NOAA20_NRT', 'VIIRS_NOAA21_NRT', 'MODIS_NRT'],
+  /**
+   * The upstream query box, as FIRMS wants it: west,south,east,north. It is slightly wider
+   * than the state, and the repository keeps only points that fall inside a district
+   * boundary, so detections in Nepal, Himachal and Tibet never reach the table.
+   */
+  BBOX: '77.5,28.6,81.1,31.5',
+  /**
+   * Two days per run, polled every half hour. NRT data for a pass can arrive hours after
+   * the overpass, and the upsert makes re-reading a pass free (DS-5).
+   */
+  DAY_RANGE: 2,
+  FETCH_TIMEOUT_MS: 20_000,
+  FETCH_RETRIES: 2,
+  /** How far back the map layer reaches. Older than this is history, not a live fire. */
+  MAP_WINDOW_HOURS: 48,
+} as const;
+
+export const CACHE_TTL_FIRES = 5 * 60;
+
+/**
+ * Fire push notifications (services/notification.service.ts, `dispatchFireNotifications`).
+ *
+ * At most one notification per district per cooldown. In a bad week in May, FIRMS reports
+ * hundreds of hotspots a day across the state. A notification for each one would get the
+ * app muted, and then the flood warnings would go unread too. (Product owner, 2026-09-29.)
+ */
+export const FIRE_PUSH = {
+  COOLDOWN_HOURS: 24,
+  /**
+   * A detection that reaches us more than this long after the satellite saw it is not
+   * news. It still goes on the map, but it does not trigger a notification. NRT latency
+   * is about three hours, so this leaves room for a late pass.
+   */
+  WINDOW_HOURS: 12,
+  /** `low` confidence is often sun glint or hot bare rock; it is mapped but never pushed. */
+  CONFIDENCE: ['nominal', 'high'],
+} as const;
 
 /**
  * GDACS — the Global Disaster Alert and Coordination System (European Commission JRC + UN).

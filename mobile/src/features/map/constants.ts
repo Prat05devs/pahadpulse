@@ -66,6 +66,17 @@ export const SEVERITY_COLORS = {
   unknown: '#5B6B93',
 } as const;
 
+/**
+ * Satellite fire detections, keyed by the satellite's own confidence. A flame ramp rather
+ * than the alert reds: a detection is an observation, not an authority's warning, and the
+ * two must not read as the same thing. Low confidence is drawn pale and small, never hidden.
+ */
+export const FIRE_COLORS = {
+  high: '#E8290B',
+  nominal: '#FF8C1A',
+  low: '#FFC857',
+} as const;
+
 /** Garhwal and Kumaon, the two administrative divisions, tinted apart. */
 export const DIVISION_COLORS = {
   garhwal: '#1E5348',

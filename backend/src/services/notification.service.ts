@@ -1,10 +1,12 @@
 import { err, ok, type Result } from 'neverthrow';
 import { z } from 'zod';
 
-import { PUSH } from '../config/constants.js';
+import { FIRE_PUSH, PUSH } from '../config/constants.js';
 import { env } from '../config/env.js';
 import type { DeviceTokenRow, PendingAlertRow } from '../models/device.model.js';
+import type { PendingFireDistrictRow } from '../models/fire.model.js';
 import { DeviceRepository } from '../repositories/device.repository.js';
+import { FireRepository } from '../repositories/fire.repository.js';
 import { describeError } from '../utils/describe-error.js';
 import type { RequestError } from '../utils/errors.js';
 import createLogger from '../utils/logger.js';
@@ -413,5 +415,112 @@ export async function dispatchNewAlerts(): Promise<Result<DispatchReport, Reques
     settled: settled.value,
   };
   logger.info('alert notifications dispatched', report);
+  return ok(report);
+}
+
+export interface FireDispatchReport {
+  districts: number;
+  accepted: number;
+  settled: number;
+}
+
+/**
+ * Wording for one district's fire notification.
+ *
+ * It says what the satellite saw and nothing more. A hot pixel can be a crop burn as easily
+ * as a forest fire, and a lock-screen message that said "forest fire in Almora" would be
+ * this product asserting something neither NASA nor the Forest Department stated (WLD-2).
+ */
+export function buildFireMessage(
+  district: PendingFireDistrictRow,
+  language: 'en' | 'hi',
+): { title: string; body: string } {
+  const count = district.detections;
+  if (language === 'hi') {
+    return {
+      title: `उपग्रह से आग का संकेत · ${district.name_hi ?? district.name_en}`,
+      body:
+        `नासा उपग्रहों ने ${count} जगह असामान्य गर्मी दर्ज की। यह जंगल की आग या नियंत्रित ` +
+        'जलाना हो सकता है। ज़मीन पर पुष्टि नहीं हुई है। नक्शे पर देखें।',
+    };
+  }
+  return {
+    title: `Satellite fire detection · ${district.name_en}`,
+    body:
+      `NASA satellites detected ${count} heat ${count === 1 ? 'signature' : 'signatures'}. ` +
+      'It may be a forest fire or a controlled burn and is not confirmed on the ground. ' +
+      'See the map.',
+  };
+}
+
+/**
+ * One pass of fire notifications: at most one per district per FIRE_PUSH.COOLDOWN_HOURS.
+ *
+ * Detections that will never be announced are settled first: low confidence, older than
+ * the window, or in a district that was already told within the cooldown. Whatever is left
+ * is grouped by district, and each district gets one message. As with warnings, a district
+ * whose sends never reached Expo is left pending so the next pass retries it.
+ */
+export async function dispatchFireNotifications(): Promise<
+  Result<FireDispatchReport, RequestError>
+> {
+  const settled = await FireRepository.settleUnannounced(
+    FIRE_PUSH.WINDOW_HOURS,
+    FIRE_PUSH.COOLDOWN_HOURS,
+    FIRE_PUSH.CONFIDENCE,
+  );
+  if (settled.isErr()) return err(settled.error);
+
+  const pending = await FireRepository.listPendingDistricts();
+  if (pending.isErr()) return err(pending.error);
+  if (pending.value.length === 0) {
+    return ok({ districts: 0, accepted: 0, settled: settled.value });
+  }
+
+  const devices = await DeviceRepository.listActiveTokens();
+  if (devices.isErr()) return err(devices.error);
+
+  let accepted = 0;
+  let announced = 0;
+  const deadTokens: string[] = [];
+  const receiptTickets: { ticketId: string; token: string }[] = [];
+
+  for (const district of pending.value) {
+    const messages = devices.value.map((device: DeviceTokenRow) => ({
+      to: device.token,
+      ...buildFireMessage(district, device.language),
+      data: { fireDistrict: district.slug, url: '/map' },
+      sound: 'default' as const,
+      priority: 'high' as const,
+      channelId: 'alerts' as const,
+    }));
+
+    // No devices still counts as reached: nobody is waiting, and the cooldown must start.
+    let reached = messages.length === 0;
+    for (const batch of chunk(messages, PUSH.BATCH_SIZE)) {
+      const result = await sendBatch(batch);
+      accepted += result.accepted;
+      deadTokens.push(...result.deadTokens);
+      receiptTickets.push(...result.receiptTickets);
+      reached = reached || result.reached;
+    }
+    if (!reached) continue;
+
+    const recorded = await FireRepository.recordNotice(district.area_id, district.detections);
+    if (recorded.isErr()) return err(recorded.error);
+    announced += 1;
+  }
+
+  await DeviceRepository.disableTokens(deadTokens);
+  const savedTickets = await DeviceRepository.savePushTickets(receiptTickets);
+  if (savedTickets.isErr()) {
+    logger.error('accepted push tickets could not be persisted', {
+      count: receiptTickets.length,
+      code: savedTickets.error.code,
+    });
+  }
+
+  const report: FireDispatchReport = { districts: announced, accepted, settled: settled.value };
+  logger.info('fire notifications dispatched', report);
   return ok(report);
 }
