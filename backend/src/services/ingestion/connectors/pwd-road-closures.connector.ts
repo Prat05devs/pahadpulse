@@ -47,9 +47,9 @@ export function fetchWindow(
 /**
  * PWD Uttarakhand's road closure dashboard.
  *
- * Seeded disabled and non-redistributable (migration 064) until PWD grants reproduction
- * permission; the runner skips it while `is_enabled` is false. See the parser for the page
- * structure and the personal-data rule.
+ * Seeded enabled for collection but non-redistributable (migration 064) until PWD grants
+ * reproduction permission. The API never serves these rows while `may_redistribute` is false.
+ * See the parser for the page structure and the personal-data rule.
  */
 class PwdRoadClosuresConnector implements SourceConnector {
   readonly sourceKey = 'pwd-uk-road-closures';

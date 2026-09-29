@@ -58,7 +58,7 @@ export const SCHEDULED_JOBS: readonly ScheduledJob[] = [
   // Fires spread within hours; each satellite pass is worth seeing as soon as FIRMS has it.
   { name: 'nasa-firms', intervalMs: INGESTION_SCHEDULE.FIRES_MS, sourceKey: 'nasa-firms' },
   // Road closures change within the hour, and a reopened road shown as closed is its own
-  // misinformation. Skipped by the runner while the source is disabled (migration 064).
+  // misinformation. Collected for validation but not served until PWD grants permission.
   {
     name: 'pwd-uk-road-closures',
     intervalMs: INGESTION_SCHEDULE.ROAD_CLOSURES_MS,

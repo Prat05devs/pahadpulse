@@ -5,18 +5,18 @@ and the highway network into one place. Data is associated with its source and v
 residents, travellers, and journalists can understand what each figure represents.
 
 The project is under active development. Deployment configuration is included; a successful
-deploy still requires a configured MySQL database, migrations, and initial ingestion.
+deploy still requires a configured PostgreSQL database, migrations, and initial ingestion.
 
 ## Current data coverage
 
-| Area | Available today | How it is populated |
-| --- | --- | --- |
-| Geography | 13 districts, bilingual names, and tehsil records | Database migrations |
-| Statistics | Census 2011 population, literacy, sex ratio, and published district income history | Database migrations |
-| Map | District boundaries and village enrichment from OpenStreetMap | Ingestion |
-| Roads | National and state highway routes from OpenStreetMap | Ingestion; this is network data, not road closure status |
-| Alerts | SACHET/NDMA and IMD CAP connectors, active alert lists, and mappable alert geometry | Ingestion, subject to upstream availability |
-| Sources | Source registry, ingestion history, provenance, and freshness | Migrations and ingestion runs |
+| Area       | Available today                                                                     | How it is populated                                      |
+| ---------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Geography  | 13 districts, bilingual names, and tehsil records                                   | Database migrations                                      |
+| Statistics | Census 2011 population, literacy, sex ratio, and published district income history  | Database migrations                                      |
+| Map        | District boundaries and village enrichment from OpenStreetMap                       | Ingestion                                                |
+| Roads      | National and state highway routes from OpenStreetMap                                | Ingestion; this is network data, not road closure status |
+| Alerts     | SACHET/NDMA and IMD CAP connectors, active alert lists, and mappable alert geometry | Ingestion, subject to upstream availability              |
+| Sources    | Source registry, ingestion history, provenance, and freshness                       | Migrations and ingestion runs                            |
 
 Weather observations, river levels, tourism, connectivity, road closures, and authenticated
 subscriptions are not complete live integrations. Some screens contain placeholders. In
@@ -27,16 +27,16 @@ is scaffolded but not implemented.
 ## Stack
 
 - **Web:** Next.js 15, React 19, TypeScript, Tailwind CSS, TanStack Query, MapLibre GL.
-- **API:** Express 5, TypeScript ESM, Zod, and mysql2.
-- **Database:** MySQL 8, with SQL migrations and source ingestion CLIs.
-- **Deployment:** Render for private MySQL, the API, and scheduled jobs; Vercel for the web app.
+- **API:** Express 5, TypeScript ESM, Zod, and pg.
+- **Database:** PostgreSQL 16 with PostGIS, SQL migrations, and source ingestion CLIs.
+- **Deployment:** Render for the API and in-process ingestion, Supabase PostgreSQL, and Vercel for the web app.
 
 ## Local setup
 
 Install Node.js 22 (see [backend/.nvmrc](backend/.nvmrc)), npm, and Docker with Compose.
 Use npm and the committed `package-lock.json` files for installation.
 
-### 1. Start MySQL and the API
+### 1. Start PostgreSQL and the API
 
 From the repository root:
 
@@ -46,11 +46,11 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-Compose starts MySQL, runs migrations, and starts the API with hot reload at
+Compose starts PostgreSQL, runs migrations, and starts the API with hot reload at
 `http://localhost:3000`. Database data persists in a Docker named volume.
 
-If port 3306 is already occupied, set `DB_HOST_PORT=3307` and `DB_PORT=3307` in
-`backend/.env` before starting Compose. Containers still communicate with MySQL on port 3306.
+If port 5432 is already occupied, set `DB_HOST_PORT=5433` and `DB_PORT=5433` in
+`backend/.env` before starting Compose. Containers still communicate with PostgreSQL on port 5432.
 
 ### 2. Load map, road, and alert data
 
@@ -117,37 +117,30 @@ An empty active-alert list can be valid when no current warnings apply.
 
 Your local database is **not** copied to production when you push to GitHub.
 
-### MySQL and Render
+### PostgreSQL and Render
 
-1. Push this repository, then create a Render Blueprint from [render.yaml](render.yaml).
-   It creates a private MySQL 8.0 service, the API, and two ingestion jobs in Singapore.
-2. Review the service charges before applying: MySQL requests 1 CPU / 2 GB RAM and a
-   10 GB persistent disk. The other three services request 0.5 CPU / 512 MB each.
-3. Render generates separate MySQL application and root passwords. The API and jobs
-   automatically reference the private hostname and application credentials; no database
-   passwords are committed. MySQL data is stored at `/var/lib/mysql` on the attached disk.
-4. Set `SERVER_URL` to the API's public HTTPS origin and `CORS_ORIGIN` to the Vercel origin,
+1. Provision Supabase PostgreSQL and configure the database credentials and CA certificate
+   as Render secrets. Push this repository, then create a Render Blueprint from
+   [render.yaml](render.yaml); it creates the API service in Singapore.
+2. Keep database credentials out of Git and use the Supabase session pooler on port 5432 so
+   the migration runner's session-level advisory lock remains effective.
+3. Set `SERVER_URL` to the API's public HTTPS origin and `CORS_ORIGIN` to the Vercel origin,
    without a trailing slash. During initial creation, if the URLs are not assigned yet,
    use `http://localhost:3000` and `http://localhost:3001` respectively, then update them
    once both deployments have their URLs. Multiple allowed CORS origins are comma-separated.
-5. Wait for MySQL initialization and successful API migrations. If migrations ran before
-   MySQL was ready, redeploy the API once MySQL is running. Manually trigger the reference
-   job once, inspect per-source results, and trigger the alert job if needed.
+4. Wait for successful API migrations, then inspect the first scheduler run and per-source
+   results. Run the large weekly OpenStreetMap reference imports manually as documented.
 
-The database has no public endpoint. `DB_SSL=false` is scoped to this Render private-network
-connection; verified TLS support remains available for external databases. Keep all four
-services in the same Render workspace and region, with private networking permitted between
-them. Vercel connects to the public API, never directly to MySQL.
+Production uses encrypted Supabase PostgreSQL connections with `DB_SSL=true` and `DB_SSL_CA`.
+Vercel connects to the public API, never directly to PostgreSQL.
 
-This MySQL service is self-managed. Configure regular logical backups to separate storage
-and test restoration before relying on it for production. Disk snapshots alone are not a
-MySQL backup strategy. See [the backup runbook](project/operations.md#mysql-backups-and-recovery).
+Configure regular logical backups to separate storage and test restoration before relying on
+them. See [the backup runbook](project/operations.md#postgres-backups-and-recovery).
 
-If you previously connected an external database, this Blueprint switches the applications
-to a new database; it does not transfer the previous database's rows.
+Changing `DB_*` secrets switches the API to a different database; it does not transfer rows.
 
-| Render service | Purpose | Schedule |
-| --- | --- | --- |
+| Render service   | Purpose                                                       | Schedule             |
+| ---------------- | ------------------------------------------------------------- | -------------------- |
 | `pahadpulse-api` | API, with migrations before rollout, and in-process ingestion | Long-running service |
 
 There are no cron services. The API runs ingestion itself when `SCHEDULER_ENABLED=true`, and an
@@ -201,12 +194,12 @@ tests against a production database.
 
 ## Project documentation
 
-| Path | Contents |
-| --- | --- |
-| [backend/](backend/) | API, migrations, connectors, and backend setup |
-| [web/](web/) | Next.js application |
-| [project/overview.md](project/overview.md) | Product scope, module map, and open decisions |
-| [project/modules/](project/modules/) | Module specifications and data-source decisions |
+| Path                                           | Contents                                            |
+| ---------------------------------------------- | --------------------------------------------------- |
+| [backend/](backend/)                           | API, migrations, connectors, and backend setup      |
+| [web/](web/)                                   | Next.js application                                 |
+| [project/overview.md](project/overview.md)     | Product scope, module map, and open decisions       |
+| [project/modules/](project/modules/)           | Module specifications and data-source decisions     |
 | [project/operations.md](project/operations.md) | Deployment configuration and operational follow-ups |
-| [guidelines/](guidelines/) | Engineering conventions |
-| [CLAUDE.md](CLAUDE.md) | Repository instructions for coding agents |
+| [guidelines/](guidelines/)                     | Engineering conventions                             |
+| [CLAUDE.md](CLAUDE.md)                         | Repository instructions for coding agents           |

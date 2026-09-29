@@ -1,6 +1,6 @@
 # PahadPulse API
 
-Express 5 · TypeScript ESM · MySQL 8 · mysql2 · Zod · neverthrow
+Express 5 · TypeScript ESM · PostgreSQL 16/PostGIS · pg · Zod · neverthrow
 
 The API serves geography, district indicators, alerts, highway routes, and source metadata.
 See the [main README](../README.md) for current data coverage, frontend setup, and deployment.
@@ -14,7 +14,7 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-Compose starts MySQL, runs migrations, and serves the API at `http://localhost:3000` with
+Compose starts PostgreSQL, runs migrations, and serves the API at `http://localhost:3000` with
 hot reload. After startup, load external data:
 
 ```bash
@@ -32,7 +32,7 @@ npm run dev
 
 Use either the container API or the host API to avoid a port 3000 conflict. Environment
 variables are documented in [.env.example](.env.example) and validated in
-[src/config/env.ts](src/config/env.ts). Local MySQL uses `DB_SSL=false`; managed MySQL can
+[src/config/env.ts](src/config/env.ts). Local PostgreSQL uses `DB_SSL=false`; managed PostgreSQL can
 use `DB_SSL=true` with optional `DB_SSL_CA` PEM contents and enforced certificate/hostname
 verification.
 
@@ -100,12 +100,10 @@ these modules require migrations through `050`. Run `npm run db:migrate` from th
 with the production database configuration, then verify `/api/connectivity` and
 `/api/tourism/pilgrim-arrivals`. Deploy the web changes to clear previously cached error pages.
 
-Creating a web service manually does not create the Blueprint's cron jobs. Ensure
-`pahadpulse-ingest-alerts` exists and is enabled on Render with schedule `*/15 * * * *`,
-command `npm run ingest -- sachet-ndma`, and the same database configuration as the API.
-Run it once immediately, then verify a second successful `ingestion_runs` record after the
-next scheduled run. Failed or partial ingestion exits nonzero so Render can flag it.
-An empty active-alert response alone does not verify that ingestion is healthy.
+Production ingestion runs inside the API process when `SCHEDULER_ENABLED=true`; there are no
+Blueprint cron services. Keep that flag enabled on exactly one API instance, keep the Render
+service awake as documented in the operations notes, and verify recent successful
+`ingestion_runs` records. An empty active-alert response alone does not verify ingestion health.
 
 See [deployment instructions](../README.md#deployment) and the
 [operations notes](../project/operations.md) for TLS, schedules, CORS, and post-deploy checks.

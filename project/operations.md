@@ -31,14 +31,12 @@ fix this section.
 
 ### Render API and ingestion, Vercel web
 
-The deployment configuration is in [`render.yaml`](../render.yaml). The selected database
-is PostgreSQL 16 on a Render private service, with 2 GB RAM and a 10 GB disk mounted at
-`/var/lib/postgres`. Postgres and the API must share a workspace and the Singapore
-region. Live provisioning has not been verified.
+The deployment configuration is in [`render.yaml`](../render.yaml). The API runs on Render
+in Singapore and connects over TLS to Supabase PostgreSQL. The database credentials and CA
+certificate are deployment secrets, never values committed in the Blueprint.
 
-1. Push the reviewed Blueprint and create or sync it in Render. Review compute and disk
-   charges before applying. The Blueprint generates separate application and root passwords
-   and wires the three consumers to the application's private database connection.
+1. Provision Supabase PostgreSQL, then push the reviewed Blueprint and create or sync it in
+   Render. Configure the `DB_*` secrets and the Supabase CA certificate in Render.
 2. Set the API's `SERVER_URL` to its public HTTPS origin and `CORS_ORIGIN` to the Vercel
    origin, with no trailing slash. Multiple allowed origins are comma-separated. Temporary
    localhost values can be used during creation and replaced after the URLs are assigned.
@@ -50,15 +48,11 @@ region. Live provisioning has not been verified.
    `ingestion run complete` per source), and set up the pinger below. Check `/health`, `/ready`,
    `/api/roads`, and `/api/map/districts`, then verify the live web app.
 
-`DB_SSL=false` applies to the Render private Postgres connection only; it does not traverse the
-public internet. The Postgres service has no public endpoint. External database connections
-should use `DB_SSL=true`, with `DB_SSL_CA` if needed. Do not expose this Postgres instance as a
-web service. Ensure environment isolation rules permit the API to reach it.
+Production database traffic crosses the public network and therefore requires `DB_SSL=true`
+with certificate and hostname verification. `DB_SSL=false` is only for local Docker.
 
-Switching an existing deployment to this Blueprint does not transfer external database data.
-The `MYSQL_*` initialization variables create users only on an empty disk. To rotate a
-password later, change it in Postgres and update the corresponding Render environment variable,
-then sync the Blueprint to propagate the value. Never delete the disk to reset credentials.
+Changing database projects or connection secrets does not transfer data. To rotate a password,
+rotate it in Supabase and update the matching Render secret before redeploying.
 
 ### Ingestion schedule
 
@@ -225,12 +219,11 @@ One entry per alert: what it means, how to confirm, how to mitigate.
 
 **Not yet configured:** automated logical backups, separate backup storage, retention,
 monitoring of backup failures, and a verified restore. Assign these before production use.
-Render disk snapshots are not a substitute for a consistent Postgres backup; see
-[Render's Postgres backup guidance](https://render.com/docs/deploy-postgres#backups).
+Provider snapshots are not a substitute for a separately stored, tested logical backup.
 
-- Run `mysqldump` using `--single-transaction --quick --no-tablespaces` for the application
-  schema from a trusted host on the private network. Avoid schema changes during the dump.
-  Supply credentials through a protected client option file, not command-line arguments.
+- Run `pg_dump` in PostgreSQL custom format from a trusted host. Avoid schema changes during
+  the dump and supply credentials through a protected environment or password file, not as a
+  command-line argument.
 - Store encrypted backups outside the database service and its disk. Restrict access and
   configure retention with the selected storage provider.
 - Restore into a separate PostgreSQL 16 instance and verify the migration ledger, row counts,

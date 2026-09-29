@@ -92,6 +92,13 @@ services:
       - key: EXPO_ACCESS_TOKEN
         sync: false
 
+      # SACHET blocks direct traffic from Render. Both values are required together and the
+      # relay key must match the Vercel web project's secret.
+      - key: SACHET_RELAY_URL
+        sync: false
+      - key: SACHET_RELAY_KEY
+        sync: false
+
       # NASA FIRMS map key for satellite fire detections. It travels in the request path,
       # so the connector redacts it from logs. Unset: the nasa-firms source reports itself
       # unavailable and the map's fire layer stays empty.

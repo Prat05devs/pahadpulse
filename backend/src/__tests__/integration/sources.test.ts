@@ -80,15 +80,16 @@ describe('GET /api/sources', () => {
   /*
    * Every source is provisional until someone confirms its terms with the publishing body.
    * The exception is a source whose licence is a published, self-contained grant needing no
-   * conversation — Open-Meteo's CC-BY-4.0 and USGS's public domain — so the assertion is
-   * that nothing is `verified` WITHOUT such a licence, not that nothing is verified.
+   * conversation — Open-Meteo's CC-BY-4.0, USGS's public domain, and NASA FIRMS' explicit
+   * no-restrictions grant — so the assertion is that nothing is `verified` WITHOUT such a
+   * licence, not that nothing is verified.
    */
   maybe('leaves sources provisional unless their licence is self-contained', async () => {
     const res = await request(app).get('/api/sources');
     for (const source of res.body.data as { metadataStatus: string; licence: string }[]) {
       if (source.metadataStatus === 'verified') {
         expect(source.licence).toMatch(
-          /Creative Commons|public domain|Government Open Data Licence/i,
+          /Creative Commons|public domain|Government Open Data Licence|no restrictions on use/i,
         );
       }
     }
