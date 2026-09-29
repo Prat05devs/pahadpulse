@@ -125,4 +125,10 @@ export const ERRORS = {
 
   // 75xxx — seismic
   SEISMIC_EVENT_NOT_FOUND: new RequestError('Seismic event not found', 75001, 404),
+
+  // 97xxx — assistant
+  ASSISTANT_QUESTION_UNKNOWN: new RequestError('That question is not in the catalogue', 97001, 404),
+  ASSISTANT_PARAM_REQUIRED: new RequestError('This question needs a district', 97002, 400),
+  ASSISTANT_DISTRICT_UNKNOWN: new RequestError('That is not a district of Uttarakhand', 97003, 400),
+  ASSISTANT_PLACE_UNKNOWN: new RequestError('That place is not in the travel guide', 97004, 400),
 } as const;

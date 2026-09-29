@@ -91,3 +91,14 @@ export function notificationAlertId(data: unknown): number | null {
   const value = typeof raw === 'string' && /^\d+$/.test(raw) ? Number(raw) : raw;
   return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null;
 }
+
+/**
+ * A fire notification carries the district slug of the detections it announces. It opens
+ * the map, where the detections are, rather than a detail screen: there is no single record
+ * to open, only a cluster of points. Validated like the alert id (N5).
+ */
+export function notificationFireDistrict(data: unknown): string | null {
+  if (typeof data !== 'object' || data === null || !('fireDistrict' in data)) return null;
+  const raw = (data as { fireDistrict?: unknown }).fireDistrict;
+  return typeof raw === 'string' && /^[a-z0-9-]{1,64}$/.test(raw) ? raw : null;
+}

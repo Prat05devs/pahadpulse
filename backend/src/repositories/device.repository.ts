@@ -1,7 +1,7 @@
 import { err, ok, type Result } from 'neverthrow';
 
 import { db } from '../database/db.js';
-import { ALERTS_TABLE, ALERT_AREAS_TABLE } from '../models/alert.model.js';
+import { ALERTS_TABLE, ALERT_AREAS_TABLE, STATE_ONLY_WHEN_ALONE } from '../models/alert.model.js';
 import {
   DEVICE_TOKENS_TABLE,
   PUSH_NOTIFICATION_TICKETS_TABLE,
@@ -211,7 +211,8 @@ class DeviceRepositoryImpl implements IDeviceRepository {
                 (SELECT array_agg(ar.name_en ORDER BY ar.name_en)
                    FROM ${ALERT_AREAS_TABLE} aa
                    JOIN areas ar ON ar.id = aa.area_id
-                  WHERE aa.alert_id = a.id) AS area_names
+                  WHERE aa.alert_id = a.id
+                    AND ${STATE_ONLY_WHEN_ALONE}) AS area_names
            FROM ${ALERTS_TABLE} a
            JOIN ${SOURCES_TABLE} s ON s.id = a.source_id
           WHERE a.notified_at IS NULL

@@ -457,7 +457,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                  * these two numbers are the real ones, not a starting point EAS would override.
                  * Increment on every upload: App Store Connect and Play each reject a repeat.
                  */
-                buildNumber: '5',
+                buildNumber: '6',
                 infoPlist: { ITSAppUsesNonExemptEncryption: false },
               },
               android: {
@@ -467,7 +467,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                  * used for internal testing. Play rejects a reused versionCode outright - AgniVision
                  * hit exactly this and had to rebuild. `versionName` comes from `version` above.
                  */
-                versionCode: 3,
+                versionCode: 4,
                 predictiveBackGestureEnabled: false,
                 adaptiveIcon: {
                   backgroundColor: '#FAF8FF',

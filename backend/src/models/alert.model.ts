@@ -154,3 +154,17 @@ export function toAlert(row: AlertWithAreasRow): Alert {
     areas: toAlertAreaSummaries(row.area_ids),
   };
 }
+
+/**
+ * SQL condition, for a query joining `alert_areas aa` to `areas ar`: keep the state row only
+ * when the alert names no district. Used by the alert list and the push query, so a screen
+ * and a notification name places the same way. Why: see ALERT_SELECT in alert.repository.
+ */
+export const STATE_ONLY_WHEN_ALONE = `(
+  ar.type <> 'state'
+  OR NOT EXISTS (
+    SELECT 1 FROM ${ALERT_AREAS_TABLE} other
+      JOIN areas other_area ON other_area.id = other.area_id
+     WHERE other.alert_id = aa.alert_id AND other_area.type <> 'state'
+  )
+)`;

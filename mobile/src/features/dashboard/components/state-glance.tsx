@@ -4,20 +4,32 @@ import { Eyebrow, HStack, Icon, Text, VStack } from '@/components/atoms';
 import { LoadingState, QueryBoundary } from '@/components/molecules';
 import { STATE_SLUG } from '@/config/constants';
 import { useAreaIndicators } from '@/features/indicators';
-import { useT } from '@/i18n';
+import { useT, type TranslationKey } from '@/i18n';
 import { formatDate, formatNumber, localise } from '@/lib/format';
 import { shouldStackCardGrid } from '@/lib/layout';
 import { useLanguage } from '@/stores';
 import { useTheme } from '@/theme';
 
-/** The state profile figures shown, in this order. */
+/**
+ * The state profile figures shown, in this order. The same keys the web home page uses
+ * (web/src/features/dashboard/services/index.ts), so the two never show different years
+ * for the same fact. The Census 2011 rows (`state_population`, `state_literacy_rate`,
+ * `state_villages`) still exist, but they are history now, not a current profile.
+ */
 const GLANCE_KEYS = [
-  'state_population',
+  'state_population_projection',
   'state_forest_cover_pct',
-  'state_literacy_rate',
-  'state_villages',
+  'state_literacy_plfs',
+  'state_administrative_villages',
   'state_area_sq_km',
 ];
+
+/** What each figure is, where its label alone could mislead. Mirrors the web notes. */
+const GLANCE_NOTES: Partial<Record<string, TranslationKey>> = {
+  state_population_projection: 'today.glance.note.population',
+  state_literacy_plfs: 'today.glance.note.literacy',
+  state_administrative_villages: 'today.glance.note.villages',
+};
 
 /** Each figure gets its own ink so the grid reads as four facts, not one table. */
 const VALUE_INK = ['primary', 'success', 'text', 'accent'] as const;
@@ -26,6 +38,17 @@ function unitSuffix(unit: string): string {
   if (unit === 'percent' || unit === 'pct') return '%';
   if (unit === 'sq_km') return ' km²';
   return '';
+}
+
+function GlanceNote({ indicatorKey }: { indicatorKey: string }) {
+  const t = useT();
+  const note = GLANCE_NOTES[indicatorKey];
+  if (note === undefined) return null;
+  return (
+    <Text variant="footnote" color="textMuted">
+      {t(note)}
+    </Text>
+  );
 }
 
 /** Published state profile figures, each with the date it describes and who published it. */
@@ -89,6 +112,7 @@ export function StateGlance() {
                       ? localise(entry.provenance.department, language)
                       : t('common.sourceNotRecorded')}
                   </Text>
+                  <GlanceNote indicatorKey={entry.indicator.key} />
                 </View>
               ))}
           </HStack>

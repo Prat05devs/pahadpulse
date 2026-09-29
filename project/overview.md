@@ -108,6 +108,8 @@ package alongside `lucide-react`; their versions must remain aligned.
 | `tourism`    | tourist flow, Char Dham, carrying capacity                   | `modules/tourism.md`    |
 | `migration`  | Palayan Ayog survey rounds, district out-migration           | `modules/migration.md`  |
 | `governance` | budget allocations and derived district evidence             | `modules/governance.md` |
+| `wildfire`   | NASA FIRMS satellite fire detections, fire notifications     | `modules/wildfire.md`   |
+| `assistant`  | "Ask Pahad Pulse": preset questions answered from our data  | `modules/assistant.md`  |
 
 ### Dependencies between modules
 
@@ -162,6 +164,8 @@ alert _content_ is fully public and readable with no account.
 | `tourism`    | geography, datasets                     | —                  |
 | `migration`  | geography, datasets                     | —                  |
 | `governance` | geography, datasets, indicators, alerts | —                  |
+| `wildfire`   | geography, datasets, alerts (push)      | —                  |
+| `assistant`  | reads every module above, via controllers | —                |
 
 ### Deferred — documented, not built
 
@@ -307,6 +311,7 @@ Things that shape decisions across every module.
 | `85xxx` | tourism                                    |
 | `90xxx` | datasets (upstream and ingestion failures) |
 | `95xxx` | governance — reserved for future workflows |
+| `97xxx` | assistant                                  |
 
 ## Links
 

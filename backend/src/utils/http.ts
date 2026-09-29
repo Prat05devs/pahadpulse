@@ -10,6 +10,11 @@ export interface FetchTextOptions {
   retries?: number;
   retryDelayMs?: number;
   headers?: Record<string, string>;
+  /**
+   * Values masked wherever the URL is logged. For sources that put their key in the URL
+   * path (NASA FIRMS) rather than a header, where the log line would otherwise leak it.
+   */
+  redact?: readonly string[];
 }
 
 const DEFAULTS: Required<FetchTextOptions> = {
@@ -17,6 +22,7 @@ const DEFAULTS: Required<FetchTextOptions> = {
   retries: 2,
   retryDelayMs: 500,
   headers: {},
+  redact: [],
 };
 
 function sleep(ms: number): Promise<void> {
@@ -35,7 +41,11 @@ export async function fetchText(
   url: string,
   options: FetchTextOptions = {},
 ): Promise<Result<string, RequestError>> {
-  const { timeoutMs, retries, retryDelayMs, headers } = { ...DEFAULTS, ...options };
+  const { timeoutMs, retries, retryDelayMs, headers, redact } = { ...DEFAULTS, ...options };
+  const loggedUrl = redact.reduce(
+    (masked, secret) => (secret === '' ? masked : masked.split(secret).join('[redacted]')),
+    url,
+  );
 
   let lastError: RequestError = ERRORS.UPSTREAM_UNAVAILABLE;
 
@@ -55,7 +65,10 @@ export async function fetchText(
         lastError = ERRORS.UPSTREAM_UNAVAILABLE;
       } else if (!response.ok) {
         // 4xx other than 429 — the request is wrong, not transient. Fail without retrying.
-        logger.warn('fetch returned a non-retryable status', { url, status: response.status });
+        logger.warn('fetch returned a non-retryable status', {
+          url: loggedUrl,
+          status: response.status,
+        });
         return err(ERRORS.UPSTREAM_UNAVAILABLE);
       } else {
         return ok(await response.text());
@@ -64,7 +77,7 @@ export async function fetchText(
       clearTimeout(timer);
       const aborted = error instanceof Error && error.name === 'AbortError';
       logger.warn('fetch attempt failed', {
-        url,
+        url: loggedUrl,
         attempt,
         aborted,
         error: error instanceof Error ? error.message : String(error),

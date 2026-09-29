@@ -60,6 +60,13 @@ const EnvSchema = z.object({
    */
   EXPO_ACCESS_TOKEN: z.string().min(1).optional(),
 
+  /**
+   * NASA FIRMS map key (firms.modaps.eosdis.nasa.gov/api/map_key). Free, but required by
+   * the fire-detection API. Optional so local and test runs need no secret; without it the
+   * `nasa-firms` connector reports itself unavailable instead of failing every run.
+   */
+  FIRMS_MAP_KEY: z.string().min(1).optional(),
+
   CORS_ORIGIN: z
     .string()
     .default('http://localhost:3001')

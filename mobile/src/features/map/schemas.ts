@@ -83,7 +83,37 @@ export const AlertCollectionSchema = z.object({
   attribution: z.array(z.string()),
 });
 
+/**
+ * A NASA FIRMS detection: one hot pixel seen from orbit, placed in the district whose
+ * boundary covers it. Not a ground report - the screen says so wherever one is shown.
+ */
+export const FireFeatureSchema = z.object({
+  type: z.literal('Feature'),
+  id: z.number(),
+  geometry: PointSchema,
+  properties: z.object({
+    detectionId: z.number(),
+    acquiredAt: z.string(),
+    confidence: z.enum(['low', 'nominal', 'high']),
+    frpMw: z.number().nullable(),
+    satellite: z.string(),
+    instrument: z.string(),
+    dayNight: z.enum(['D', 'N']).nullable(),
+    districtSlug: z.string(),
+    districtNameEn: z.string(),
+    districtNameHi: z.string().nullable(),
+  }),
+});
+
+export const FireCollectionSchema = z.object({
+  type: z.literal('FeatureCollection'),
+  features: z.array(FireFeatureSchema),
+  attribution: z.array(z.string()),
+});
+
 export type MapGeometry = z.infer<typeof MapGeometrySchema>;
+export type FireFeature = z.infer<typeof FireFeatureSchema>;
+export type FireCollection = z.infer<typeof FireCollectionSchema>;
 export type DistrictFeature = z.infer<typeof DistrictFeatureSchema>;
 export type DistrictCollection = z.infer<typeof DistrictCollectionSchema>;
 export type AlertFeature = z.infer<typeof AlertFeatureSchema>;
@@ -101,6 +131,7 @@ export const MapMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('error'), message: z.string() }),
   z.object({ type: z.literal('district'), slug: z.string().min(1) }),
   z.object({ type: z.literal('alert'), alertId: z.number().int().positive() }),
+  z.object({ type: z.literal('fire'), detectionId: z.number().int().positive() }),
   z.object({ type: z.literal('clear') }),
 ]);
 

@@ -199,6 +199,9 @@ export const hi: Record<keyof typeof en, string> = {
   'today.glance.title': 'एक नज़र में उत्तराखंड',
   'today.glance.subtitle': 'राज्य के प्रकाशित आँकड़े',
   'today.glance.loading': 'राज्य की जानकारी आ रही है',
+  'today.glance.note.population': 'जनगणना 2011 पर आधारित आधिकारिक अनुमान, नई गणना नहीं।',
+  'today.glance.note.literacy': 'PLFS नमूना-सर्वेक्षण अनुमान, 7+ आयु।',
+  'today.glance.note.villages': 'वर्तमान LGD निर्देशिका में दर्ज गाँव कोड।',
   'today.glance.empty': 'राज्य के आँकड़े उपलब्ध नहीं',
   'today.following.title': 'आप जिन्हें देख रहे हैं',
   'today.following.subtitle': 'आपके सहेजे ज़िले',
@@ -368,6 +371,7 @@ export const hi: Record<keyof typeof en, string> = {
   /* ── Map ────────────────────────────────────────────────────────── */
   'map.layer.districts': 'ज़िले',
   'map.layer.alerts': 'चेतावनियाँ',
+  'map.layer.fires': 'आग',
   'map.layer.highways': 'हाईवे',
   'map.loading': 'मैप आ रहा है',
   'map.drawing': 'भू-आकृति बन रही है',
@@ -378,7 +382,7 @@ export const hi: Record<keyof typeof en, string> = {
   'map.creditsTitle': 'मैप के स्रोत',
   'map.creditsClose': 'मैप के स्रोत बंद करें',
   'map.creditsBody':
-    'ज़िलों की सीमाएँ और हाईवे नंबर OpenStreetMap से हैं। ऊँचाई AWS Terrain Tiles के सार्वजनिक डेटासेट से है। इस मैप के लिए किसी API key की ज़रूरत नहीं है।',
+    'ज़िलों की सीमाएँ और हाईवे नंबर OpenStreetMap से हैं। ऊँचाई AWS Terrain Tiles के सार्वजनिक डेटासेट से है। आग के संकेत नासा FIRMS (LANCE, NASA ESDIS) से हैं, जो हर उपग्रह गुज़रने पर अपडेट होते हैं।',
   'map.label':
     'उत्तराखंड का इंटरैक्टिव मैप, {count} ज़िलों के साथ। हर ज़िले की सुलभ सूची के लिए ज़िले टैब खोलें।',
   'map.header.eyebrow': 'लाइव भू-आकृति एक्सप्लोरर',
@@ -401,6 +405,18 @@ export const hi: Record<keyof typeof en, string> = {
   'map.selection.alerts': 'मैप पर {count} चेतावनी क्षेत्र',
   'map.selection.close': 'ज़िले की झलक बंद करें',
   'map.selection.view': '{name} ज़िला देखें',
+  'map.legend.fires': '{count} आग संकेत · 48 घंटे',
+  'map.legend.firesUnavailable': 'आग का डेटा उपलब्ध नहीं',
+  'map.fire.eyebrow': 'उपग्रह से आग का संकेत',
+  'map.fire.district': '{name} ज़िला',
+  'map.fire.seen': '{when} दर्ज · {time} IST',
+  'map.fire.confidence.high': 'उच्च विश्वसनीयता',
+  'map.fire.confidence.nominal': 'सामान्य विश्वसनीयता',
+  'map.fire.confidence.low': 'कम विश्वसनीयता',
+  'map.fire.power': 'विकिरण शक्ति {value} MW',
+  'map.fire.caveat':
+    'नासा उपग्रहों द्वारा अंतरिक्ष से दर्ज की गई गर्मी। यह जंगल की आग या नियंत्रित जलाना हो सकता है, और ज़मीन पर इसकी पुष्टि नहीं हुई है। आपात स्थिति में 112 पर कॉल करें।',
+  'map.fire.close': 'आग का विवरण बंद करें',
 
   'alertDetail.whatToDo': 'क्या करें',
   'alertDetail.dateTimeRelative': '{date}, {time} ({relative})',

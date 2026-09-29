@@ -10,7 +10,11 @@ import {
   registerNotificationDevice,
   unregisterRememberedNotificationDevices,
 } from './registration';
-import { notificationAlertId, obtainNotificationToken } from './runtime';
+import {
+  notificationAlertId,
+  notificationFireDistrict,
+  obtainNotificationToken,
+} from './runtime';
 
 /**
  * Honour the local switch even while a server-side unsubscribe is waiting for connectivity.
@@ -124,11 +128,17 @@ export function NotificationCoordinator() {
       const requestId = response.notification.request.identifier;
       if (handledResponses.current.has(requestId)) return false;
 
-      const alertId = notificationAlertId(response.notification.request.content.data);
-      if (alertId === null) return false;
+      const data = response.notification.request.content.data;
+      const alertId = notificationAlertId(data);
+      if (alertId !== null) {
+        handledResponses.current.add(requestId);
+        router.push({ pathname: '/alerts/[id]', params: { id: String(alertId) } });
+        return true;
+      }
 
+      if (notificationFireDistrict(data) === null) return false;
       handledResponses.current.add(requestId);
-      router.push({ pathname: '/alerts/[id]', params: { id: String(alertId) } });
+      router.push('/map');
       return true;
     };
 

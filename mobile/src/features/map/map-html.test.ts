@@ -1,6 +1,6 @@
 import { buildMapHtml } from './map-html';
 import { MapMessageSchema } from './schemas';
-import type { DistrictCollection } from './schemas';
+import type { DistrictCollection, FireCollection } from './schemas';
 
 const district: DistrictCollection = {
   type: 'FeatureCollection',
@@ -28,6 +28,30 @@ const district: DistrictCollection = {
         centroid: { lat: 30.1, lng: 79.1 },
         isPlaceholder: false,
         sourceNote: 'OSM via Overpass',
+      },
+    },
+  ],
+};
+
+const fires: FireCollection = {
+  type: 'FeatureCollection',
+  attribution: ['Source: NASA LANCE FIRMS, part of NASA ESDIS'],
+  features: [
+    {
+      type: 'Feature',
+      id: 9,
+      geometry: { type: 'Point', coordinates: [79.45, 29.61] },
+      properties: {
+        detectionId: 9,
+        acquiredAt: '2026-04-12T07:40:00.000Z',
+        confidence: 'high',
+        frpMw: 12.5,
+        satellite: 'N20',
+        instrument: 'VIIRS',
+        dayNight: 'D',
+        districtSlug: 'almora',
+        districtNameEn: 'Almora',
+        districtNameHi: 'अल्मोड़ा',
       },
     },
   ],
@@ -84,6 +108,14 @@ describe('MapMessageSchema', () => {
 
   it('rejects a district message with no slug, rather than navigating nowhere', () => {
     expect(MapMessageSchema.safeParse({ type: 'district', slug: '' }).success).toBe(false);
+  });
+
+  it('accepts a fire tap and rejects one without a detection id', () => {
+    expect(MapMessageSchema.parse({ type: 'fire', detectionId: 9 })).toEqual({
+      type: 'fire',
+      detectionId: 9,
+    });
+    expect(MapMessageSchema.safeParse({ type: 'fire' }).success).toBe(false);
   });
 
   it('accepts alert and cleared-selection messages', () => {
@@ -146,5 +178,15 @@ describe('the document control surface', () => {
       "post({ type: 'alert', alertId: Number(alertFeature.properties.alertId) })"
     );
     expect(html).toContain("post({ type: 'clear' })");
+  });
+
+  it('draws fire detections as their own toggleable, tappable layer', () => {
+    const html = buildMapHtml({ districts: district, alerts: null, fires });
+    expect(html).toContain('"detectionId":9');
+    expect(html).toContain("id: 'fire-point'");
+    expect(html).toContain("setVisible('fire-point', !!state.fires)");
+    expect(html).toContain(
+      "post({ type: 'fire', detectionId: Number(fireFeature.properties.detectionId) })"
+    );
   });
 });

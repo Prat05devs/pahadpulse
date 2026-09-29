@@ -200,6 +200,9 @@ export const en = {
   'today.glance.subtitle': 'Published state profile figures',
   'today.glance.loading': 'Loading state profile',
   'today.glance.empty': 'No state profile figures',
+  'today.glance.note.population': 'Official projection from Census 2011, not a new headcount.',
+  'today.glance.note.literacy': 'PLFS sample-survey estimate, age 7+.',
+  'today.glance.note.villages': 'Village codes in the current LGD directory.',
   'today.following.title': 'Following',
   'today.following.subtitle': 'Districts you saved',
   'today.following.manage': 'Manage',
@@ -368,6 +371,7 @@ export const en = {
   /* ── Map ────────────────────────────────────────────────────────── */
   'map.layer.districts': 'Districts',
   'map.layer.alerts': 'Alerts',
+  'map.layer.fires': 'Fires',
   'map.layer.highways': 'Highways',
   'map.loading': 'Loading the map',
   'map.drawing': 'Drawing the terrain',
@@ -378,7 +382,7 @@ export const en = {
   'map.creditsTitle': 'Map sources',
   'map.creditsClose': 'Close map sources',
   'map.creditsBody':
-    'District boundaries and highway numbers come from OpenStreetMap. Elevation is from the AWS Terrain Tiles public dataset. Nothing on this map requires an API key.',
+    'District boundaries and highway numbers come from OpenStreetMap. Elevation is from the AWS Terrain Tiles public dataset. Fire detections are from NASA FIRMS (LANCE, part of NASA ESDIS), updated from each satellite pass.',
   'map.label':
     'Interactive map of Uttarakhand with {count} districts. Use the Districts tab for an accessible list of every district.',
   'map.header.eyebrow': 'LIVE TERRAIN EXPLORER',
@@ -401,6 +405,18 @@ export const en = {
   'map.selection.alerts': '{count} mapped alert areas',
   'map.selection.close': 'Close district preview',
   'map.selection.view': 'View {name} district',
+  'map.legend.fires': '{count} fire detections · 48h',
+  'map.legend.firesUnavailable': 'fire data unavailable',
+  'map.fire.eyebrow': 'SATELLITE FIRE DETECTION',
+  'map.fire.district': '{name} district',
+  'map.fire.seen': 'Seen {when} · {time} IST',
+  'map.fire.confidence.high': 'High confidence',
+  'map.fire.confidence.nominal': 'Nominal confidence',
+  'map.fire.confidence.low': 'Low confidence',
+  'map.fire.power': '{value} MW radiative power',
+  'map.fire.caveat':
+    'A heat signature seen from orbit by NASA satellites. It may be a forest fire or a controlled burn, and it is not confirmed on the ground. In an emergency, call 112.',
+  'map.fire.close': 'Close fire details',
 
   'alertDetail.whatToDo': 'WHAT TO DO',
   'alertDetail.dateTimeRelative': '{date}, {time} ({relative})',

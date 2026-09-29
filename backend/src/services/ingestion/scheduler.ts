@@ -3,7 +3,11 @@ import { SourceRepository } from '../../repositories/source.repository.js';
 import { RunStatus } from '../../types/dataset.js';
 import { describeError } from '../../utils/describe-error.js';
 import createLogger from '../../utils/logger.js';
-import { dispatchNewAlerts, reconcilePushReceipts } from '../notification.service.js';
+import {
+  dispatchFireNotifications,
+  dispatchNewAlerts,
+  reconcilePushReceipts,
+} from '../notification.service.js';
 import { rollupObservations } from '../observation-rollup.service.js';
 import { runSource } from './runner.js';
 
@@ -51,6 +55,8 @@ export const SCHEDULED_JOBS: readonly ScheduledJob[] = [
     intervalMs: INGESTION_SCHEDULE.SEISMIC_MS,
     sourceKey: 'usgs-earthquakes',
   },
+  // Fires spread within hours; each satellite pass is worth seeing as soon as FIRMS has it.
+  { name: 'nasa-firms', intervalMs: INGESTION_SCHEDULE.FIRES_MS, sourceKey: 'nasa-firms' },
   // Road closures change within the hour, and a reopened road shown as closed is its own
   // misinformation. Skipped by the runner while the source is disabled (migration 064).
   {
@@ -122,6 +128,7 @@ async function runJob(job: ScheduledJob): Promise<void> {
   if (job.name === 'alert-notifications') {
     await reconcilePushReceipts();
     await dispatchNewAlerts();
+    await dispatchFireNotifications();
     return;
   }
   if (job.sourceKey === null) {

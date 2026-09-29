@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { STALE_TIME } from '@/lib/query-client';
 
 import { mapKeys } from './queries';
-import { fetchAlertFeatures, fetchDistrictFeatures } from './services';
+import { fetchAlertFeatures, fetchDistrictFeatures, fetchFireFeatures } from './services';
 
 /**
  * District boundaries.
@@ -25,6 +25,15 @@ export function useAlertFeatures() {
   return useQuery({
     queryKey: mapKeys.alerts(),
     queryFn: ({ signal }) => fetchAlertFeatures(signal),
+    staleTime: STALE_TIME.live,
+  });
+}
+
+/** Fire detections. FIRMS adds a satellite pass at most every half hour. */
+export function useFireFeatures() {
+  return useQuery({
+    queryKey: mapKeys.fires(),
+    queryFn: ({ signal }) => fetchFireFeatures(signal),
     staleTime: STALE_TIME.live,
   });
 }
