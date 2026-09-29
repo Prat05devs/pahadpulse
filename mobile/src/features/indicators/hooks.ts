@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { STALE_TIME } from '@/lib/query-client';
 
 import { indicatorKeys } from './queries';
-import { fetchAreaIndicators } from './services';
+import { fetchAllIndicators, fetchAreaIndicators } from './services';
 import type { AreaIndicatorValue } from './schemas';
 
 export function useAreaIndicators(slug: string) {
@@ -48,4 +48,12 @@ export function useGroupedAreaIndicators(slug: string) {
   }, [query.data]);
 
   return { ...query, groups, pending: query.data?.pending ?? [] };
+}
+
+export function useIndicatorCatalogue() {
+  return useQuery({
+    queryKey: indicatorKeys.catalogue(),
+    queryFn: ({ signal }) => fetchAllIndicators(signal),
+    staleTime: STALE_TIME.reference,
+  });
 }

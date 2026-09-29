@@ -4,10 +4,12 @@ import { db } from '../database/db.js';
 import { ALERTS_TABLE, ALERT_AREAS_TABLE } from '../models/alert.model.js';
 import {
   DEVICE_TOKENS_TABLE,
+  PUSH_NOTIFICATION_TICKETS_TABLE,
   type DeviceLanguage,
   type DevicePlatform,
   type DeviceTokenRow,
   type PendingAlertRow,
+  type PushNotificationTicketRow,
 } from '../models/device.model.js';
 import { SOURCES_TABLE } from '../models/source.model.js';
 import { describeError } from '../utils/describe-error.js';
@@ -22,11 +24,24 @@ export interface RegisterDeviceInput {
   language: DeviceLanguage;
 }
 
+export interface PushTicketInput {
+  ticketId: string;
+  token: string;
+}
+
 export interface IDeviceRepository {
   register(input: RegisterDeviceInput): Promise<Result<void, RequestError>>;
   unregister(token: string): Promise<Result<void, RequestError>>;
   listActiveTokens(): Promise<Result<DeviceTokenRow[], RequestError>>;
   disableTokens(tokens: readonly string[]): Promise<Result<number, RequestError>>;
+  savePushTickets(tickets: readonly PushTicketInput[]): Promise<Result<number, RequestError>>;
+  listPendingPushTickets(
+    minimumAgeMinutes: number,
+    retentionHours: number,
+    limit: number,
+  ): Promise<Result<PushNotificationTicketRow[], RequestError>>;
+  deletePushTickets(ticketIds: readonly string[]): Promise<Result<number, RequestError>>;
+  prunePushTickets(retentionHours: number): Promise<Result<number, RequestError>>;
   listPendingAlerts(
     withinHours: number,
     limit: number,
@@ -100,6 +115,77 @@ class DeviceRepositoryImpl implements IDeviceRepository {
       return ok(rowCount ?? 0);
     } catch (error) {
       logger.error('disableTokens failed', { error: describeError(error) });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  /** Persists successful send tickets so the provider handoff can be verified later. */
+  async savePushTickets(
+    tickets: readonly PushTicketInput[],
+  ): Promise<Result<number, RequestError>> {
+    if (tickets.length === 0) return ok(0);
+    try {
+      const { rowCount } = await db.query(
+        `INSERT INTO ${PUSH_NOTIFICATION_TICKETS_TABLE} (ticket_id, device_token)
+         SELECT * FROM unnest($1::varchar[], $2::varchar[])
+         ON CONFLICT (ticket_id) DO NOTHING`,
+        [tickets.map((ticket) => ticket.ticketId), tickets.map((ticket) => ticket.token)],
+      );
+      return ok(rowCount ?? 0);
+    } catch (error) {
+      logger.error('savePushTickets failed', { error: describeError(error) });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  /** Tickets become queryable after Expo's recommended receipt delay. */
+  async listPendingPushTickets(
+    minimumAgeMinutes: number,
+    retentionHours: number,
+    limit: number,
+  ): Promise<Result<PushNotificationTicketRow[], RequestError>> {
+    try {
+      const { rows } = await db.query<PushNotificationTicketRow>(
+        `SELECT ticket_id, device_token, created_at
+           FROM ${PUSH_NOTIFICATION_TICKETS_TABLE}
+          WHERE created_at <= (now() AT TIME ZONE 'utc') - ($1 * INTERVAL '1 minute')
+            AND created_at > (now() AT TIME ZONE 'utc') - ($2 * INTERVAL '1 hour')
+          ORDER BY created_at ASC
+          LIMIT $3`,
+        [minimumAgeMinutes, retentionHours, limit],
+      );
+      return ok(rows);
+    } catch (error) {
+      logger.error('listPendingPushTickets failed', { error: describeError(error) });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  async deletePushTickets(ticketIds: readonly string[]): Promise<Result<number, RequestError>> {
+    if (ticketIds.length === 0) return ok(0);
+    try {
+      const { rowCount } = await db.query(
+        `DELETE FROM ${PUSH_NOTIFICATION_TICKETS_TABLE} WHERE ticket_id = ANY($1::varchar[])`,
+        [[...ticketIds]],
+      );
+      return ok(rowCount ?? 0);
+    } catch (error) {
+      logger.error('deletePushTickets failed', { error: describeError(error) });
+      return err(ERRORS.DATABASE_ERROR);
+    }
+  }
+
+  /** Expo clears receipts after 24 hours; retaining older IDs only grows dead state. */
+  async prunePushTickets(retentionHours: number): Promise<Result<number, RequestError>> {
+    try {
+      const { rowCount } = await db.query(
+        `DELETE FROM ${PUSH_NOTIFICATION_TICKETS_TABLE}
+          WHERE created_at <= (now() AT TIME ZONE 'utc') - ($1 * INTERVAL '1 hour')`,
+        [retentionHours],
+      );
+      return ok(rowCount ?? 0);
+    } catch (error) {
+      logger.error('prunePushTickets failed', { error: describeError(error) });
       return err(ERRORS.DATABASE_ERROR);
     }
   }

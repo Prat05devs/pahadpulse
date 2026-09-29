@@ -1,0 +1,12 @@
+{
+  "Simulator Target Bundle": "in.pahadpulse.app",
+  "aps": {
+    "alert": {
+      "title": "Pahad Pulse notification test",
+      "body": "Tap to open a current public warning"
+    },
+    "sound": "default"
+  },
+  "alertId": 6334,
+  "url": "/alerts/6334"
+}

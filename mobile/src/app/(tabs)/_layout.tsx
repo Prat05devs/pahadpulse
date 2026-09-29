@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 import { Platform, View } from 'react-native';
 
 import { useAlertSummary } from '@/features/alerts';
+import { useWelcomeGate } from '@/features/onboarding';
 import { useT } from '@/i18n';
 import { fontFamily } from '@/theme/fonts';
 import { useTheme } from '@/theme';
@@ -34,6 +35,7 @@ export default function TabsLayout() {
   const theme = useTheme();
   const t = useT();
   const { data: summary } = useAlertSummary();
+  useWelcomeGate();
 
   const activeAlerts = summary?.activeCount ?? 0;
 
@@ -68,16 +70,20 @@ export default function TabsLayout() {
         name="map"
         options={{
           title: t('nav.map'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="map" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="compass" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="districts"
         options={{
           title: t('nav.districts'),
-          // A list icon, not a map one: the map metaphor belongs to the tab that actually
-          // renders a map, and this tab is a searchable list of thirteen districts.
-          tabBarIcon: ({ color, size }) => <Ionicons name="list" size={size} color={color} />,
+          // A civic building, not a map: the map metaphor belongs to the tab that actually
+          // renders a map, and this tab is the thirteen district administrations.
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="business" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -103,9 +109,7 @@ export default function TabsLayout() {
         name="more"
         options={{
           title: t('nav.more'),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="ellipsis-horizontal" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="grid" size={size} color={color} />,
         }}
       />
     </Tabs>

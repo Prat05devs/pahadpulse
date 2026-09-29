@@ -4,6 +4,7 @@ import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 
 import { AppProviders, AppShell } from '@/components/templates';
+import { NotificationCoordinator } from '@/features/notifications';
 import { useT } from '@/i18n';
 import { useTheme } from '@/theme';
 import { fontFamily } from '@/theme/fonts';
@@ -11,8 +12,8 @@ import { fontFamily } from '@/theme/fonts';
 /**
  * Anchor every route to the tab bar.
  *
- * Without this, opening a deep link such as `pahadpulse://settings` — or a push notification,
- * or a link shared from the web portal — makes that screen the FIRST entry in the stack.
+ * Without this, opening a deep link such as `pahadpulse://settings` - or a push notification,
+ * or a link shared from the web portal - makes that screen the FIRST entry in the stack.
  * There is nothing beneath it to go back to, so no back button is drawn and the reader is
  * stranded on a screen with no way out. Naming the initial route means a deep link is always
  * pushed on top of the tabs instead.
@@ -22,7 +23,7 @@ export const unstable_settings = {
 };
 
 /**
- * The root layout. Routing and providers only — no screen ever lives in `src/app`.
+ * The root layout. Routing and providers only - no screen ever lives in `src/app`.
  */
 function RootNavigator() {
   const theme = useTheme();
@@ -30,7 +31,7 @@ function RootNavigator() {
 
   /*
    * The native window behind every screen. It defaults to white, and Android reveals it
-   * during screen transitions and while the keyboard resizes the window — a white flash on
+   * during screen transitions and while the keyboard resizes the window - a white flash on
    * every push in dark mode. Kept in step with the theme rather than set once in config,
    * because the reader can switch theme at runtime.
    */
@@ -40,6 +41,7 @@ function RootNavigator() {
 
   return (
     <>
+      <NotificationCoordinator />
       <StatusBar style={theme.scheme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
@@ -47,7 +49,7 @@ function RootNavigator() {
           headerTintColor: theme.colors.text,
           // The native header is not a Text atom, so its font and alignment are pinned here.
           // Left alone it renders Roboto, left-aligned, on Android and San Francisco,
-          // centred, on iOS — every pushed screen looked like a different app.
+          // centred, on iOS - every pushed screen looked like a different app.
           headerTitleStyle: { fontFamily: fontFamily.semibold },
           headerTitleAlign: 'center',
           headerShadowVisible: false,
@@ -65,12 +67,25 @@ function RootNavigator() {
         <Stack.Screen name="air-quality" options={{ title: t('nav.airQuality') }} />
         <Stack.Screen name="compare" options={{ title: t('nav.compare') }} />
         <Stack.Screen name="credits" options={{ title: t('nav.credits') }} />
+        <Stack.Screen name="trip-check" options={{ title: t('nav.tripCheck') }} />
+        <Stack.Screen name="schemes" options={{ title: t('nav.schemes') }} />
+        <Stack.Screen name="budget" options={{ title: t('nav.budget') }} />
+        <Stack.Screen name="data-explorer" options={{ title: t('nav.dataExplorer') }} />
+        <Stack.Screen
+          name="welcome"
+          options={{
+            headerShown: false,
+            presentation: 'fullScreenModal',
+            // Leaving without choosing is allowed through Skip; a swipe would bypass it.
+            gestureEnabled: false,
+          }}
+        />
         <Stack.Screen
           name="settings"
           options={{
             title: t('nav.settings'),
             presentation: 'modal',
-            // A modal has no back button of its own — iOS relies on a swipe-down gesture
+            // A modal has no back button of its own - iOS relies on a swipe-down gesture
             // that is invisible and undiscoverable. The screen draws its own Done button.
             headerBackVisible: false,
           }}

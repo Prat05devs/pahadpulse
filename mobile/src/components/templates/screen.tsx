@@ -11,7 +11,7 @@ type ScreenProps = {
   refreshing?: boolean;
   /** Turn off scrolling for a screen that hosts its own list. */
   scroll?: boolean;
-  /** Pinned above the scrolling content — a title bar or a filter row. */
+  /** Pinned above the scrolling content - a title bar or a filter row. */
   header?: ReactNode;
   contentContainerStyle?: ScrollViewProps['contentContainerStyle'];
 };

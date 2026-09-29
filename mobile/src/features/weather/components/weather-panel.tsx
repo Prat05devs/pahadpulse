@@ -17,11 +17,12 @@ function conditionIcon(key: keyof typeof CONDITION_ICONS | undefined): IconName 
 function ForecastRow({ day }: { day: ForecastDay }) {
   const language = useLanguage();
   const theme = useTheme();
+  const t = useT();
   const { fontScale } = useWindowDimensions();
   /*
    * The date and temperature columns grow with the reader's font size, up to the caption's
    * own cap. Fixed widths fit at 1x and wrapped "16 Sept 2026" onto two lines as soon as the
-   * system font was a step larger — the default on many Android phones.
+   * system font was a step larger - the default on many Android phones.
    */
   const columnScale = Math.min(fontScale, theme.typography.caption.maxFontScale);
 
@@ -34,7 +35,7 @@ function ForecastRow({ day }: { day: ForecastDay }) {
       <Icon name={conditionIcon(day.condition?.condition)} size={18} tone="accent" />
 
       <Text variant="caption" color="textMuted" numberOfLines={1} style={{ flex: 1 }}>
-        {day.condition ? localise(day.condition.label, language) : '—'}
+        {day.condition ? localise(day.condition.label, language) : t('common.notAvailable')}
       </Text>
 
       {day.precipitationMm !== null && day.precipitationMm > 0 ? (
@@ -48,7 +49,9 @@ function ForecastRow({ day }: { day: ForecastDay }) {
         tabular
         style={{ minWidth: 74 * columnScale, textAlign: 'right' }}
       >
-        {day.maxTemperatureC === null ? '—' : `${Math.round(day.maxTemperatureC)}°`}
+        {day.maxTemperatureC === null
+          ? t('common.notAvailable')
+          : `${Math.round(day.maxTemperatureC)}°`}
         <Text variant="caption" color="textMuted">
           {day.minTemperatureC === null ? '' : ` / ${Math.round(day.minTemperatureC)}°`}
         </Text>
@@ -75,7 +78,7 @@ export function WeatherPanel({ weather }: { weather: WeatherData }) {
   /**
    * The weather endpoint reports its source in its own shape, not as a `Provenance`. It is
    * adapted here rather than in the schema so the wire format stays a faithful copy of what
-   * the API sends — the mapping is a display concern.
+   * the API sends - the mapping is a display concern.
    */
   const provenance: Provenance = weather.source
     ? {
@@ -99,7 +102,9 @@ export function WeatherPanel({ weather }: { weather: WeatherData }) {
           <VStack grow gap="xxs">
             <HStack align="baseline" gap="xs">
               <Text variant="display" tabular>
-                {weather.temperature ? `${Math.round(weather.temperature.value)}°` : '—'}
+                {weather.temperature
+                  ? `${Math.round(weather.temperature.value)}°`
+                  : t('common.notAvailable')}
               </Text>
               {weather.condition ? (
                 <Text variant="caption" color="textMuted" numberOfLines={1}>

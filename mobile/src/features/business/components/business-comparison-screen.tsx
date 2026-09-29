@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Modal, Platform, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, useWindowDimensions } from 'react-native';
 import { useBusinessScenarios, useBusinessComparison } from '../hooks';
 import { outcomeOf, readMetric } from '../outcome';
 import {
@@ -16,6 +15,10 @@ import {
 import { useT, type Translate, type TranslationKey } from '@/i18n';
 import { useTheme } from '@/theme';
 import { AnimatedNumber } from '@/components/atoms/animated-number';
+import { SelectField } from '@/components/molecules';
+import { formatCrore } from '@/features/governance';
+
+import { SchemeCard } from './scheme-card';
 
 const METRIC_KEYS: Record<string, TranslationKey> = {
   connectivity: 'compare.metric.connectivity',
@@ -36,133 +39,6 @@ const CONFIDENCE_KEYS = {
 function metricLabel(t: Translate, key: string): string {
   const translationKey = METRIC_KEYS[key];
   return translationKey ? t(translationKey) : key;
-}
-
-// Generic Select component for Native
-function NativeSelect({
-  label,
-  value,
-  options,
-  onSelect,
-  disabledValues = [],
-}: {
-  label: string;
-  value: string;
-  options: { label: string; value: string; description?: string }[];
-  onSelect: (v: string) => void;
-  disabledValues?: string[];
-}) {
-  const [modalVisible, setModalVisible] = useState(false);
-  const theme = useTheme();
-  const t = useT();
-
-  const selectedOption = options.find((o) => o.value === value);
-
-  return (
-    <>
-      <VStack gap="xs">
-        <Text variant="footnote" color="textMuted">
-          {label}
-        </Text>
-        <Pressable
-          onPress={() => setModalVisible(true)}
-          accessibilityLabel={`${label}: ${selectedOption?.label ?? 'not selected'}`}
-          accessibilityHint={t('compare.choicesHint')}
-          accessibilityState={{ expanded: modalVisible }}
-          style={{
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            padding: theme.spacing.md,
-            borderRadius: theme.radius.md,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: theme.colors.surface,
-          }}
-        >
-          <Text variant="bodyStrong">
-            {selectedOption ? selectedOption.label : t('compare.select')}
-          </Text>
-          <Icon name="chevron-down" size={16} tone="textMuted" />
-        </Pressable>
-      </VStack>
-
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'overFullScreen'}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-          <View
-            style={{
-              padding: theme.spacing.md,
-              paddingHorizontal: theme.spacing.xl,
-              borderBottomWidth: 1,
-              borderBottomColor: theme.colors.border,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Text variant="heading">{label}</Text>
-            <Pressable
-              onPress={() => setModalVisible(false)}
-              accessibilityLabel={t('compare.closeChoices', { label })}
-            >
-              <Icon name="close" size={24} tone="text" />
-            </Pressable>
-          </View>
-          <ScrollView contentContainerStyle={{ padding: theme.spacing.lg }}>
-            <VStack gap="sm">
-              {options.map((opt) => {
-                const isSelected = opt.value === value;
-                const isDisabled = disabledValues.includes(opt.value);
-                return (
-                  <Pressable
-                    key={opt.value}
-                    onPress={() => {
-                      onSelect(opt.value);
-                      setModalVisible(false);
-                    }}
-                    disabled={isDisabled}
-                    accessibilityRole="radio"
-                    accessibilityLabel={opt.label}
-                    accessibilityState={{ selected: isSelected, disabled: isDisabled }}
-                    style={{
-                      padding: theme.spacing.lg,
-                      backgroundColor: isSelected
-                        ? theme.colors.primaryMuted
-                        : theme.colors.surface,
-                      borderRadius: theme.radius.lg,
-                      borderWidth: 1,
-                      borderColor: isSelected ? theme.colors.primary : theme.colors.border,
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      opacity: isDisabled ? 0.45 : 1,
-                    }}
-                  >
-                    <VStack gap="xs" style={{ flex: 1 }}>
-                      <Text variant="bodyStrong" color={isSelected ? 'primary' : 'text'}>
-                        {opt.label}
-                      </Text>
-                      {opt.description && (
-                        <Text variant="caption" color="textMuted">
-                          {opt.description}
-                        </Text>
-                      )}
-                    </VStack>
-                    {isSelected && <Icon name="checkmark-circle" size={24} tone="primary" />}
-                  </Pressable>
-                );
-              })}
-            </VStack>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
-    </>
-  );
 }
 
 /**
@@ -293,7 +169,7 @@ export function BusinessComparisonScreen({
   const ResultRow = stackDistrictCards ? VStack : HStack;
 
   /*
-   * Three outcomes, not two: a district, a tie, or no recommendation at all — see
+   * Three outcomes, not two: a district, a tie, or no recommendation at all - see
    * `outcomeOf`, which is where the reasoning and its tests live.
    */
   const outcome = report ? outcomeOf(report) : null;
@@ -333,7 +209,7 @@ export function BusinessComparisonScreen({
       {/* Configurator */}
       <Card>
         <VStack gap="md">
-          <NativeSelect
+          <SelectField
             label={t('compare.whatBusiness')}
             value={selectedScenarioId}
             options={scenarioOptions}
@@ -351,7 +227,7 @@ export function BusinessComparisonScreen({
             style={{ marginTop: theme.spacing.md, alignItems: 'center' }}
           >
             <View style={{ flex: 1 }}>
-              <NativeSelect
+              <SelectField
                 label={t('compare.districtA')}
                 value={districtA}
                 options={districtOptions}
@@ -369,7 +245,7 @@ export function BusinessComparisonScreen({
               </Text>
             ) : null}
             <View style={{ flex: 1 }}>
-              <NativeSelect
+              <SelectField
                 label={t('compare.districtB')}
                 value={districtB}
                 options={districtOptions}
@@ -493,7 +369,7 @@ export function BusinessComparisonScreen({
                    *
                    * This used to test only for `tie`, so when the API reported that the
                    * evidence was too thin to recommend either district, the slug comparison
-                   * below fell through and the screen named district B as recommended — a
+                   * below fell through and the screen named district B as recommended - a
                    * recommendation the API had explicitly declined to make.
                    */}
                   <Text variant="title" color={hasRecommendation ? 'primary' : 'text'}>
@@ -587,6 +463,79 @@ export function BusinessComparisonScreen({
                 );
               })}
             </ResultRow>
+
+            {report.publicInvestmentContext ? (
+              <Card padding="md">
+                <VStack gap="sm">
+                  <Text variant="heading">{t('compare.investment.title')}</Text>
+                  <Text variant="caption" color="textMuted">
+                    {t('compare.investment.body', { category: report.scenario.category })}
+                  </Text>
+                  <HStack gap="lg" wrap>
+                    <VStack>
+                      <Text variant="footnote" color="textMuted">
+                        {t('compare.investment.total', {
+                          year: report.publicInvestmentContext.fiscalYear,
+                        })}
+                      </Text>
+                      <Text variant="heading" tabular>
+                        {formatCrore(report.publicInvestmentContext.total, 0)}
+                      </Text>
+                    </VStack>
+                    <VStack>
+                      <Text variant="footnote" color="textMuted">
+                        {t('budget.capital')}
+                      </Text>
+                      <Text variant="heading" tabular>
+                        {formatCrore(report.publicInvestmentContext.capital, 0)}
+                      </Text>
+                    </VStack>
+                    {report.publicInvestmentContext.changePct !== null ? (
+                      <VStack>
+                        <Text variant="footnote" color="textMuted">
+                          {t('compare.investment.change', {
+                            year:
+                              report.publicInvestmentContext.previousFiscalYear ??
+                              t('common.notAvailable'),
+                          })}
+                        </Text>
+                        <Text variant="heading" tabular>
+                          {report.publicInvestmentContext.changePct >= 0 ? '+' : ''}
+                          {report.publicInvestmentContext.changePct}%
+                        </Text>
+                      </VStack>
+                    ) : null}
+                  </HStack>
+                  {report.publicInvestmentContext.departments.map((department) => (
+                    <HStack key={department.demandNo} justify="space-between" gap="md">
+                      <Text variant="caption" style={{ flex: 1 }}>
+                        {department.name}
+                      </Text>
+                      <Text variant="caption" tabular>
+                        {formatCrore(department.total, 0)}
+                      </Text>
+                    </HStack>
+                  ))}
+                  <Text variant="footnote" color="textMuted">
+                    {report.publicInvestmentContext.note}
+                  </Text>
+                </VStack>
+              </Card>
+            ) : null}
+
+            {report.recommendedSchemes && report.recommendedSchemes.length > 0 ? (
+              <VStack gap="sm">
+                <Text variant="heading">
+                  {t('compare.schemes.title', { name: report.scenario.name })}
+                </Text>
+                <Text variant="caption" color="textMuted">
+                  {t('compare.schemes.body')}
+                </Text>
+                {report.recommendedSchemes.map((scheme) => (
+                  <SchemeCard key={scheme.slug} scheme={scheme} />
+                ))}
+              </VStack>
+            ) : null}
           </VStack>
         </Entrance>
       ) : null}

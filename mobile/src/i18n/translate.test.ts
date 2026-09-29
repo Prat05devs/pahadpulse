@@ -14,7 +14,7 @@ describe('the dictionaries', () => {
      * justified here rather than slipping in unnoticed:
      *
      *  - licence names and "API" identify a thing, and stop identifying it if translated
-     *  - the rest are pure format strings — placeholders, separators and punctuation, with
+     *  - the rest are pure format strings - placeholders, separators and punctuation, with
      *    no word of their own to translate
      */
     expect(untranslated.sort()).toEqual(
@@ -27,6 +27,10 @@ describe('the dictionaries', () => {
         'credits.contact.email',
         'credits.licence.bsd',
         'credits.licence.odbl',
+        // "AQI" names the index, as CPCB publishes it in both languages.
+        'today.aqi',
+        // The state's name in Devanagari, shown as a tag beside the English brand name.
+        'today.stateTag',
       ].sort()
     );
   });
@@ -37,6 +41,18 @@ describe('the dictionaries', () => {
       .map(([key]) => key);
 
     expect(empty).toEqual([]);
+  });
+
+  it('does not use em dashes in authored app copy', () => {
+    const emDash = String.fromCodePoint(8212);
+    const offenders = [
+      ...Object.entries(en).map(([key, value]) => [`en.${key}`, value] as const),
+      ...Object.entries(hi).map(([key, value]) => [`hi.${key}`, value] as const),
+    ]
+      .filter(([, value]) => value.includes(emDash))
+      .map(([key]) => key);
+
+    expect(offenders).toEqual([]);
   });
 
   it('keeps every placeholder a string uses in English', () => {

@@ -19,9 +19,8 @@ const sections = [
     title: 'Who operates Pahad Pulse',
     body: (
       <>
-        Pahad Pulse is built and operated by Team Pahad Pulse, based in Dehradun,
-        Uttarakhand, India. Questions about this policy can be sent to the contact address
-        below.
+        Pahad Pulse is built and operated by Team Pahad Pulse, based in Dehradun, Uttarakhand,
+        India. Questions about this policy can be sent to the contact address below.
       </>
     ),
   },
@@ -29,9 +28,9 @@ const sections = [
     title: 'Information you choose to send',
     body: (
       <>
-        Pahad Pulse has no account or profile system. If you email support, we receive the
-        address you email from and the information you include. Please do not send passwords,
-        identity documents, medical records or other sensitive personal information.
+        Pahad Pulse has no account or profile system. If you email support, we receive the address
+        you email from and the information you include. Please do not send passwords, identity
+        documents, medical records or other sensitive personal information.
       </>
     ),
   },
@@ -47,15 +46,28 @@ const sections = [
     ),
   },
   {
+    title: 'Optional warning notifications',
+    body: (
+      <>
+        If you turn on warning notifications, the app sends a pseudonymous Expo push token, your
+        device platform and your selected language to the Pahad Pulse API. We keep that token only
+        to send new public-warning notifications; it is not linked to an account, name, phone number
+        or email address. Alert text and the token are processed by Expo, Apple Push Notification
+        service or Firebase Cloud Messaging to deliver the message. Turning notifications off or
+        resetting app preferences asks our API to delete the token. Invalid tokens are disabled when
+        the delivery services report them.
+      </>
+    ),
+  },
+  {
     title: 'Operational request data',
     body: (
       <>
-        When the website or app requests public data, our API records a request identifier,
-        method, requested path, response status, timestamp and processing duration for security,
-        reliability and troubleshooting. Hosting and network providers may also process standard
-        connection data such as IP address, browser or device information. We retain operational
-        data only as needed for those purposes and according to the configured provider retention
-        settings.
+        When the website or app requests public data, our API records a request identifier, method,
+        requested path, response status, timestamp and processing duration for security, reliability
+        and troubleshooting. Hosting and network providers may also process standard connection data
+        such as IP address, browser or device information. We retain operational data only as needed
+        for those purposes and according to the configured provider retention settings.
       </>
     ),
   },
@@ -65,10 +77,9 @@ const sections = [
       <>
         The website is delivered using Vercel and the public API is hosted on Render. Opening the
         map requests basemap resources from OpenFreeMap and terrain tiles hosted on Amazon Web
-        Services. Source links can open government departments or other publishers in your
-        browser. Those services receive normal network request information and apply their own
-        privacy terms. Pahad Pulse does not send them an account identifier because the app has
-        no accounts.
+        Services. Source links can open government departments or other publishers in your browser.
+        Those services receive normal network request information and apply their own privacy terms.
+        Pahad Pulse does not send them an account identifier because the app has no accounts.
       </>
     ),
   },
@@ -87,10 +98,9 @@ const sections = [
     title: 'Children’s privacy',
     body: (
       <>
-        Pahad Pulse is a general-audience public information service and is not designed to
-        collect personal information from children. If you believe a child has sent personal
-        information through support email, contact us so we can review and delete it where
-        appropriate.
+        Pahad Pulse is a general-audience public information service and is not designed to collect
+        personal information from children. If you believe a child has sent personal information
+        through support email, contact us so we can review and delete it where appropriate.
       </>
     ),
   },
@@ -98,9 +108,9 @@ const sections = [
     title: 'Your choices and requests',
     body: (
       <>
-        You can use the service without an account, reset mobile preferences at any time, and
-        choose whether to open external source links. To ask about access, correction or deletion
-        of information you sent to support, email us using the address below. We may need enough
+        You can use the service without an account, reset mobile preferences at any time, and choose
+        whether to open external source links. To ask about access, correction or deletion of
+        information you sent to support, email us using the address below. We may need enough
         information to locate the relevant message and verify the request.
       </>
     ),
@@ -125,7 +135,7 @@ export default function PrivacyPage() {
             <div className="mb-4 flex size-11 items-center justify-center rounded-lg bg-info-soft text-info">
               <ShieldCheck className="size-6" strokeWidth={1.8} aria-hidden="true" />
             </div>
-            <p className="text-sm font-medium text-muted-foreground">Effective 14 September 2026</p>
+            <p className="text-sm font-medium text-muted-foreground">Effective 28 September 2026</p>
             <h1 className="mt-2 font-display text-3xl font-semibold tracking-[-0.03em] text-text-light sm:text-4xl">
               Privacy Policy
             </h1>
@@ -148,7 +158,10 @@ export default function PrivacyPage() {
             ))}
           </article>
 
-          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start" aria-label="Privacy summary">
+          <aside
+            className="space-y-4 lg:sticky lg:top-6 lg:self-start"
+            aria-label="Privacy summary"
+          >
             <div className="surface-card p-5">
               <h2 className="font-semibold text-text-light">At a glance</h2>
               <ul className="mt-4 space-y-4 text-sm leading-6 text-muted-foreground">
@@ -158,7 +171,7 @@ export default function PrivacyPage() {
                 </li>
                 <li className="flex gap-3">
                   <Database className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden="true" />
-                  Operational logs help keep public APIs reliable and secure.
+                  An optional push token is stored only when you turn warning notifications on.
                 </li>
                 <li className="flex gap-3">
                   <ExternalLink className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden="true" />
@@ -178,7 +191,10 @@ export default function PrivacyPage() {
               </a>
               <p className="mt-4 text-sm leading-6 text-muted-foreground">
                 For product help instead, visit the{' '}
-                <Link href="/support" className="font-medium text-accent underline underline-offset-4">
+                <Link
+                  href="/support"
+                  className="font-medium text-accent underline underline-offset-4"
+                >
                   support page
                 </Link>
                 .

@@ -94,14 +94,26 @@ cd mobile
 
 # 2. Regenerate the native project. --clean guarantees the signing plugin has run
 #    against a fresh template rather than a half-migrated one.
+#    APP_VARIANT is REQUIRED: without it app.config.ts builds the development variant
+#    (in.pahadpulse.app.dev). 1.0.0 (2) was built that way and Play cannot accept it.
+#    The URLs are set in the shell because Gradle's JS bundling otherwise reads the local
+#    .env - which put ONLY http://localhost:3000/api into 1.0.0 (2).
+export APP_VARIANT=production
+export EXPO_PUBLIC_API_URL=https://pahadpulse.onrender.com/api
+export EXPO_PUBLIC_WEB_URL=https://www.pahadpulse.live
 npx expo prebuild -p android --clean
 
-#    Verify the plugin applied, every time:
-grep -n "signingConfigs.release" android/app/build.gradle
+#    Verify the plugin applied and the package is the store one, every time:
+grep -n "signingConfigs.release\|applicationId" android/app/build.gradle
+#    -> applicationId 'in.pahadpulse.app' (no .dev / .preview suffix)
 
-# 3. The store bundle
+# 3. The store bundle (same shell, so the exports above still apply)
 cd android && ./gradlew bundleRelease
 #    -> android/app/build/outputs/bundle/release/app-release.aab
+
+#    The production API URL must be in the bundle. No output here = do not upload.
+unzip -p app/build/outputs/bundle/release/app-release.aab base/assets/index.android.bundle \
+  | grep -ao 'https://pahadpulse.onrender.com/api' | head -1
 
 # 4. Confirm it is signed with YOUR upload key, not the debug key.
 #    "CN=Android Debug" here means the signing plugin did not apply: do not upload.

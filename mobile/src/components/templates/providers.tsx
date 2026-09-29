@@ -13,7 +13,7 @@ import { ThemeProvider } from '@/theme';
  * Every app-wide provider, in one place and in the order they depend on each other.
  *
  * `ThemeProvider` sits inside the query provider because it reads the reader's theme choice
- * from Zustand, which has no provider of its own — a Zustand store is just a module.
+ * from Zustand, which has no provider of its own - a Zustand store is just a module.
  */
 
 const persister = createAsyncStoragePersister({

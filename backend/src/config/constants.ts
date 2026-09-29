@@ -69,8 +69,15 @@ export const INGESTION_RUN_TIMEOUT_SECONDS = 30 * 60;
  */
 export const PUSH = {
   EXPO_URL: 'https://exp.host/--/api/v2/push/send',
+  EXPO_RECEIPTS_URL: 'https://exp.host/--/api/v2/push/getReceipts',
   /** Expo accepts up to 100 messages per request. */
   BATCH_SIZE: 100,
+  /** Expo accepts up to 1,000 receipt IDs per request. */
+  RECEIPT_BATCH_SIZE: 1_000,
+  /** Expo recommends waiting this long before requesting a receipt. */
+  RECEIPT_DELAY_MINUTES: 15,
+  /** Expo removes receipts after 24 hours, so older tickets cannot be reconciled. */
+  RECEIPT_RETENTION_HOURS: 24,
   ALERT_WINDOW_HOURS: 3,
   /** A ceiling on one pass, so a burst of warnings cannot become an unbounded send. */
   MAX_ALERTS_PER_RUN: 5,

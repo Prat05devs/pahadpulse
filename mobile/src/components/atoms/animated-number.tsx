@@ -25,7 +25,7 @@ type AnimatedNumberProps = Omit<TextProps, 'children'> & {
  * up says "this was measured", and it draws the eye to the number that changed.
  *
  * It animates a shared value and formats on the JS thread rather than driving the text
- * natively, because the text has to pass through `formatNumber` for Indian digit grouping —
+ * natively, because the text has to pass through `formatNumber` for Indian digit grouping -
  * a worklet cannot call `Intl`. The cost is one setState per frame for well under a second,
  * on at most a handful of counters.
  */

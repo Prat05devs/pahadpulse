@@ -29,7 +29,7 @@ function buildTheme(scheme: ColorScheme): Theme {
 /**
  * Defaulted to light rather than left undefined.
  *
- * A component rendered outside the provider — most often in a test — then styles itself
+ * A component rendered outside the provider - most often in a test - then styles itself
  * correctly instead of throwing, which keeps unit tests free of provider boilerplate.
  */
 const ThemeContext = createContext<Theme>(buildTheme('light'));
@@ -59,7 +59,7 @@ export function useTheme(): Theme {
  * plain `StyleSheet.create` is. This memoises per theme, so switching to dark rebuilds them
  * once rather than on every render.
  *
- * Define the factory at module scope, not inline in the component — an inline arrow is a new
+ * Define the factory at module scope, not inline in the component - an inline arrow is a new
  * function every render, which defeats the memo:
  *
  *   const makeStyles = (t: Theme) => ({ card: { backgroundColor: t.colors.surface } });

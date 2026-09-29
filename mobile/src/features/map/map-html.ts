@@ -41,7 +41,28 @@ export interface BuildMapHtmlOptions {
   districts: DistrictCollection | null;
   alerts: AlertCollection | null;
   language?: 'en' | 'hi';
+  palette?: MapDocumentPalette;
 }
+
+export type MapDocumentPalette = {
+  background: string;
+  text: string;
+  labelBackground: string;
+  labelBorder: string;
+  labelShadow: string;
+  selection: string;
+  selectionCasing: string;
+};
+
+const DEFAULT_DOCUMENT_PALETTE: MapDocumentPalette = {
+  background: '#FAF8FF',
+  text: '#131B2E',
+  labelBackground: 'rgba(255, 255, 255, 0.92)',
+  labelBorder: 'rgba(19, 27, 46, 0.22)',
+  labelShadow: 'rgba(19, 27, 46, 0.2)',
+  selection: '#015BD6',
+  selectionCasing: '#FFFFFF',
+};
 
 /**
  * The layers a reader can turn on and off, and whether each starts visible.
@@ -63,19 +84,20 @@ export const DEFAULT_LAYERS: MapLayerState = {
  * The whole map, as one self-contained HTML document.
  *
  * Why a WebView at all: MapLibre's 3D terrain has no React Native equivalent that runs in
- * Expo Go, and the terrain is the reason this map exists — an alert polygon over Chamoli
+ * Expo Go, and the terrain is the reason this map exists - an alert polygon over Chamoli
  * means something different depending on whether it covers a valley floor or a ridge, and a
  * flat map cannot show that. Rendering the same library the web app uses also means the two
  * maps cannot drift apart in how they read.
  *
  * The GeoJSON is inlined into the document rather than fetched from inside it, so the app's
- * own validated, cached data is what gets drawn — the WebView never talks to our API, and
+ * own validated, cached data is what gets drawn - the WebView never talks to our API, and
  * there is exactly one place (the Zod schemas) where a payload is trusted.
  */
 export function buildMapHtml({
   districts,
   alerts,
   language = 'en',
+  palette = DEFAULT_DOCUMENT_PALETTE,
 }: BuildMapHtmlOptions): string {
   const districtJson = toScriptJson(districts ?? { type: 'FeatureCollection', features: [] });
   const alertJson = toScriptJson(alerts ?? { type: 'FeatureCollection', features: [] });
@@ -87,24 +109,24 @@ export function buildMapHtml({
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <link href="${MAPLIBRE_CSS}" rel="stylesheet" />
 <style>
-  html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: #F2F7F7; }
+  html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: ${palette.background}; }
   /* The RN screen draws its own attribution, where it can be styled with the app's type. */
   .maplibregl-ctrl-attrib, .maplibregl-ctrl-bottom-right { display: none; }
   .pp-district-label {
     pointer-events: none;
     white-space: nowrap;
     padding: 3px 7px;
-    border: 1px solid rgba(16, 42, 43, 0.24);
+    border: 1px solid ${palette.labelBorder};
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 1px 4px rgba(7, 23, 25, 0.22);
-    color: #102A2B;
+    background: ${palette.labelBackground};
+    box-shadow: 0 1px 4px ${palette.labelShadow};
+    color: ${palette.text};
     font: 600 11px/15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     letter-spacing: 0.1px;
   }
   #err {
     position: absolute; inset: 0; display: none; padding: 24px;
-    font: 15px -apple-system, system-ui, sans-serif; color: #314B4C; background: #F2F7F7;
+    font: 15px -apple-system, system-ui, sans-serif; color: ${palette.text}; background: ${palette.background};
   }
 </style>
 </head>
@@ -182,8 +204,8 @@ export function buildMapHtml({
     /*
      * Highways, drawn by restyling the BASEMAP's own vector roads rather than from our API.
      *
-     * road_routes in our database stores a ref, a segment count and a bounding box — no
-     * geometry — so there is nothing of ours to draw. The basemap already carries every
+     * road_routes in our database stores a ref, a segment count and a bounding box - no
+     * geometry - so there is nothing of ours to draw. The basemap already carries every
      * road; transportation_name is the layer that carries the ref tag, and matching on
      * its prefix is what makes this an actual NH/SH highlight rather than a "big roads" one.
      */
@@ -264,6 +286,24 @@ export function buildMapHtml({
       paint: { 'line-color': '#FFFFFF', 'line-width': 1.1 }
     });
 
+    map.addLayer({
+      id: 'district-selected-casing',
+      type: 'line',
+      source: 'districts',
+      filter: ['==', ['get', 'slug'], ''],
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': ${toScriptJson(palette.selectionCasing)}, 'line-width': 7 }
+    });
+
+    map.addLayer({
+      id: 'district-selected',
+      type: 'line',
+      source: 'districts',
+      filter: ['==', ['get', 'slug'], ''],
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': ${toScriptJson(palette.selection)}, 'line-width': 4 }
+    });
+
     var alertColor = [
       'match', ['get', 'severity'],
       'extreme', ${toScriptJson(SEVERITY_COLORS.extreme)},
@@ -332,13 +372,26 @@ export function buildMapHtml({
      * only thirteen labels this has negligible cost and is more reliable than a symbol
      * layer, whose collision system can discard the names on a narrow phone viewport.
      */
+    var LABEL_OFFSETS = {
+      dehradun: [48, 18],
+      haridwar: [32, 24],
+      'tehri-garhwal': [-24, 8],
+      'pauri-garhwal': [26, 22],
+      rudraprayag: [34, 2],
+      chamoli: [28, -16],
+      uttarkashi: [-18, -18],
+      bageshwar: [18, -12],
+      almora: [12, 12],
+      nainital: [-18, 18],
+      'udham-singh-nagar': [12, 22]
+    };
+
     var districtMarkers = districts.features
       .filter(function (feature) { return feature.properties && feature.properties.centroid; })
       .map(function (feature) {
         var centroid = feature.properties.centroid;
-        // Dehradun's centroid is almost on the state's western edge. A small label-only
-        // offset keeps the full name inside a phone viewport without moving the geometry.
-        var labelOffset = feature.properties.slug === 'dehradun' ? [55, 32] : [0, 0];
+        // Dense central districts need label-only offsets on a phone. Geometry stays exact.
+        var labelOffset = LABEL_OFFSETS[feature.properties.slug] || [0, 0];
         var element = document.createElement('span');
         element.className = 'pp-district-label';
         element.setAttribute('aria-hidden', 'true');
@@ -364,7 +417,7 @@ export function buildMapHtml({
      * Frame the state, then tilt.
      *
      * fitBounds solves for a centre and zoom against the CURRENT camera, so passing pitch
-     * in its options fits the box to an untilted view and then tilts away from it — which
+     * in its options fits the box to an untilted view and then tilts away from it - which
      * is what pushed the state off the left edge. Fitting flat first and tilting after
      * keeps the whole state in frame.
      *
@@ -376,7 +429,7 @@ export function buildMapHtml({
       map.fitBounds(STATE_BOUNDS, {
         // Side room is for the district-name pills, not decorative whitespace. Without it,
         // Dehradun and Pithoragarh can be technically on-map while their labels are clipped.
-        padding: { top: 48, bottom: 132, left: 48, right: 48 },
+        padding: { top: 180, bottom: 132, left: 48, right: 48 },
         duration: 0
       });
       if (!terrainOn) { map.setBearing(0); map.setPitch(0); }
@@ -391,11 +444,24 @@ export function buildMapHtml({
      */
     window.addEventListener('resize', frameState);
 
-    map.on('click', 'district-fill', function (e) {
-      var f = e.features && e.features[0];
-      if (f && f.properties && f.properties.slug) {
-        post({ type: 'district', slug: String(f.properties.slug) });
+    map.on('click', function (event) {
+      var alertFeatures = map.queryRenderedFeatures(event.point, {
+        layers: ['alert-point', 'alert-outline', 'alert-fill']
+      });
+      var alertFeature = alertFeatures && alertFeatures[0];
+      if (alertFeature && alertFeature.properties && alertFeature.properties.alertId) {
+        post({ type: 'alert', alertId: Number(alertFeature.properties.alertId) });
+        return;
       }
+
+      var districtFeatures = map.queryRenderedFeatures(event.point, { layers: ['district-fill'] });
+      var districtFeature = districtFeatures && districtFeatures[0];
+      if (districtFeature && districtFeature.properties && districtFeature.properties.slug) {
+        post({ type: 'district', slug: String(districtFeature.properties.slug) });
+        return;
+      }
+
+      post({ type: 'clear' });
     });
 
     /*
@@ -422,6 +488,8 @@ export function buildMapHtml({
       setVisible('district-fill', !!state.districts);
       setVisible('district-casing', !!state.districts);
       setVisible('district-border', !!state.districts);
+      setVisible('district-selected-casing', !!state.districts);
+      setVisible('district-selected', !!state.districts);
       districtMarkers.forEach(function (item) {
         item.element.style.display = state.districts ? '' : 'none';
       });
@@ -436,6 +504,12 @@ export function buildMapHtml({
         map.setTerrain(null);
         map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
       }
+    };
+
+    window.ppSelectDistrict = function (slug) {
+      var filter = ['==', ['get', 'slug'], slug || ''];
+      if (map.getLayer('district-selected-casing')) map.setFilter('district-selected-casing', filter);
+      if (map.getLayer('district-selected')) map.setFilter('district-selected', filter);
     };
 
     /*

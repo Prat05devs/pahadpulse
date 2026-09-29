@@ -65,6 +65,48 @@ export const ComparisonDistrictSchema = z.object({
 
 export type ComparisonDistrict = z.infer<typeof ComparisonDistrictSchema>;
 
+export const PublicInvestmentContextSchema = z.object({
+  scope: z.literal('statewide'),
+  fiscalYear: z.string(),
+  previousFiscalYear: z.string().nullable(),
+  unit: z.literal('thousand_inr'),
+  total: z.number(),
+  capital: z.number(),
+  changePct: z.number().nullable(),
+  departments: z.array(
+    z.object({
+      demandNo: z.number(),
+      name: z.string(),
+      total: z.number(),
+      capital: z.number(),
+      previousTotal: z.number().nullable(),
+    })
+  ),
+  source: z.string(),
+  sourceUrl: z.string().nullable(),
+  note: z.string(),
+});
+
+export const BusinessSchemeSchema = z.object({
+  id: z.number(),
+  group: z.string(),
+  slug: z.string(),
+  name: z.string(),
+  acronym: z.string(),
+  owner: z.string(),
+  sector: z.array(z.string()),
+  stage: z.array(z.string()),
+  support: z.array(z.string()),
+  access: z.string(),
+  status: z.string(),
+  summary: z.string(),
+  eligibility: z.array(z.string()),
+  benefits: z.array(z.string()),
+  apply: z.array(z.string()),
+  url: z.string().url(),
+  availability: z.string(),
+});
+
 export const ComparisonReportSchema = z.object({
   /** A district slug, `tie`, or `insufficient` when the evidence is too thin to recommend. */
   winner: z.string(),
@@ -84,6 +126,22 @@ export const ComparisonReportSchema = z.object({
       note: z.string(),
     })
     .optional(),
+  recommendedSchemes: z.array(BusinessSchemeSchema).optional(),
+  // Optional: an installed build must keep working against an API that predates it.
+  publicInvestmentContext: PublicInvestmentContextSchema.nullable().optional(),
 });
 
 export type ComparisonReport = z.infer<typeof ComparisonReportSchema>;
+
+export const BusinessSchemeDirectorySchema = z.object({
+  verifiedOn: z.string(),
+  sourceUrl: z.string().url(),
+  total: z.number(),
+  filteredCount: z.number(),
+  sectors: z.array(z.string()),
+  supportTypes: z.array(z.string()),
+  schemes: z.array(BusinessSchemeSchema),
+});
+
+export type BusinessScheme = z.infer<typeof BusinessSchemeSchema>;
+export type BusinessSchemeDirectory = z.infer<typeof BusinessSchemeDirectorySchema>;

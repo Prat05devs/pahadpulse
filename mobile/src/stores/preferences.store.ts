@@ -1,12 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { deviceLanguage } from '@/i18n';
+// Direct, not via the `@/i18n` barrel: that barrel imports this store, and the cycle leaves
+// `deviceLanguage` undefined when a module enters through `@/i18n` first.
+import { deviceLanguage } from '@/i18n/device-language';
 import { STORAGE_KEYS } from '@/lib/storage';
 
 /**
- * CLIENT state only — what this person has chosen.
+ * CLIENT state only - what this person has chosen.
  *
  * The rule that keeps this store small: if the API is the source of truth, it does NOT
  * belong here. Districts, alerts and readings live in TanStack Query, which already handles
@@ -31,7 +34,7 @@ type PreferencesState = {
    * Whether this device asked to be told about new public warnings.
    *
    * The server holds the push token; this is the reader's choice, which has to survive a
-   * launch before any network call is made — otherwise the switch flickers off on every
+   * launch before any network call is made - otherwise the switch flickers off on every
    * cold start while registration is in flight.
    */
   notificationsEnabled: boolean;
@@ -48,7 +51,7 @@ const INITIAL = {
   /**
    * Seeded from the phone, not hardcoded to English: a reader whose device is set to Hindi
    * should not have to find a setting to read the app in Hindi. Only the first launch is
-   * affected — once `setLanguage` runs, the persisted choice wins and the device is never
+   * affected - once `setLanguage` runs, the persisted choice wins and the device is never
    * consulted again.
    */
   language: deviceLanguage() as Language,
@@ -103,7 +106,7 @@ export const usePreferencesStore = create<PreferencesState>()(
  * Atomic selectors.
  *
  * Subscribing with `usePreferencesStore()` re-renders a component on EVERY preference
- * change — a district card would repaint because the theme changed. Exporting one selector
+ * change - a district card would repaint because the theme changed. Exporting one selector
  * per field makes the narrow subscription the easy thing to reach for.
  *
  * Each is a stable module-level reference, so it never re-subscribes on re-render.
@@ -116,6 +119,20 @@ export const selectHasSeenIntro = (s: PreferencesState) => s.hasSeenIntro;
 export const useLanguage = () => usePreferencesStore(selectLanguage);
 export const useThemeMode = () => usePreferencesStore(selectThemeMode);
 export const useSavedDistricts = () => usePreferencesStore(selectSavedDistricts);
+export const useHasSeenIntro = () => usePreferencesStore(selectHasSeenIntro);
+
+/**
+ * Whether the persisted preferences have been read back from storage.
+ *
+ * Until they have, `hasSeenIntro` is its initial `false` for EVERY reader - acting on it
+ * before hydration would show the welcome to someone who dismissed it a year ago.
+ */
+export function usePreferencesHydrated(): boolean {
+  return useSyncExternalStore(
+    (onChange) => usePreferencesStore.persist.onFinishHydration(onChange),
+    () => usePreferencesStore.persist.hasHydrated()
+  );
+}
 
 /**
  * Whether one district is followed.

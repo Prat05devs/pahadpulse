@@ -1,4 +1,5 @@
 import { err, ok, type Result } from 'neverthrow';
+import { z } from 'zod';
 
 import { PUSH } from '../config/constants.js';
 import { env } from '../config/env.js';
@@ -25,23 +26,47 @@ const logger = createLogger('@notifications');
 
 export interface DispatchReport {
   alerts: number;
-  delivered: number;
+  /** Accepted by Expo for provider handoff; final status is checked through receipts. */
+  accepted: number;
   tokensDisabled: number;
   settled: number;
 }
 
-interface ExpoTicket {
-  status: 'ok' | 'error';
-  id?: string;
-  message?: string;
-  details?: { error?: string };
+export interface ReceiptReport {
+  requested: number;
+  resolved: number;
+  tokensDisabled: number;
+  expired: number;
 }
 
-/** Expo replies with one ticket per message, in the order they were sent. */
-interface ExpoResponse {
-  data?: ExpoTicket[];
-  errors?: { message: string }[];
-}
+const ExpoTicketSchema = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('ok'), id: z.string().min(1) }).loose(),
+  z
+    .object({
+      status: z.literal('error'),
+      message: z.string().optional(),
+      details: z.object({ error: z.string().optional() }).loose().optional(),
+    })
+    .loose(),
+]);
+
+/** Expo replies with exactly one ticket per message, in the same order. */
+const ExpoResponseSchema = z.object({ data: z.array(ExpoTicketSchema) }).loose();
+
+const ExpoReceiptSchema = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('ok') }).loose(),
+  z
+    .object({
+      status: z.literal('error'),
+      message: z.string().optional(),
+      details: z.object({ error: z.string().optional() }).loose().optional(),
+    })
+    .loose(),
+]);
+
+const ExpoReceiptResponseSchema = z
+  .object({ data: z.record(z.string(), ExpoReceiptSchema) })
+  .loose();
 
 const UNKNOWN_LABEL = { en: 'Public alert', hi: 'सार्वजनिक चेतावनी' } as const;
 
@@ -91,8 +116,21 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
  * again, so it is retired.
  */
 async function sendBatch(
-  messages: { to: string; title: string; body: string; data: Record<string, unknown> }[],
-): Promise<{ delivered: number; deadTokens: string[]; reached: boolean }> {
+  messages: {
+    to: string;
+    title: string;
+    body: string;
+    data: Record<string, unknown>;
+    sound: 'default';
+    priority: 'high';
+    channelId: 'alerts';
+  }[],
+): Promise<{
+  accepted: number;
+  deadTokens: string[];
+  receiptTickets: { ticketId: string; token: string }[];
+  reached: boolean;
+}> {
   const headers: Record<string, string> = {
     accept: 'application/json',
     'content-type': 'application/json',
@@ -111,29 +149,50 @@ async function sendBatch(
     });
   } catch (error) {
     logger.warn('push transport failed', { error: describeError(error) });
-    return { delivered: 0, deadTokens: [], reached: false };
+    return { accepted: 0, deadTokens: [], receiptTickets: [], reached: false };
   }
 
   if (!response.ok) {
     logger.warn('push rejected', { status: response.status });
-    return { delivered: 0, deadTokens: [], reached: false };
+    return { accepted: 0, deadTokens: [], receiptTickets: [], reached: false };
   }
 
-  let payload: ExpoResponse;
+  let rawPayload: unknown;
   try {
-    payload = (await response.json()) as ExpoResponse;
+    rawPayload = await response.json();
   } catch (error) {
     logger.warn('push response was not JSON', { error: describeError(error) });
-    return { delivered: 0, deadTokens: [], reached: false };
+    return { accepted: 0, deadTokens: [], receiptTickets: [], reached: false };
   }
 
-  const tickets = payload.data ?? [];
+  const payload = ExpoResponseSchema.safeParse(rawPayload);
+  if (!payload.success) {
+    logger.warn('push response had an invalid shape', {
+      issues: payload.error.issues.slice(0, 3).map((issue) => issue.message),
+    });
+    return { accepted: 0, deadTokens: [], receiptTickets: [], reached: false };
+  }
+
+  const tickets = payload.data.data;
+  if (tickets.length !== messages.length) {
+    logger.warn('push response ticket count did not match the request', {
+      messages: messages.length,
+      tickets: tickets.length,
+    });
+    return { accepted: 0, deadTokens: [], receiptTickets: [], reached: false };
+  }
+
   const deadTokens: string[] = [];
-  let delivered = 0;
+  const receiptTickets: { ticketId: string; token: string }[] = [];
+  let accepted = 0;
 
   tickets.forEach((ticket, index) => {
     if (ticket.status === 'ok') {
-      delivered += 1;
+      const token = messages[index]?.to;
+      if (token !== undefined) {
+        accepted += 1;
+        receiptTickets.push({ ticketId: ticket.id, token });
+      }
       return;
     }
     const token = messages[index]?.to;
@@ -144,7 +203,121 @@ async function sendBatch(
     logger.warn('push ticket failed', { error: ticket.details?.error, message: ticket.message });
   });
 
-  return { delivered, deadTokens, reached: true };
+  return { accepted, deadTokens, receiptTickets, reached: true };
+}
+
+/**
+ * Resolves Expo tickets after the recommended delay and retires tokens rejected by APNs/FCM.
+ * Missing receipts remain queued until Expo's 24-hour retention window expires.
+ */
+export async function reconcilePushReceipts(): Promise<Result<ReceiptReport, RequestError>> {
+  const pruned = await DeviceRepository.prunePushTickets(PUSH.RECEIPT_RETENTION_HOURS);
+  if (pruned.isErr()) return err(pruned.error);
+
+  const pending = await DeviceRepository.listPendingPushTickets(
+    PUSH.RECEIPT_DELAY_MINUTES,
+    PUSH.RECEIPT_RETENTION_HOURS,
+    PUSH.RECEIPT_BATCH_SIZE,
+  );
+  if (pending.isErr()) return err(pending.error);
+  if (pending.value.length === 0) {
+    return ok({ requested: 0, resolved: 0, tokensDisabled: 0, expired: pruned.value });
+  }
+
+  const headers: Record<string, string> = {
+    accept: 'application/json',
+    'content-type': 'application/json',
+  };
+  if (env.EXPO_ACCESS_TOKEN !== undefined) {
+    headers.authorization = `Bearer ${env.EXPO_ACCESS_TOKEN}`;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(PUSH.EXPO_RECEIPTS_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ ids: pending.value.map((ticket) => ticket.ticket_id) }),
+      signal: AbortSignal.timeout(PUSH.TIMEOUT_MS),
+    });
+  } catch (error) {
+    logger.warn('push receipt transport failed', { error: describeError(error) });
+    return ok({
+      requested: pending.value.length,
+      resolved: 0,
+      tokensDisabled: 0,
+      expired: pruned.value,
+    });
+  }
+
+  if (!response.ok) {
+    logger.warn('push receipt request rejected', { status: response.status });
+    return ok({
+      requested: pending.value.length,
+      resolved: 0,
+      tokensDisabled: 0,
+      expired: pruned.value,
+    });
+  }
+
+  let rawPayload: unknown;
+  try {
+    rawPayload = await response.json();
+  } catch (error) {
+    logger.warn('push receipt response was not JSON', { error: describeError(error) });
+    return ok({
+      requested: pending.value.length,
+      resolved: 0,
+      tokensDisabled: 0,
+      expired: pruned.value,
+    });
+  }
+
+  const payload = ExpoReceiptResponseSchema.safeParse(rawPayload);
+  if (!payload.success) {
+    logger.warn('push receipt response had an invalid shape', {
+      issues: payload.error.issues.slice(0, 3).map((issue) => issue.message),
+    });
+    return ok({
+      requested: pending.value.length,
+      resolved: 0,
+      tokensDisabled: 0,
+      expired: pruned.value,
+    });
+  }
+
+  const resolvedIds: string[] = [];
+  const deadTokens: string[] = [];
+  for (const ticket of pending.value) {
+    const receipt = payload.data.data[ticket.ticket_id];
+    if (receipt === undefined) continue;
+    resolvedIds.push(ticket.ticket_id);
+    if (receipt.status === 'error') {
+      if (receipt.details?.error === 'DeviceNotRegistered') {
+        deadTokens.push(ticket.device_token);
+      } else {
+        logger.warn('push receipt failed', {
+          ticketId: ticket.ticket_id,
+          error: receipt.details?.error,
+          message: receipt.message,
+        });
+      }
+    }
+  }
+
+  const disabled = await DeviceRepository.disableTokens(deadTokens);
+  if (disabled.isErr()) return err(disabled.error);
+  const removed = await DeviceRepository.deletePushTickets(resolvedIds);
+  if (removed.isErr()) return err(removed.error);
+
+  const report: ReceiptReport = {
+    requested: pending.value.length,
+    resolved: removed.value,
+    tokensDisabled: disabled.value,
+    expired: pruned.value,
+  };
+  logger.info('push receipts reconciled', report);
+  return ok(report);
 }
 
 /**
@@ -165,7 +338,7 @@ export async function dispatchNewAlerts(): Promise<Result<DispatchReport, Reques
   );
   if (pending.isErr()) return err(pending.error);
   if (pending.value.length === 0) {
-    return ok({ alerts: 0, delivered: 0, tokensDisabled: 0, settled: settled.value });
+    return ok({ alerts: 0, accepted: 0, tokensDisabled: 0, settled: settled.value });
   }
 
   const devices = await DeviceRepository.listActiveTokens();
@@ -177,14 +350,15 @@ export async function dispatchNewAlerts(): Promise<Result<DispatchReport, Reques
     if (marked.isErr()) return err(marked.error);
     return ok({
       alerts: pending.value.length,
-      delivered: 0,
+      accepted: 0,
       tokensDisabled: 0,
       settled: settled.value,
     });
   }
 
-  let delivered = 0;
+  let accepted = 0;
   const deadTokens: string[] = [];
+  const receiptTickets: { ticketId: string; token: string }[] = [];
   /**
    * Which warnings actually reached the push service.
    *
@@ -201,25 +375,40 @@ export async function dispatchNewAlerts(): Promise<Result<DispatchReport, Reques
       to: device.token,
       ...buildMessage(alert, device.language),
       data: { alertId: alert.id, url: `/alerts/${alert.id}` },
+      // Background delivery uses payload policy, not the foreground JS handler. Without
+      // these fields iOS is silent and Android can fall back to a low-importance channel.
+      sound: 'default' as const,
+      priority: 'high' as const,
+      channelId: 'alerts' as const,
     }));
 
     let reached = false;
     for (const batch of chunk(messages, PUSH.BATCH_SIZE)) {
       const result = await sendBatch(batch);
-      delivered += result.delivered;
+      accepted += result.accepted;
       deadTokens.push(...result.deadTokens);
+      receiptTickets.push(...result.receiptTickets);
       reached = reached || result.reached;
     }
     if (reached) announced.push(alert.id);
   }
 
   const disabled = await DeviceRepository.disableTokens(deadTokens);
+  const savedTickets = await DeviceRepository.savePushTickets(receiptTickets);
+  if (savedTickets.isErr()) {
+    // Expo already accepted these messages. Retrying the warning would duplicate it, so the
+    // alert is still marked announced while the persistence failure is made visible in logs.
+    logger.error('accepted push tickets could not be persisted', {
+      count: receiptTickets.length,
+      code: savedTickets.error.code,
+    });
+  }
   const marked = await DeviceRepository.markNotified(announced);
   if (marked.isErr()) return err(marked.error);
 
   const report: DispatchReport = {
     alerts: announced.length,
-    delivered,
+    accepted,
     tokensDisabled: disabled.isOk() ? disabled.value : 0,
     settled: settled.value,
   };

@@ -1,5 +1,13 @@
 # Pahad Pulse Mobile Colour System
 
+> **2026-09-27 redesign.** The neutrals and primary moved from mineral teal to a cool
+> mountain blue built around the logo's `#015BD6`: light background `#FAF8FF`, surfaces
+> `#FFFFFF` / `#F2F3FF` / `#EAEDFF`, text `#131B2E`, primary `#0045A6`; dark neutrals are a
+> deep navy (`#0B1220` background) with primary `#B1C5FF`. Two new token groups were added:
+> `hero` (the Today screen's gradient card) and `tile` (six tinted signal-tile families).
+> Severity and freshness encodings are unchanged. `src/theme/tokens.ts` is the source of
+> truth; the teal "mapping" tables below describe the previous palette.
+
 ## Strategy
 
 **Direction:** Himalayan Signal  

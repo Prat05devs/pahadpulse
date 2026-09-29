@@ -1,18 +1,27 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { FlatList, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, ScrollView } from 'react-native';
 
-import { Entrance, Icon, Pressable, Text, VStack } from '@/components/atoms';
-import { EmptyState, ErrorState, LoadingState } from '@/components/molecules';
+import { Card, Entrance, HStack, Icon, Pressable, Text, VStack } from '@/components/atoms';
+import {
+  Chip,
+  CivicHeader,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SearchField,
+  SectionHeader,
+} from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { DISTRICT_COUNT } from '@/config/constants';
 import { useT } from '@/i18n';
-import { HIT_SLOP_MIN_SIZE, useTheme } from '@/theme';
-import { familyFor, platformTextFixes } from '@/theme/fonts';
+import { useSavedDistricts } from '@/stores';
+import { useTheme } from '@/theme';
 
 import { useDistrictList } from '../hooks';
 import { DistrictCard } from './district-card';
+
+type DistrictFilter = 'all' | 'followed' | 'garhwal' | 'kumaon';
 
 /**
  * Every district, searchable, with followed ones pinned to the top.
@@ -23,9 +32,10 @@ import { DistrictCard } from './district-card';
 export function DistrictsScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const t = useT();
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<DistrictFilter>('all');
+  const savedDistricts = useSavedDistricts();
 
   // One stable handler for every row, so DistrictCard's memo actually holds.
   const openDistrict = useCallback(
@@ -33,78 +43,83 @@ export function DistrictsScreen() {
     [router]
   );
 
-  const { districts, isPending, isError, error, refetch, isRefetching } =
-    useDistrictList(search);
+  const {
+    districts: matchedDistricts,
+    data: allDistricts,
+    isPending,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useDistrictList(search);
+
+  const districts = useMemo(
+    () =>
+      matchedDistricts.filter((district) => {
+        if (filter === 'followed') return savedDistricts.includes(district.slug);
+        if (filter === 'all') return true;
+        return district.division?.toLowerCase() === filter;
+      }),
+    [filter, matchedDistricts, savedDistricts]
+  );
+
+  const divisionCounts = useMemo(
+    () => ({
+      garhwal: (allDistricts ?? []).filter(
+        (district) => district.division?.toLowerCase() === 'garhwal'
+      ).length,
+      kumaon: (allDistricts ?? []).filter(
+        (district) => district.division?.toLowerCase() === 'kumaon'
+      ).length,
+    }),
+    [allDistricts]
+  );
+
+  const filters: { value: DistrictFilter; label: string }[] = [
+    { value: 'all', label: t('districts.filter.all') },
+    {
+      value: 'followed',
+      label: t('districts.filter.followed', { count: savedDistricts.length }),
+    },
+    { value: 'garhwal', label: t('districts.garhwal') },
+    { value: 'kumaon', label: t('districts.kumaon') },
+  ];
 
   const header = (
-    <View
-      style={{
-        // This tab has no navigation header, so the screen itself owns the status-bar
-        // inset. Without it the search field renders underneath the clock.
-        paddingTop: insets.top + theme.spacing.sm,
-        paddingHorizontal: theme.spacing.lg,
-        paddingBottom: theme.spacing.md,
-        backgroundColor: theme.colors.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.border,
-      }}
+    <CivicHeader
+      title={t('nav.districts')}
+      eyebrow={t('districts.header.eyebrow')}
+      subtitle={t('districts.header.subtitle', { count: DISTRICT_COUNT })}
+      showStatusDot={false}
     >
-      <View style={{ justifyContent: 'center' }}>
-        <TextInput
+      <VStack gap="sm" paddingX="lg">
+        <SearchField
           value={search}
           onChangeText={setSearch}
           placeholder={t('districts.search', { count: DISTRICT_COUNT })}
-          placeholderTextColor={theme.colors.textMuted}
-          autoCorrect={false}
-          returnKeyType="search"
           accessibilityLabel={t('districts.searchLabel')}
-          // Android otherwise paints the cursor and selection handles in the system accent
-          // (often green or teal) rather than the brand colour iOS already uses.
-          cursorColor={theme.colors.primary}
-          selectionColor={theme.colors.primary}
-          style={{
-            height: 48,
-            paddingLeft: theme.spacing.md,
-            // Room for the clear button, so a long query never runs underneath it.
-            paddingRight: search ? HIT_SLOP_MIN_SIZE : theme.spacing.md,
-            // Android's EditText adds its own vertical padding and top-aligns text, which
-            // pushes the text off-centre in a fixed-height field.
-            paddingVertical: 0,
-            textAlignVertical: 'center',
-            borderRadius: theme.radius.md,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.surface,
-            color: theme.colors.text,
-            // The search field is a raw TextInput, so it has to name its font explicitly —
-            // it is the one place the Text atom cannot do it for us.
-            fontFamily: familyFor(search, 'regular'),
-            fontSize: theme.typography.body.fontSize,
-            ...platformTextFixes(search),
-          }}
+          clearLabel={t('districts.clearSearch')}
         />
-        {/*
-         * Drawn by the app, not by `clearButtonMode`: that prop is iOS-only, so Android readers
-         * had no way to clear a query except deleting it character by character.
-         */}
-        {search ? (
-          <Pressable
-            onPress={() => setSearch('')}
-            accessibilityLabel={t('districts.clearSearch')}
-            style={{
-              position: 'absolute',
-              right: 0,
-              width: HIT_SLOP_MIN_SIZE,
-              height: HIT_SLOP_MIN_SIZE,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Icon name="close-circle" size={18} tone="textMuted" />
-          </Pressable>
-        ) : null}
-      </View>
-    </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -theme.spacing.lg }}
+          contentContainerStyle={{
+            paddingHorizontal: theme.spacing.lg,
+            gap: theme.spacing.xs,
+          }}
+        >
+          {filters.map((item) => (
+            <Chip
+              key={item.value}
+              label={item.label}
+              selected={filter === item.value}
+              onPress={() => setFilter(item.value)}
+            />
+          ))}
+        </ScrollView>
+      </VStack>
+    </CivicHeader>
   );
 
   if (isPending) {
@@ -135,12 +150,55 @@ export function DistrictsScreen() {
         )}
         contentContainerStyle={{
           paddingHorizontal: theme.spacing.lg,
+          paddingTop: theme.spacing.lg,
           paddingBottom: theme.spacing.xxxl * 2,
           gap: theme.spacing.sm,
         }}
         onRefresh={refetch}
         refreshing={isRefetching}
         keyboardDismissMode="on-drag"
+        ListHeaderComponent={
+          filter === 'all' && search.trim().length === 0 ? (
+            <VStack gap="md" style={{ marginBottom: theme.spacing.sm }}>
+              <SectionHeader
+                title={t('districts.divisions.title')}
+                subtitle={t('districts.divisions.subtitle')}
+              />
+              <HStack gap="sm">
+                <DivisionCard
+                  label={t('districts.garhwal')}
+                  count={divisionCounts.garhwal}
+                  icon="trail-sign-outline"
+                  tone="primary"
+                  onPress={() => setFilter('garhwal')}
+                />
+                <DivisionCard
+                  label={t('districts.kumaon')}
+                  count={divisionCounts.kumaon}
+                  icon="leaf-outline"
+                  tone="accent"
+                  onPress={() => setFilter('kumaon')}
+                />
+              </HStack>
+              <SectionHeader
+                title={t('districts.directory.title')}
+                subtitle={t('districts.directory.subtitle')}
+              />
+            </VStack>
+          ) : (
+            <SectionHeader
+              title={
+                filter === 'followed'
+                  ? t('districts.followed.title')
+                  : t('districts.directory.title')
+              }
+              subtitle={t('districts.countOf', {
+                shown: districts.length,
+                total: DISTRICT_COUNT,
+              })}
+            />
+          )
+        }
         ListEmptyComponent={
           <EmptyState
             title={t('districts.noMatch')}
@@ -159,5 +217,42 @@ export function DistrictsScreen() {
         }
       />
     </Screen>
+  );
+}
+
+function DivisionCard({
+  label,
+  count,
+  icon,
+  tone,
+  onPress,
+}: {
+  label: string;
+  count: number;
+  icon: 'trail-sign-outline' | 'leaf-outline';
+  tone: 'primary' | 'accent';
+  onPress: () => void;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${count}`}
+      style={{ flex: 1, minWidth: 0 }}
+    >
+      <Card tone={tone} elevation="none" padding="md" style={{ minHeight: 138 }}>
+        <VStack gap="sm">
+          <Icon name={icon} tone={tone} />
+          <VStack gap="xxs">
+            <Text variant="heading">{label}</Text>
+            <Text variant="caption" color="textMuted">
+              {count}
+            </Text>
+          </VStack>
+          <Icon name="arrow-forward" size={17} color={theme.colors[tone]} />
+        </VStack>
+      </Card>
+    </Pressable>
   );
 }

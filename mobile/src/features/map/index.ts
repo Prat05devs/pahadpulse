@@ -1,5 +1,5 @@
 /**
- * The map feature's public surface. Other features import from here and nowhere else —
+ * The map feature's public surface. Other features import from here and nowhere else -
  * never from `./components`, which is enforced by an ESLint rule.
  */
 export { useDistrictFeatures, useAlertFeatures } from './hooks';

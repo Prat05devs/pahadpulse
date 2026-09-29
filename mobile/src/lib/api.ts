@@ -10,7 +10,7 @@ import { env } from '@/config/env';
  *   1. Every response is validated with Zod before it reaches a component. A payload off the
  *      network is `unknown` until proven otherwise.
  *   2. Every failure becomes an `ApiError` with a `kind`, so a screen can distinguish "you
- *      are offline" from "the server is broken" — on a phone those need different words and
+ *      are offline" from "the server is broken" - on a phone those need different words and
  *      different recovery, and collapsing them into one "Something went wrong" is what makes
  *      an app feel unreliable in exactly the places this one is used.
  */
@@ -56,7 +56,7 @@ const ErrorEnvelopeSchema = z.object({
  * `AbortSignal.timeout` with a manual fallback.
  *
  * Hermes has not always shipped the static method, and silently having NO timeout is the
- * precise failure this guards against — a request that hangs forever leaves a spinner on
+ * precise failure this guards against - a request that hangs forever leaves a spinner on
  * screen with no error to catch.
  */
 function timeoutSignal(ms: number): { signal: AbortSignal; clear: () => void } {
@@ -69,8 +69,13 @@ function timeoutSignal(ms: number): { signal: AbortSignal; clear: () => void } {
 }
 
 function isAbort(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
   return (
-    error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')
+    error.name === 'AbortError' ||
+    error.name === 'TimeoutError' ||
+    error.name === 'FetchRequestCanceledException' ||
+    /fetch request (?:has been )?cancell?ed/i.test(error.message)
   );
 }
 
@@ -101,7 +106,7 @@ async function request<T>(
   try {
     const response = await fetch(url, {
       method,
-      // A caller's own signal wins — TanStack Query passes one to cancel stale queries.
+      // A caller's own signal wins - TanStack Query passes one to cancel stale queries.
       signal: options?.signal ?? timeout.signal,
       headers: {
         Accept: 'application/json',
@@ -117,7 +122,7 @@ async function request<T>(
     try {
       json = JSON.parse(raw) as unknown;
     } catch {
-      // Almost always the wrong origin answering — a dev server or a captive portal.
+      // Almost always the wrong origin answering - a dev server or a captive portal.
       throw new ApiError(
         'invalid-response',
         10_000,

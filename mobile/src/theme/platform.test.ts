@@ -3,7 +3,7 @@
  *
  * jest-expo runs as iOS by default, so a rule that only exists on Android would never be
  * exercised at all. Each case loads the module in an isolated registry and sets `Platform.OS`
- * on THAT registry's copy of react-native — patching the top-level import would miss it,
+ * on THAT registry's copy of react-native - patching the top-level import would miss it,
  * because isolation hands the module under test a fresh `Platform` object.
  */
 function withPlatform<T>(os: 'ios' | 'android', load: () => T): T {

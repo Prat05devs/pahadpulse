@@ -37,7 +37,7 @@ describe('buildMapHtml', () => {
   it('inlines the district geometry rather than fetching it in the document', () => {
     const html = buildMapHtml({ districts: district, alerts: null });
     expect(html).toContain('"slug":"chamoli"');
-    // The document must never call our API itself — the app owns validation and caching.
+    // The document must never call our API itself - the app owns validation and caching.
     expect(html).not.toContain('/api/');
   });
 
@@ -86,6 +86,14 @@ describe('MapMessageSchema', () => {
     expect(MapMessageSchema.safeParse({ type: 'district', slug: '' }).success).toBe(false);
   });
 
+  it('accepts alert and cleared-selection messages', () => {
+    expect(MapMessageSchema.parse({ type: 'alert', alertId: 42 })).toEqual({
+      type: 'alert',
+      alertId: 42,
+    });
+    expect(MapMessageSchema.parse({ type: 'clear' })).toEqual({ type: 'clear' });
+  });
+
   it('rejects an unknown message type', () => {
     expect(MapMessageSchema.safeParse({ type: 'navigate', to: '/settings' }).success).toBe(
       false
@@ -100,6 +108,7 @@ describe('the document control surface', () => {
     const html = buildMapHtml({ districts: district, alerts: null });
     expect(html).toContain('window.ppSetLayers = function');
     expect(html).toContain('window.ppSetTerrain = function');
+    expect(html).toContain('window.ppSelectDistrict = function');
   });
 
   it('starts the optional layers hidden', () => {
@@ -124,7 +133,18 @@ describe('the document control surface', () => {
     expect(english).toContain('pp-district-label');
     expect(english).toContain('"en" === \'hi\'');
     expect(hindi).toContain('"hi" === \'hi\'');
-    expect(english).toContain("feature.properties.slug === 'dehradun' ? [55, 32]");
+    expect(english).toContain('LABEL_OFFSETS[feature.properties.slug]');
     expect(english).toContain("item.element.style.display = state.districts ? '' : 'none'");
+  });
+
+  it('makes district and alert geometry directly actionable', () => {
+    const html = buildMapHtml({ districts: district, alerts: null });
+    expect(html).toContain(
+      "post({ type: 'district', slug: String(districtFeature.properties.slug) })"
+    );
+    expect(html).toContain(
+      "post({ type: 'alert', alertId: Number(alertFeature.properties.alertId) })"
+    );
+    expect(html).toContain("post({ type: 'clear' })");
   });
 });

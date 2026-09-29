@@ -19,3 +19,9 @@ export const STATE_SLUG = 'uttarakhand';
 
 /** Uttarakhand has thirteen districts; used to size skeleton lists honestly. */
 export const DISTRICT_COUNT = 13;
+
+/**
+ * India's single emergency number. A fallback only: the tourism guide publishes the current
+ * number from the API, and that value wins whenever it has loaded.
+ */
+export const EMERGENCY_NUMBER = '112';

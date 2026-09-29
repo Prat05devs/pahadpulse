@@ -8,7 +8,16 @@ export type CardProps = ViewProps & {
   radius?: RadiusToken;
   elevation?: ElevationToken;
   /** A muted card recedes; used for nested blocks inside another card. */
-  tone?: 'surface' | 'muted' | 'tertiary' | 'glass' | 'warning';
+  tone?:
+    | 'surface'
+    | 'muted'
+    | 'tertiary'
+    | 'glass'
+    | 'primary'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'accent';
   /** Draw a 1px border. Off by default when elevated, since both together reads as heavy. */
   bordered?: boolean;
   children?: ReactNode;
@@ -46,9 +55,17 @@ export function Card({
             isAndroid
             ? theme.colors.surfaceElevated
             : theme.colors.surfaceGlassStrong
-          : tone === 'warning'
-            ? theme.colors.warningSubtle
-            : theme.colors.surface;
+          : tone === 'primary'
+            ? theme.colors.primarySubtle
+            : tone === 'success'
+              ? theme.colors.successSubtle
+              : tone === 'warning'
+                ? theme.colors.warningSubtle
+                : tone === 'danger'
+                  ? theme.colors.errorSubtle
+                  : tone === 'accent'
+                    ? theme.colors.accentSubtle
+                    : theme.colors.surface;
 
   return (
     <View

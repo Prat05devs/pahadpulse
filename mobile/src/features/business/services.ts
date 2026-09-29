@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { apiClient } from '@/lib/api';
-import { BusinessScenarioSchema, ComparisonReportSchema } from './schemas';
+import {
+  BusinessScenarioSchema,
+  BusinessSchemeDirectorySchema,
+  ComparisonReportSchema,
+} from './schemas';
 
 export async function fetchScenarios() {
   return apiClient.get('/business/scenarios', z.array(BusinessScenarioSchema));
@@ -16,4 +20,12 @@ export async function compareDistricts(
     `/business/compare?districtA=${districtA}&districtB=${districtB}&scenarioId=${scenarioId}`,
     ComparisonReportSchema
   );
+}
+
+/**
+ * The verified scheme directory - all of it. Seventy-odd records, so filtering happens on the
+ * device and the search stays instant with a weak signal.
+ */
+export async function fetchBusinessSchemes() {
+  return apiClient.get('/business/schemes', BusinessSchemeDirectorySchema);
 }

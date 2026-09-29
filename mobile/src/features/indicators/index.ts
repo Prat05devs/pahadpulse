@@ -1,9 +1,15 @@
-export { useAreaIndicators, useGroupedAreaIndicators, type IndicatorGroup } from './hooks';
+export {
+  useAreaIndicators,
+  useGroupedAreaIndicators,
+  useIndicatorCatalogue,
+  type IndicatorGroup,
+} from './hooks';
 export { indicatorKeys } from './queries';
-export { fetchAreaIndicators } from './services';
+export { fetchAreaIndicators, fetchAllIndicators } from './services';
 export {
   IndicatorSchema,
   AreaIndicatorsSchema,
+  IndicatorListSchema,
   type Indicator,
   type IndicatorValue,
   type AreaIndicatorValue,

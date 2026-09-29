@@ -5,9 +5,9 @@ import { Platform } from 'react-native';
 /**
  * Two storage tiers, deliberately separated.
  *
- * `storage`  — ordinary device storage. Preferences, cached responses, anything a person
+ * `storage`  - ordinary device storage. Preferences, cached responses, anything a person
  *              could read off a rooted phone without it mattering.
- * `secureStorage` — Keychain (iOS) / Keystore (Android). Tokens and nothing else.
+ * `secureStorage` - Keychain (iOS) / Keystore (Android). Tokens and nothing else.
  *
  * Keeping them apart is what stops a credential being written to the wrong tier by habit.
  * Every method swallows failure and returns `null` rather than throwing: storage is not
@@ -88,4 +88,8 @@ export const secureStorage = {
 export const STORAGE_KEYS = {
   preferences: 'pp.v1.preferences',
   queryCache: 'pp.v1.query-cache',
+  /** Last Expo push token successfully registered with the Pahad Pulse API. */
+  notificationToken: 'pp.v1.notification-token',
+  /** Old tokens whose server-side removal must be retried after a network failure. */
+  notificationTokensPendingRemoval: 'pp.v1.notification-tokens-pending-removal',
 } as const;

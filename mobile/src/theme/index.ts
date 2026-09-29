@@ -21,4 +21,5 @@ export {
   type RadiusToken,
   type TypographyToken,
   type ElevationToken,
+  type TileTone,
 } from './tokens';

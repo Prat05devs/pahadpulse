@@ -8,7 +8,7 @@ import {
 } from './schemas';
 
 /**
- * One function per endpoint. No caching, no React — a service is a plain async call that
+ * One function per endpoint. No caching, no React - a service is a plain async call that
  * either resolves with validated data or throws an `ApiError`.
  *
  * Keeping them free of hooks is what lets the same file be copied to the web app, and lets

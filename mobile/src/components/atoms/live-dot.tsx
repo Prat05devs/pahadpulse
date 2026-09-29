@@ -16,7 +16,7 @@ type LiveDotProps = {
   /** `danger` while something is in force, `fresh` when the feed is merely current. */
   tone?: 'fresh' | 'danger' | 'primary';
   size?: number;
-  /** Stops the pulse. Use when the data is stale — a still dot says so without words. */
+  /** Stops the pulse. Use when the data is stale - a still dot says so without words. */
   active?: boolean;
 };
 
@@ -25,7 +25,7 @@ type LiveDotProps = {
  *
  * This is the app's one ambient animation: it runs without anybody touching anything, which
  * is precisely what makes a screen feel connected to something rather than printed. It is
- * used only where the claim is true — beside data that really is being kept current — because
+ * used only where the claim is true - beside data that really is being kept current - because
  * a pulse next to a stale figure is a lie told smoothly.
  *
  * The halo and the core are separate views so the halo can grow past the dot without the

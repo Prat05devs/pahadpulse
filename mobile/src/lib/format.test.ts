@@ -6,8 +6,17 @@ import {
   formatUnit,
   humanise,
   localise,
+  normaliseAppText,
   parseUtc,
 } from './format';
+
+describe('normaliseAppText', () => {
+  it('replaces em dashes from published copy', () => {
+    const dash = String.fromCodePoint(8212);
+    expect(normaliseAppText(`Rain ${dash} road closures`)).toBe('Rain; road closures');
+    expect(normaliseAppText(`performance${dash}not access`)).toBe('performance; not access');
+  });
+});
 
 describe('localise', () => {
   it('returns the requested language', () => {

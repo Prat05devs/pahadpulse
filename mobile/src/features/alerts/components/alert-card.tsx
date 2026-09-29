@@ -39,10 +39,13 @@ const TYPE_ICONS: Record<Alert['type'], IconName> = {
 export const AlertCard = memo(function AlertCard({
   alert,
   onPress,
+  featured = false,
 }: {
   alert: Alert;
   /** Takes the id rather than closing over it, so the list passes one stable handler (P3). */
   onPress?: (id: number) => void;
+  /** The first directive receives a stronger hierarchy, without changing its data. */
+  featured?: boolean;
 }) {
   const theme = useTheme();
   const language = useLanguage();
@@ -69,7 +72,7 @@ export const AlertCard = memo(function AlertCard({
   });
 
   const cardContent = (
-    <VStack grow gap="sm" padding="lg">
+    <VStack grow gap="sm" padding={featured ? 'xl' : 'lg'}>
       <HStack align="center" justify="space-between" gap="sm">
         <HStack align="center" gap="sm" wrap style={{ flex: 1 }}>
           <View
@@ -91,7 +94,7 @@ export const AlertCard = memo(function AlertCard({
         </Text>
       </HStack>
 
-      <Text variant="bodyStrong" numberOfLines={3}>
+      <Text variant={featured ? 'heading' : 'bodyStrong'} numberOfLines={featured ? 4 : 3}>
         {alert.headline}
       </Text>
 

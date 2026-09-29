@@ -36,7 +36,7 @@ export const AirQualitySchema = z.object({
   /**
    * India's National AQI (CPCB), computed by the API from the concentrations.
    *
-   * Null means "not enough data for an index" — fewer than three pollutants, no particulate
+   * Null means "not enough data for an index" - fewer than three pollutants, no particulate
    * among them, or a window without enough hourly readings to be an average. It never means
    * clean air, so the panel must not render it as a zero or an all-clear.
    */

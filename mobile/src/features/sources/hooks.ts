@@ -4,8 +4,8 @@ import { sourceKeys } from './queries';
 import { fetchSources } from './services';
 
 /**
- * The registry changes when a dataset is added or its terms are confirmed — a matter of
- * weeks, not minutes — so it is cached hard and refetched rarely.
+ * The registry changes when a dataset is added or its terms are confirmed - a matter of
+ * weeks, not minutes - so it is cached hard and refetched rarely.
  */
 export function useSources() {
   return useQuery({

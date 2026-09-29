@@ -3,7 +3,7 @@ import { SourceRepository } from '../../repositories/source.repository.js';
 import { RunStatus } from '../../types/dataset.js';
 import { describeError } from '../../utils/describe-error.js';
 import createLogger from '../../utils/logger.js';
-import { dispatchNewAlerts } from '../notification.service.js';
+import { dispatchNewAlerts, reconcilePushReceipts } from '../notification.service.js';
 import { rollupObservations } from '../observation-rollup.service.js';
 import { runSource } from './runner.js';
 
@@ -120,6 +120,7 @@ export function dueJobs(
 
 async function runJob(job: ScheduledJob): Promise<void> {
   if (job.name === 'alert-notifications') {
+    await reconcilePushReceipts();
     await dispatchNewAlerts();
     return;
   }

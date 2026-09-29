@@ -15,7 +15,7 @@ export const SeismicEventSchema = z.object({
   id: z.number(),
   sourceEventId: z.string(),
   magnitude: z.number(),
-  /** mb, ml, mw — not interchangeable, so it is shown rather than dropped. */
+  /** mb, ml, mw - not interchangeable, so it is shown rather than dropped. */
   magnitudeType: z.string().nullable(),
   band: z.enum(SEISMIC_BANDS),
   depthKm: z.number().nullable(),

@@ -12,6 +12,7 @@ import {
   VStack,
 } from '@/components/atoms';
 import {
+  ActionButton,
   EmptyState,
   ListRow,
   LoadingState,
@@ -24,6 +25,7 @@ import { AlertCard, useAreaAlerts } from '@/features/alerts';
 import { useGroupedAreaIndicators } from '@/features/indicators';
 import { WeatherPanel, useAreaWeather } from '@/features/weather';
 import { useAreaNetwork } from '@/features/connectivity';
+import { RoadClosuresPanel, useRoadClosures } from '@/features/roads';
 import { useT } from '@/i18n';
 import { formatNumber, humanise, localise } from '@/lib/format';
 import { useIsDistrictSaved, useLanguage, usePreferencesStore } from '@/stores';
@@ -52,6 +54,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
   const alerts = useAreaAlerts(slug);
   const indicators = useGroupedAreaIndicators(slug);
   const connectivity = useAreaNetwork(slug);
+  const roads = useRoadClosures(slug, { enabled: slug.length > 0 });
 
   const isSaved = useIsDistrictSaved(slug);
   const toggleSaved = usePreferencesStore((s) => s.toggleSavedDistrict);
@@ -65,6 +68,7 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
     void alerts.refetch();
     void indicators.refetch();
     void connectivity.refetch();
+    void roads.refetch();
   };
 
   return (
@@ -143,10 +147,16 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
                     {t('districtDetail.lgdCode')}
                   </Text>
                   <Text variant="bodyStrong" tabular>
-                    {data.district.officialIds.lgd ?? '—'}
+                    {data.district.officialIds.lgd ?? t('common.notAvailable')}
                   </Text>
                 </VStack>
               </HStack>
+              <ActionButton
+                label={t('districtDetail.checkTrip')}
+                icon="calendar-outline"
+                tone="primary"
+                onPress={() => router.push({ pathname: '/trip-check', params: { to: slug } })}
+              />
             </VStack>
           </Card>
         )}
@@ -190,6 +200,26 @@ export function DistrictDetailScreen({ slug }: { slug: string }) {
             </VStack>
           )}
         </QueryBoundary>
+      </VStack>
+
+      {/* Roads */}
+      <VStack gap="sm">
+        <SectionHeader
+          title={t('roads.closures.title')}
+          subtitle={t('roads.closures.subtitle')}
+          onPressAction={() => router.push({ pathname: '/roads', params: { district: slug } })}
+        />
+        {roads.isPending ? (
+          <LoadingState label={t('roads.closures.loading')} />
+        ) : (
+          <RoadClosuresPanel
+            report={roads.data ?? null}
+            limit={3}
+            onSeeAll={() => router.push({ pathname: '/roads', params: { district: slug } })}
+            showDistrict={false}
+            scopeLabel={t('trip.districtOf', { district: name })}
+          />
+        )}
       </VStack>
 
       {/* Statistics */}

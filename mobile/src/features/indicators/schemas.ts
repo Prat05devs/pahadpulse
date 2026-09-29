@@ -6,7 +6,7 @@ import { DateOnly, LocalisedTextSchema, ProvenanceSchema, UtcDateTime } from '@/
  * Statistical indicators: census figures, health, education, connectivity, migration.
  *
  * `vintage` is the date the figure DESCRIBES and `fetchedAt` is when we retrieved it. Those
- * are different facts and are typed differently on purpose — collapsing them into one "date"
+ * are different facts and are typed differently on purpose - collapsing them into one "date"
  * is what makes a 2011 census figure look like it was measured this morning.
  */
 
@@ -55,7 +55,7 @@ export const AreaIndicatorsSchema = z
       /**
        * Catalogue indicators in scope for this area with no published figure yet. Carried so
        * a screen can say a number is still being compiled, rather than just omitting the row
-       * — an absent row and a broken screen look identical to a reader.
+       * - an absent row and a broken screen look identical to a reader.
        */
       pending: z.array(IndicatorSchema),
     }),
@@ -64,3 +64,6 @@ export const AreaIndicatorsSchema = z
   .transform((parsed) => (Array.isArray(parsed) ? { values: parsed, pending: [] } : parsed));
 
 export type AreaIndicators = z.infer<typeof AreaIndicatorsSchema>;
+
+/** The complete catalogue returned by `GET /indicators`. */
+export const IndicatorListSchema = z.array(IndicatorSchema);

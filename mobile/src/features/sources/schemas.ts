@@ -5,7 +5,7 @@ import { z } from 'zod';
  *
  * Only the fields this app shows are declared. `url` is the one that matters most: Google
  * Play's Misleading Claims policy requires an app presenting government information to link
- * to the original source, and this is where those links come from — the registry the
+ * to the original source, and this is where those links come from - the registry the
  * figures themselves are stamped with, so a link can never drift from the data it credits.
  */
 const LocalisedTextSchema = z.object({ en: z.string(), hi: z.string() });

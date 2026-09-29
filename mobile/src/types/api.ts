@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /**
  * Shapes shared by every endpoint. Kept identical to the matching schema files under
- * `web/src/features`, so a schema can be copied between the two apps without editing — a
+ * `web/src/features`, so a schema can be copied between the two apps without editing - a
  * divergence here means the two clients disagree about what the API said, which is the
  * worst kind of bug to chase.
  */

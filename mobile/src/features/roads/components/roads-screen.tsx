@@ -9,18 +9,30 @@ import {
   QueryBoundary,
   SectionHeader,
   SourceNote,
+  StatTile,
 } from '@/components/molecules';
 import { useT } from '@/i18n';
 import { Screen } from '@/components/templates';
-import { formatDate, formatNumber } from '@/lib/format';
+import { formatDate, formatNumber, localise } from '@/lib/format';
 import { shouldStackCardGrid } from '@/lib/layout';
 import { useTheme } from '@/theme';
 
-import { useRoadNetwork } from '../hooks';
+import { useDistricts } from '@/features/areas/hooks';
+import { useLanguage } from '@/stores';
+
+import { closureCounts } from '../closures';
+import { useRoadClosures, useRoadNetwork } from '../hooks';
+import { RoadClosuresPanel } from './road-closures-panel';
 
 type Network = 'NH' | 'SH';
 
-export function RoadsScreen() {
+/**
+ * Roads: what is closed first, then the highway register.
+ *
+ * Closures lead because "can I drive there today?" is the question a reader opens this screen
+ * with; the register is reference material for the map.
+ */
+export function RoadsScreen({ district }: { district?: string }) {
   const t = useT();
   const theme = useTheme();
   const router = useRouter();
@@ -28,19 +40,70 @@ export function RoadsScreen() {
   const stackSummaryCards = shouldStackCardGrid(width, fontScale);
   const [network, setNetwork] = useState<Network>('NH');
   const roadNetwork = useRoadNetwork();
+  const language = useLanguage();
+  const [scope, setScope] = useState<string | undefined>(district);
+  const closures = useRoadClosures(scope);
+  const districts = useDistricts();
+  const scopeName =
+    scope === undefined
+      ? t('common.uttarakhand')
+      : localise(districts.data?.find((entry) => entry.slug === scope)?.name, language) ||
+        scope;
+  const counts = closures.data?.available ? closureCounts(closures.data) : null;
 
   return (
-    <Screen onRefresh={() => void roadNetwork.refetch()} refreshing={roadNetwork.isRefetching}>
-      <Card style={{ borderColor: theme.colors.warning, borderWidth: 1 }} elevation="none">
-        <HStack gap="sm" align="flex-start">
-          <Icon name="warning-outline" tone="warning" />
-          <Text variant="caption" style={{ flex: 1 }}>
-            <Text variant="bodyStrong">{t('roads.notOpenStatus')}</Text> Closures and landslide
-            blocks have no reliable live feed here. Check the district administration before
-            travelling.
-          </Text>
-        </HStack>
-      </Card>
+    <Screen
+      onRefresh={() => {
+        void roadNetwork.refetch();
+        void closures.refetch();
+      }}
+      refreshing={roadNetwork.isRefetching || closures.isRefetching}
+    >
+      <VStack gap="sm">
+        <SectionHeader
+          title={t('roads.closures.title')}
+          subtitle={t('roads.closures.subtitle')}
+        />
+        {district !== undefined ? (
+          <HStack gap="xs" wrap>
+            <Chip
+              label={scopeName}
+              selected={scope !== undefined}
+              onPress={() => setScope(district)}
+            />
+            <Chip
+              label={t('common.uttarakhand')}
+              selected={scope === undefined}
+              onPress={() => setScope(undefined)}
+            />
+          </HStack>
+        ) : null}
+        {counts !== null ? (
+          <HStack gap="sm" wrap>
+            <StatTile
+              label={t('roads.closures.closed')}
+              value={formatNumber(counts.closed)}
+              icon="close-circle-outline"
+              tone={counts.closed > 0 ? 'danger' : 'default'}
+              live
+            />
+            <StatTile
+              label={t('roads.closures.highways')}
+              value={formatNumber(counts.highways)}
+              icon="car-outline"
+            />
+          </HStack>
+        ) : null}
+        {closures.isPending ? (
+          <LoadingState label={t('roads.closures.loading')} />
+        ) : (
+          <RoadClosuresPanel
+            report={closures.data ?? null}
+            showDistrict={scope === undefined}
+            scopeLabel={scopeName}
+          />
+        )}
+      </VStack>
 
       <QueryBoundary
         query={roadNetwork}

@@ -10,12 +10,12 @@ import { useLanguage } from '@/stores';
  * Where the data and the map come from.
  *
  * This screen is why the map itself carries no permanent caption. OpenStreetMap's licence
- * asks that the credit be reachable, not that it sit on top of the map — and a two-line
+ * asks that the credit be reachable, not that it sit on top of the map - and a two-line
  * caption across the terrain covers the thing it is crediting. The (i) control on the map
  * opens the same credit, and this is its full form.
  */
 /**
- * Source names stay as published — "OpenStreetMap" is a proper noun in any language, and a
+ * Source names stay as published - "OpenStreetMap" is a proper noun in any language, and a
  * translated licence name would no longer identify the licence. Only our own descriptions of
  * them are translated.
  */
@@ -61,7 +61,7 @@ const DATA_SOURCES: Credit[] = [
  * One registry row: who published the dataset, and a link to their own page.
  *
  * The link is the point. An app that presents government information has to say where each
- * figure came from and let the reader go and check it — Google Play requires it under the
+ * figure came from and let the reader go and check it - Google Play requires it under the
  * Misleading Claims policy, and it is the same promise the rest of this product makes. The
  * URL comes from the registry the figures are stamped with, so it cannot drift from them.
  */

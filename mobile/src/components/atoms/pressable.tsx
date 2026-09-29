@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { HIT_SLOP_MIN_SIZE } from '@/theme';
+import { normaliseAppText } from '@/lib/format';
 
 const AnimatedPressable = Animated.createAnimatedComponent(RNPressable);
 
@@ -66,7 +67,7 @@ function tapHaptic() {
  *
  * There is deliberately no `android_ripple`. A ripple is drawn to the pressable's rectangle,
  * not to the rounded card inside it, so every tapped card showed square grey corners on
- * Android — and it stacked on top of the scale-and-dim below, so Android got two press
+ * Android - and it stacked on top of the scale-and-dim below, so Android got two press
  * effects where iOS got one.
  */
 export function Pressable({
@@ -76,6 +77,8 @@ export function Pressable({
   onPress,
   hitSlop,
   accessibilityRole = 'button',
+  accessibilityLabel,
+  accessibilityHint,
   children,
   ...rest
 }: PressableProps) {
@@ -96,10 +99,20 @@ export function Pressable({
 
   return (
     <AnimatedPressable
-      // Spread first, so the handlers below — which call the caller's own — are not replaced
+      // Spread first, so the handlers below - which call the caller's own - are not replaced
       // by it and the press animation cannot be silently lost.
       {...rest}
       accessibilityRole={accessibilityRole}
+      accessibilityLabel={
+        typeof accessibilityLabel === 'string'
+          ? normaliseAppText(accessibilityLabel)
+          : accessibilityLabel
+      }
+      accessibilityHint={
+        typeof accessibilityHint === 'string'
+          ? normaliseAppText(accessibilityHint)
+          : accessibilityHint
+      }
       hitSlop={hitSlop ?? 8}
       onPressIn={(event) => {
         setIsPressed(true);

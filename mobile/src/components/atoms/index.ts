@@ -1,4 +1,5 @@
 export { Text, type TextProps } from './text';
+export { Eyebrow } from './eyebrow';
 export { VStack, HStack, Spacer } from './stack';
 export { Card, type CardProps } from './card';
 export { Badge, type BadgeTone } from './badge';

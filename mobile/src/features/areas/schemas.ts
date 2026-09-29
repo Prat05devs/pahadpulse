@@ -6,7 +6,7 @@ import { CentroidSchema, LocalisedTextSchema } from '@/types/api';
  * Geography: districts, tehsils, villages.
  *
  * Kept byte-identical in shape to `web/src/features/dashboard/schemas.ts`. When the API
- * changes, both files change in the same commit — a schema that has drifted between web and
+ * changes, both files change in the same commit - a schema that has drifted between web and
  * mobile means one of the two clients is silently rejecting valid data.
  */
 

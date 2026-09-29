@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/theme';
  * Render with the providers a component actually needs.
  *
  * Retries are off and `gcTime` is zero so a failing query resolves immediately and nothing
- * leaks between tests — the default retry policy would otherwise make every error-path test
+ * leaks between tests - the default retry policy would otherwise make every error-path test
  * wait through three backoffs.
  */
 function createTestQueryClient() {
@@ -23,7 +23,7 @@ function createTestQueryClient() {
 
 /**
  * ASYNC, because Testing Library v14's `render` is. Awaiting it is what populates the
- * returned queries and the global `screen` — a forgotten `await` yields an object with no
+ * returned queries and the global `screen` - a forgotten `await` yields an object with no
  * query methods on it at all, which is a confusing way to find out.
  */
 export async function renderWithProviders(

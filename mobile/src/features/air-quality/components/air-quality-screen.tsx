@@ -106,7 +106,7 @@ export function AirQualityScreen() {
                               </VStack>
                               <VStack align="flex-end" gap="xs">
                                 <Text variant="metric" color={dangerous ? 'danger' : 'primary'}>
-                                  {national?.value ?? '—'}
+                                  {national?.value ?? t('common.notAvailable')}
                                 </Text>
                                 <Badge
                                   label={
@@ -125,7 +125,7 @@ export function AirQualityScreen() {
                                 <Text variant="bodyStrong" tabular>
                                   {reading.pm25
                                     ? `${reading.pm25.value.toFixed(1)} µg/m³`
-                                    : '—'}
+                                    : t('common.notAvailable')}
                                 </Text>
                               </VStack>
                               <VStack gap="xxs">
@@ -135,7 +135,7 @@ export function AirQualityScreen() {
                                 <Text variant="bodyStrong" tabular>
                                   {reading.pm10
                                     ? `${reading.pm10.value.toFixed(1)} µg/m³`
-                                    : '—'}
+                                    : t('common.notAvailable')}
                                 </Text>
                               </VStack>
                               {national ? (

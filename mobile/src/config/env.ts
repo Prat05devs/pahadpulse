@@ -5,7 +5,7 @@ import { z } from 'zod';
  *
  * Expo inlines `EXPO_PUBLIC_*` variables into the bundle at build time via a literal string
  * substitution, so each one must be written out in full below. `process.env[key]` with a
- * computed key returns undefined in a production build — a bug that only shows up after
+ * computed key returns undefined in a production build - a bug that only shows up after
  * release, which is exactly why this file reads them explicitly and validates the result.
  */
 const EnvSchema = z.object({

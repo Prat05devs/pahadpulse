@@ -5,7 +5,7 @@ import { View } from 'react-native';
  *
  * Why not the library's own `react-native-reanimated/mock`: it re-imports the real module,
  * which initialises `react-native-worklets` and reaches for a native module Jest does not
- * have — so it fails on import in precisely the situation it exists to rescue.
+ * have - so it fails on import in precisely the situation it exists to rescue.
  *
  * Every animation resolves instantly to its target value. That is the right behaviour for a
  * test: assertions should be about the state the UI settles in, never about a frame partway

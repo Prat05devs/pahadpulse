@@ -1,4 +1,5 @@
 export const DEVICE_TOKENS_TABLE = 'device_tokens';
+export const PUSH_NOTIFICATION_TICKETS_TABLE = 'push_notification_tickets';
 
 export type DevicePlatform = 'ios' | 'android';
 export type DeviceLanguage = 'en' | 'hi';
@@ -23,4 +24,11 @@ export interface PendingAlertRow {
   issued_at: string;
   expires_at: string | null;
   area_names: string[] | null;
+}
+
+/** A successful Expo ticket waiting for the provider handoff receipt. */
+export interface PushNotificationTicketRow {
+  ticket_id: string;
+  device_token: string;
+  created_at: string;
 }

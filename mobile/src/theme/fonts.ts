@@ -17,7 +17,7 @@ import { Platform, type TextStyle } from 'react-native';
  *
  * Left to the platform, iOS renders San Francisco and Android renders Roboto. Those two have
  * different cap heights, different advance widths and different default line heights, so the
- * same card is a different height on each — labels wrap on one platform and not the other,
+ * same card is a different height on each - labels wrap on one platform and not the other,
  * and a grid of tiles stops lining up. Shipping the font makes text metrics a constant.
  *
  * Noto Sans is chosen because this app is bilingual: Noto Sans and Noto Sans Devanagari are
@@ -29,12 +29,12 @@ import { Platform, type TextStyle } from 'react-native';
  *   Noto Sans Devanagari  ascent 0.896em, descent 0.408em, tallest glyph 1.35em
  *
  * Devanagari vowel signs and reph rise well above the font's own ascent. That is harmless on
- * iOS, which lets glyphs overflow a line box, but Android clips them — see
+ * iOS, which lets glyphs overflow a line box, but Android clips them - see
  * `platformTextFixes` below.
  */
 
 /**
- * One family name per weight — the rule that matters most on Android.
+ * One family name per weight - the rule that matters most on Android.
  *
  * Android does NOT synthesise weights for a custom font: `fontWeight: '700'` against a
  * regular font file is silently ignored, so text that is bold on iOS renders regular on
@@ -82,7 +82,7 @@ export function containsDevanagari(text: string): boolean {
  *
  * Noto Sans Devanagari also carries Latin glyphs, so a mixed string ("Dehradun देहरादून")
  * renders correctly in it, while the Latin cut would show tofu for the Devanagari half. When
- * in doubt, the Devanagari family is the safe choice — hence the test is "contains any
+ * in doubt, the Devanagari family is the safe choice - hence the test is "contains any
  * Devanagari", not "is mostly Devanagari".
  */
 export function familyFor(text: string, weight: FontWeightToken): string {
@@ -95,7 +95,7 @@ export function familyFor(text: string, weight: FontWeightToken): string {
  * Android reserves extra space above the first line and below the last for glyphs that
  * overflow the font's ascent, which iOS does not. For Latin text that padding is dead space
  * (Noto Sans never exceeds its ascent), so it is turned off and `lineHeight` means the same
- * thing on both platforms — otherwise the same card is taller on Android.
+ * thing on both platforms - otherwise the same card is taller on Android.
  *
  * For Devanagari it is the opposite: the matras above the headline DO exceed the ascent, and
  * Android clips a TextView's drawing to its bounds, so with the padding off the tops of Hindi

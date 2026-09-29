@@ -12,7 +12,7 @@ type BadgeProps = {
   tone?: BadgeTone;
   /** Pass an explicit colour only for data encodings (severity, freshness) that own a scale. */
   color?: string;
-  /** A dot instead of a filled pill — for a label that sits next to other text. */
+  /** A dot instead of a filled pill - for a label that sits next to other text. */
   variant?: 'solid' | 'soft' | 'dot';
 };
 
@@ -25,7 +25,7 @@ const TONE_KEYS = {
   warning: 'freshness',
 } as const;
 
-/** A short status label. Never used for anything tappable — that is a Chip. */
+/** A short status label. Never used for anything tappable - that is a Chip. */
 export function Badge({ label, tone = 'neutral', color, variant = 'soft' }: BadgeProps) {
   const theme = useTheme();
 

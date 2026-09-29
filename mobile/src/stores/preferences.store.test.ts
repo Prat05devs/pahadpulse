@@ -2,7 +2,7 @@ import { usePreferencesStore } from './preferences.store';
 
 /**
  * A Zustand store is a plain module, not a React tree, so these call it directly rather than
- * wrapping in `act` — `set` is synchronous and there is no render to flush.
+ * wrapping in `act` - `set` is synchronous and there is no render to flush.
  */
 const store = () => usePreferencesStore.getState();
 

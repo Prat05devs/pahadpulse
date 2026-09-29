@@ -1,8 +1,10 @@
 import type { LocalisedText } from '@/types/api';
 import type { Language } from '@/stores';
 
+const EM_DASH_PATTERN = new RegExp(`\\s*${String.fromCodePoint(8212)}\\s*`, 'g');
+
 /**
- * Presentation helpers. Pure functions only — nothing here touches state or the network, so
+ * Presentation helpers. Pure functions only - nothing here touches state or the network, so
  * every one of them is trivially testable.
  */
 
@@ -18,6 +20,11 @@ export function localise(text: LocalisedText | null | undefined, language: Langu
   if (preferred && preferred.trim().length > 0) return preferred;
   const fallback = language === 'en' ? text.hi : text.en;
   return fallback ?? '';
+}
+
+/** Keep published or remotely supplied copy aligned with the app's punctuation style. */
+export function normaliseAppText(value: string): string {
+  return value.replace(EM_DASH_PATTERN, '; ');
 }
 
 /**
@@ -37,7 +44,7 @@ export function formatNumber(value: number, decimals = 0): string {
  * Compact form for large figures, in Indian units.
  *
  * A district card has room for "10.9 L", not "10,86,346". The full figure stays available on
- * the detail screen — this is for the card, never for the page that cites a source.
+ * the detail screen - this is for the card, never for the page that cites a source.
  */
 export function formatCompact(value: number): string {
   const abs = Math.abs(value);
@@ -90,7 +97,7 @@ const RELATIVE_AUTO: Partial<Record<RelativeUnit, readonly [string, string]>> = 
  * Hand-rolled rather than `Intl.RelativeTimeFormat`, which Hermes does not implement. On
  * device the constructor is `undefined`, so `new Intl.RelativeTimeFormat(...)` threw
  * "undefined cannot be used as a constructor" and took down every screen that renders a
- * source note — which is nearly all of them. `Intl.NumberFormat` and `Intl.DateTimeFormat`
+ * source note - which is nearly all of them. `Intl.NumberFormat` and `Intl.DateTimeFormat`
  * elsewhere in this file are fine: Hermes backs those with the platform's ICU.
  *
  * A polyfill (@formatjs/intl-relativetimeformat) would restore the API, but it pulls locale
@@ -119,7 +126,7 @@ export function formatRelative(value: string | Date | null | undefined): string 
   return 'just now';
 }
 
-/** "10 Sep 2026" — for a vintage, where the exact day matters and "2 years ago" does not. */
+/** "10 Sep 2026" - for a vintage, where the exact day matters and "2 years ago" does not. */
 export function formatDate(value: string | Date | null | undefined): string {
   const date =
     value instanceof Date
@@ -136,7 +143,7 @@ export function formatDate(value: string | Date | null | undefined): string {
   }).format(date);
 }
 
-/** "4:30 pm" in IST — the zone every reader of this app is in. */
+/** "4:30 pm" in IST - the zone every reader of this app is in. */
 export function formatTime(value: string | Date | null | undefined): string {
   const date = value instanceof Date ? value : parseUtc(value);
   if (!date) return '';

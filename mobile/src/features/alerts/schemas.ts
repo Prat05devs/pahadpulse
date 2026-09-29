@@ -7,7 +7,7 @@ import { LocalisedTextSchema, ProvenanceSchema, UtcDateTime } from '@/types/api'
  *
  * Every timestamp here is `UtcDateTime`, not `z.string().datetime()`. The API sends
  * `YYYY-MM-DD HH:mm:ss` in UTC, and typing these as ISO made every alert response fail
- * validation on the web app — which then rendered an empty page rather than an error, so
+ * validation on the web app - which then rendered an empty page rather than an error, so
  * nobody noticed for weeks.
  */
 

@@ -20,12 +20,20 @@ localhost and non-HTTPS production URLs.
 - [ ] Create or confirm the Apple Developer and App Store Connect accounts.
 - [ ] Create the App Store Connect app for bundle ID `in.pahadpulse.app`; record its numeric
       Apple ID as `ascAppId` in `eas.json` only after it exists.
-- [ ] Run `eas init` and set `EAS_PROJECT_ID` if this project has not been linked to EAS.
+- [ ] Run `eas init` and set `EAS_PROJECT_ID`; notification opt-in deliberately fails closed
+      when the build is not linked to a real EAS project.
+- [ ] Configure an APNs key for `in.pahadpulse.app` with `eas credentials` and confirm the
+      App Store provisioning profile includes Push Notifications.
+- [ ] Add the Android app to Firebase, set `android.googleServicesFile` to its
+      `google-services.json`, and upload the matching FCM V1 service-account key to EAS.
+      Follow [PUSH_NOTIFICATIONS_SETUP.md](./PUSH_NOTIFICATIONS_SETUP.md) for the complete
+      Android, iOS, backend, cost, and verification procedure.
 - [x] iPad is not in v1 (decided 2026-09-15). `ios.supportsTablet` is `false`, so no iPad QA
       or iPad screenshots are needed; iPad can come in a later update.
-- [x] Marketing version is `1.0.0`. The first store builds are produced locally (Xcode archive,
-      Gradle bundle), so `ios.buildNumber` and `android.versionCode` in `app.config.ts` are set
-      by hand — increment both before every upload.
+- [x] The next marketing version is `1.0.1`; Apple closed the approved `1.0.0` train to new
+      builds. The first store builds are produced locally (Xcode archive, Gradle bundle), so
+      `ios.buildNumber` and `android.versionCode` in `app.config.ts` are set by hand — increment
+      the platform-specific number before every upload.
 
 ## EAS environment setup
 
@@ -79,8 +87,10 @@ profiles and repeat the live contract suite before building.
 
 The current client has no account flow, advertising SDK, analytics SDK, tracking permission,
 location request, camera request or photo-library request. It stores followed districts,
-language, theme and a short-lived API cache on the device. `expo-secure-store` is present for
-future sensitive local values but the current public flows do not create an identity.
+language, theme and a short-lived API cache on the device. If a reader explicitly turns on
+warning notifications, a pseudonymous Expo push token, platform and selected language are
+stored by the API until opt-out or invalidation; the token is also kept in secure device storage
+so an offline unsubscribe can be retried. It is not linked to a profile or contact information.
 
 Before answering **“No, we do not collect data from this app”**, verify production API/CDN
 logging and retention. IP addresses or other request metadata retained or linked beyond the
@@ -90,9 +100,10 @@ partners as well as client code.
 Suggested App Review note:
 
 > Pahad Pulse is a public, read-only information app and requires no account. It consolidates
-> data from attributed public sources. The app does not request location, tracking, camera,
-> photo-library or notification access. Source links open in the system browser. Some screens
-> retain previously loaded public data on-device for limited-connectivity use.
+> data from attributed public sources. The app does not request location, tracking, camera or
+> photo-library access. Warning notifications are optional and requested only after the user
+> taps Turn on notifications. Source links open in the system browser. Some screens retain
+> previously loaded public data on-device for limited-connectivity use.
 
 - [ ] Add the deployed privacy policy and support URLs in App Store Connect.
 - [ ] Complete App Privacy after the server-log review.
@@ -116,9 +127,9 @@ Xcode — a change made in the Xcode UI is destroyed by the next prebuild.
   rewriting `PahadPulse.entitlements` mid-archive to match the App ID. It happened because
   the App ID had Push Notifications enabled while nothing in the app used push: the
   entitlement carried `aps-environment` with no `expo-notifications`, no registration code
-  and no sender. The entitlements file is now an empty dict and the capability is off in
-  Xcode. When push is actually built, it must come from the `expo-notifications` config
-  plugin so it survives a prebuild — never clicked into Xcode.
+  and no sender. Push is now intentional and comes from the `expo-notifications` config plugin,
+  so the entitlement survives every prebuild. Never add it by clicking in Xcode. Confirm the
+  regenerated entitlement and provisioning profile agree before archiving.
 
 - **"Upload Symbols Failed" warnings.** Warnings, never blocking; the build uploads and
   reviews normally. Five of the eight were fixable: ExpoImage and the four SDWebImage

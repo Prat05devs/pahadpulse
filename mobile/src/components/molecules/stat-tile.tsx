@@ -28,7 +28,7 @@ type StatTileProps = {
    * The figure as a number, when it is one, so the tile can count up to it.
    *
    * Separate from `value` rather than replacing it: most tiles show something that is not a
-   * plain number — a temperature with a degree sign, an em dash while loading — and those
+   * plain number - a temperature with a degree sign, an em dash while loading - and those
    * must keep working. When this is given, `countFormat` renders each step and `value` is
    * only the accessible reading.
    */
@@ -111,7 +111,7 @@ export function StatTile({
           {/*
            * One line, shrinking to fit rather than wrapping. Some tiles hold a word
            * ("Highways") rather than a figure, and on a 360dp Android screen a word that does
-           * not fit was broken across two lines mid-word — the tile then stood taller than
+           * not fit was broken across two lines mid-word - the tile then stood taller than
            * its neighbour. `flexShrink` lets the text measure against the tile, not overflow.
            */}
           {countTo === undefined ? (

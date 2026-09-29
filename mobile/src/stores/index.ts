@@ -8,6 +8,8 @@ export {
   useThemeMode,
   useSavedDistricts,
   useIsDistrictSaved,
+  useHasSeenIntro,
+  usePreferencesHydrated,
   type Language,
   type ThemeMode,
 } from './preferences.store';

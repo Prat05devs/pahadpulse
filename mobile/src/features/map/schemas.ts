@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /**
  * The map's boundary at the network edge (N5). Geometry arriving from the API is validated
- * structurally rather than trusted — a malformed coordinate array is the kind of thing that
+ * structurally rather than trusted - a malformed coordinate array is the kind of thing that
  * throws deep inside the renderer, far from the cause.
  *
  * Mirrors `web/src/features/map/schemas.ts` because both clients read the same two
@@ -100,6 +100,8 @@ export const MapMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('ready') }),
   z.object({ type: z.literal('error'), message: z.string() }),
   z.object({ type: z.literal('district'), slug: z.string().min(1) }),
+  z.object({ type: z.literal('alert'), alertId: z.number().int().positive() }),
+  z.object({ type: z.literal('clear') }),
 ]);
 
 export type MapMessage = z.infer<typeof MapMessageSchema>;

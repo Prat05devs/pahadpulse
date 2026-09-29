@@ -46,8 +46,8 @@ function useStackStyle(
  * Split the layout tokens out of the props before they reach `View`.
  *
  * Without this, `gap`, `padding`, `align` and friends are spread onto the underlying View as
- * unknown component props. They do nothing there — the real values already went into the
- * computed style — but they are noise on every element and a trap for anyone who assumes a
+ * unknown component props. They do nothing there - the real values already went into the
+ * computed style - but they are noise on every element and a trap for anyone who assumes a
  * prop that is being passed is a prop that is being used.
  */
 function splitProps({

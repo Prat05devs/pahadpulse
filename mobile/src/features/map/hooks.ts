@@ -20,7 +20,7 @@ export function useDistrictFeatures() {
   });
 }
 
-/** Active alerts, on the same cadence the alerts tab uses — they expire in hours. */
+/** Active alerts, on the same cadence the alerts tab uses - they expire in hours. */
 export function useAlertFeatures() {
   return useQuery({
     queryKey: mapKeys.alerts(),

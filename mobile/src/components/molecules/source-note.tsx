@@ -16,8 +16,8 @@ const FRESHNESS_KEY = {
 /**
  * Where a figure came from, rendered next to the figure.
  *
- * This is not decoration. The platform does not author data — it ingests, attributes and
- * displays what departments publish — so a number without its department, its vintage and
+ * This is not decoration. The platform does not author data - it ingests, attributes and
+ * displays what departments publish - so a number without its department, its vintage and
  * how fresh it is has lost the thing that makes it trustworthy. Every panel that shows a
  * value shows one of these.
  */

@@ -1,13 +1,14 @@
 import Constants from 'expo-constants';
 import { Stack, router } from 'expo-router';
-import { Alert, Linking } from 'react-native';
+import { Alert } from 'react-native';
 
 import { Card, Divider, HStack, Pressable, Text, VStack } from '@/components/atoms';
 import { Chip, ListRow, SectionHeader } from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { env } from '@/config/env';
-import { useAlertNotifications } from '@/features/notifications';
+import { showNotificationEnableFailure, useAlertNotifications } from '@/features/notifications';
 import { useT, type TranslationKey } from '@/i18n';
+import { openExternal } from '@/lib/external-link';
 import { usePreferencesStore, type Language, type ThemeMode } from '@/stores';
 import { useTheme } from '@/theme';
 
@@ -25,7 +26,7 @@ const THEMES: { labelKey: TranslationKey; value: ThemeMode }[] = [
 /**
  * Preferences, and the honest facts about where the data comes from.
  *
- * Everything here reads from the Zustand store, which is persisted — so a choice made once
+ * Everything here reads from the Zustand store, which is persisted - so a choice made once
  * survives a cold start, which is the whole reason those four fields are client state rather
  * than server state.
  */
@@ -47,8 +48,8 @@ export function SettingsScreen() {
   /**
    * Dismiss to the tab bar rather than calling `router.back()` unconditionally.
    *
-   * `back()` does nothing when there is no history — which is exactly the case when this
-   * screen was opened from a deep link — leaving the reader tapping a button that appears
+   * `back()` does nothing when there is no history - which is exactly the case when this
+   * screen was opened from a deep link - leaving the reader tapping a button that appears
    * broken. `canGoBack` is what tells the two situations apart.
    */
   const dismiss = () => {
@@ -66,26 +67,22 @@ export function SettingsScreen() {
       void notifications.disable();
       return;
     }
-    void notifications.enable().then((granted) => {
-      if (granted) return;
-      Alert.alert(
-        t('settings.notifications.blockedTitle'),
-        t('settings.notifications.blockedBody'),
-        [
-          { text: t('settings.reset.cancel'), style: 'cancel' },
-          {
-            text: t('settings.notifications.openSettings'),
-            onPress: () => void Linking.openSettings(),
-          },
-        ]
-      );
-    });
+    void notifications.enable().then((result) => showNotificationEnableFailure(result, t));
   };
 
   const confirmReset = () => {
     Alert.alert(t('settings.reset.confirmTitle'), t('settings.reset.confirmBody'), [
       { text: t('settings.reset.cancel'), style: 'cancel' },
-      { text: t('settings.reset.confirm'), style: 'destructive', onPress: reset },
+      {
+        text: t('settings.reset.confirm'),
+        style: 'destructive',
+        onPress: () => {
+          // Reset includes the notification preference, so its server token must be removed
+          // as part of the same reader action rather than continuing to send silently.
+          void notifications.disable();
+          reset();
+        },
+      },
     ]);
   };
 
@@ -152,7 +149,9 @@ export function SettingsScreen() {
             subtitle={
               notifications.permission === 'denied'
                 ? t('settings.notifications.blocked')
-                : t('settings.notifications.alerts.subtitle')
+                : notifications.permission === 'unavailable'
+                  ? t('settings.notifications.unavailable')
+                  : t('settings.notifications.alerts.subtitle')
             }
             icon={notifications.enabled ? 'notifications' : 'notifications-off-outline'}
             value={
@@ -168,7 +167,7 @@ export function SettingsScreen() {
           <Divider />
           {/*
            * Said next to the switch, not buried in a policy page. This mirrors warnings
-           * published by SACHET/NDMA and cannot promise delivery — a phone that is off or
+           * published by SACHET/NDMA and cannot promise delivery - a phone that is off or
            * out of coverage misses one, and the state's own channels remain authoritative.
            */}
           <Text variant="footnote" color="textMuted" style={{ marginTop: theme.spacing.sm }}>
@@ -212,14 +211,14 @@ export function SettingsScreen() {
             title={t('settings.support')}
             subtitle={t('settings.support.subtitle')}
             icon="help-circle-outline"
-            onPress={() => void Linking.openURL(`${env.webUrl}/support`)}
+            onPress={() => void openExternal(`${env.webUrl}/support`)}
           />
           <Divider />
           <ListRow
             title={t('settings.privacy')}
             subtitle={t('settings.privacy.subtitle')}
             icon="shield-checkmark-outline"
-            onPress={() => void Linking.openURL(`${env.webUrl}/privacy`)}
+            onPress={() => void openExternal(`${env.webUrl}/privacy`)}
           />
         </Card>
 

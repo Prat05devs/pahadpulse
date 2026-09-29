@@ -16,5 +16,6 @@ export function useAreaNetwork(slug: string) {
     queryKey: connectivityKeys.area(slug),
     queryFn: () => fetchAreaNetwork(slug),
     staleTime: STALE_TIME.hourly,
+    enabled: slug.length > 0,
   });
 }

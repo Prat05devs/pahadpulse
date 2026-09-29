@@ -3,6 +3,7 @@ import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'r
 
 import { useTheme, type TypographyToken } from '@/theme';
 import { familyFor, platformTextFixes, type FontWeightToken } from '@/theme/fonts';
+import { normaliseAppText } from '@/lib/format';
 
 type ColorToken =
   | 'text'
@@ -46,9 +47,15 @@ function textOf(children: React.ReactNode): string {
   return out;
 }
 
+function normaliseChildren(children: React.ReactNode): React.ReactNode {
+  return Children.map(children, (child) =>
+    typeof child === 'string' ? normaliseAppText(child) : child
+  );
+}
+
 /**
  * The app's only text primitive. React Native's `Text` is never imported directly by a
- * screen — that is how a stray `fontSize: 14` or an OS-default font gets in.
+ * screen - that is how a stray `fontSize: 14` or an OS-default font gets in.
  *
  * It sets `fontFamily` explicitly and never sets `fontWeight`. See `theme/fonts.ts`: a
  * numeric weight against a bundled font is ignored on Android, so weight has to be carried
@@ -67,7 +74,8 @@ export function Text({
   const theme = useTheme();
   const ramp = theme.typography[variant];
   const resolvedWeight = weight ?? ramp.weight;
-  const content = textOf(children);
+  const renderedChildren = normaliseChildren(children);
+  const content = textOf(renderedChildren);
 
   return (
     <RNText
@@ -90,7 +98,7 @@ export function Text({
       ]}
       {...rest}
     >
-      {children}
+      {renderedChildren}
     </RNText>
   );
 }

@@ -1,15 +1,16 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 
-import { Card, Divider, Text, VStack } from '@/components/atoms';
+import { Card, Divider, Text, VStack, type IconName } from '@/components/atoms';
 import { ListRow, SectionHeader } from '@/components/molecules';
 import { Screen } from '@/components/templates';
-import { useT } from '@/i18n';
+import { useT, type TranslationKey } from '@/i18n';
 import { useTheme } from '@/theme';
 
 /**
- * The overflow tab.
+ * The overflow tab, grouped by what a reader is trying to do rather than listed flat - the
+ * flat list of eleven rows was where people told us they got lost.
  */
 export function MoreScreen() {
   const theme = useTheme();
@@ -32,89 +33,146 @@ export function MoreScreen() {
     </View>
   );
 
+  type Row = { title: TranslationKey; subtitle: TranslationKey; icon: IconName; href: Href };
+  const groups: { title: TranslationKey; rows: Row[] }[] = [
+    {
+      title: 'more.group.travel',
+      rows: [
+        {
+          title: 'nav.tripCheck',
+          subtitle: 'more.trip.subtitle',
+          icon: 'calendar-outline',
+          href: '/trip-check',
+        },
+        {
+          title: 'more.tourism',
+          subtitle: 'more.tourism.subtitle',
+          icon: 'compass-outline',
+          href: '/tourism',
+        },
+        {
+          title: 'more.roads',
+          subtitle: 'more.roads.subtitle',
+          icon: 'car-outline',
+          href: '/roads',
+        },
+        {
+          title: 'nav.alerts',
+          subtitle: 'more.alerts.subtitle',
+          icon: 'warning-outline',
+          href: '/alerts',
+        },
+      ],
+    },
+    {
+      title: 'more.group.area',
+      rows: [
+        {
+          title: 'nav.districts',
+          subtitle: 'more.districts.subtitle',
+          icon: 'list-outline',
+          href: '/districts',
+        },
+        {
+          title: 'nav.map',
+          subtitle: 'more.map.subtitle',
+          icon: 'earth-outline',
+          href: '/map',
+        },
+        {
+          title: 'more.airQuality',
+          subtitle: 'more.airQuality.subtitle',
+          icon: 'cloud-outline',
+          href: '/air-quality',
+        },
+        {
+          title: 'more.seismic',
+          subtitle: 'more.seismic.subtitle',
+          icon: 'pulse-outline',
+          href: '/seismic',
+        },
+        {
+          title: 'more.connectivity',
+          subtitle: 'more.connectivity.subtitle',
+          icon: 'wifi-outline',
+          href: '/connectivity',
+        },
+      ],
+    },
+    {
+      title: 'more.group.business',
+      rows: [
+        {
+          title: 'more.compare',
+          subtitle: 'more.compare.subtitle',
+          icon: 'git-compare-outline',
+          href: '/compare',
+        },
+        {
+          title: 'nav.schemes',
+          subtitle: 'more.schemes.subtitle',
+          icon: 'briefcase-outline',
+          href: '/schemes',
+        },
+        {
+          title: 'nav.budget',
+          subtitle: 'more.budget.subtitle',
+          icon: 'wallet-outline',
+          href: '/budget',
+        },
+        {
+          title: 'nav.dataExplorer',
+          subtitle: 'more.data.subtitle',
+          icon: 'stats-chart-outline',
+          href: '/data-explorer',
+        },
+      ],
+    },
+    {
+      title: 'more.group.app',
+      rows: [
+        {
+          title: 'nav.settings',
+          subtitle: 'more.settings.subtitle',
+          icon: 'settings-outline',
+          href: '/settings',
+        },
+        {
+          title: 'more.welcome',
+          subtitle: 'more.welcome.subtitle',
+          icon: 'sparkles-outline',
+          href: '/welcome',
+        },
+        {
+          title: 'more.credits',
+          subtitle: 'more.credits.subtitle',
+          icon: 'information-circle-outline',
+          href: '/credits',
+        },
+      ],
+    },
+  ];
+
   return (
     <Screen header={header}>
-      <VStack gap="sm">
-        <SectionHeader title={t('more.inTheApp')} />
-        <Card padding="md">
-          <ListRow
-            title={t('nav.districts')}
-            subtitle={t('more.districts.subtitle')}
-            icon="map-outline"
-            onPress={() => router.push('/districts')}
-          />
-          <Divider />
-          <ListRow
-            title={t('nav.alerts')}
-            subtitle={t('more.alerts.subtitle')}
-            icon="warning-outline"
-            onPress={() => router.push('/alerts')}
-          />
-          <Divider />
-          <ListRow
-            title={t('nav.map')}
-            subtitle={t('more.map.subtitle')}
-            icon="earth-outline"
-            onPress={() => router.push('/map')}
-          />
-          <Divider />
-          <ListRow
-            title={t('more.tourism')}
-            subtitle={t('more.tourism.subtitle')}
-            icon="compass-outline"
-            onPress={() => router.push('/tourism')}
-          />
-          <Divider />
-          <ListRow
-            title={t('more.compare')}
-            subtitle={t('more.compare.subtitle')}
-            icon="trending-up-outline"
-            onPress={() => router.push('/compare')}
-          />
-          <Divider />
-          <ListRow
-            title={t('more.roads')}
-            subtitle={t('more.roads.subtitle')}
-            icon="car-outline"
-            onPress={() => router.push('/roads')}
-          />
-          <Divider />
-          <ListRow
-            title={t('more.connectivity')}
-            subtitle={t('more.connectivity.subtitle')}
-            icon="wifi-outline"
-            onPress={() => router.push('/connectivity')}
-          />
-          <Divider />
-          <ListRow
-            title={t('more.airQuality')}
-            subtitle={t('more.airQuality.subtitle')}
-            icon="cloud-outline"
-            onPress={() => router.push('/air-quality')}
-          />
-          <Divider />
-          <ListRow
-            title={t('more.seismic')}
-            subtitle={t('more.seismic.subtitle')}
-            icon="pulse-outline"
-            onPress={() => router.push('/seismic')}
-          />
-          <Divider />
-          <ListRow
-            title={t('nav.settings')}
-            subtitle={t('more.settings.subtitle')}
-            icon="settings-outline"
-            onPress={() => router.push('/settings')}
-          />
-          <Divider />
-          <ListRow
-            title={t('more.credits')}
-            subtitle={t('more.credits.subtitle')}
-            icon="information-circle-outline"
-            onPress={() => router.push('/credits')}
-          />
-        </Card>
-      </VStack>
+      {groups.map((group) => (
+        <VStack key={group.title} gap="sm">
+          <SectionHeader title={t(group.title)} />
+          <Card padding="md">
+            {group.rows.map((row, index) => (
+              <View key={row.title}>
+                {index > 0 ? <Divider /> : null}
+                <ListRow
+                  title={t(row.title)}
+                  subtitle={t(row.subtitle)}
+                  icon={row.icon}
+                  onPress={() => router.push(row.href)}
+                />
+              </View>
+            ))}
+          </Card>
+        </VStack>
+      ))}
     </Screen>
   );
 }

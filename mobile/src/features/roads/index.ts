@@ -3,3 +3,5 @@ export * from './services';
 export * from './queries';
 export * from './hooks';
 export { RoadsScreen } from './components/roads-screen';
+export { RoadClosuresPanel } from './components/road-closures-panel';
+export * from './closures';

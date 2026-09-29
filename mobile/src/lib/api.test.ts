@@ -90,8 +90,19 @@ describe('apiClient.get', () => {
     expect((error as ApiError).kind).toBe('timeout');
   });
 
+  it('treats Expo native fetch cancellation as a retryable timeout', async () => {
+    const cancellation = new Error('Fetch request has been canceled');
+    cancellation.name = 'FetchRequestCanceledException';
+    global.fetch = jest.fn().mockRejectedValue(cancellation);
+
+    const error = await apiClient.get('/areas/x', DistrictSchema).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).kind).toBe('timeout');
+    expect((error as ApiError).isRetryable).toBe(true);
+  });
+
   it('explains a non-JSON body instead of throwing a parse error', async () => {
-    // Usually the wrong origin answering — a dev server or a captive portal.
+    // Usually the wrong origin answering - a dev server or a captive portal.
     mockFetch({ body: '<!doctype html><html></html>' });
 
     const error = await apiClient.get('/areas/x', DistrictSchema).catch((e: unknown) => e);

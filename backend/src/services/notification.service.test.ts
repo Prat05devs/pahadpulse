@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { ok } from 'neverthrow';
 
-import type { DeviceTokenRow, PendingAlertRow } from '../models/device.model.js';
+import type {
+  DeviceTokenRow,
+  PendingAlertRow,
+  PushNotificationTicketRow,
+} from '../models/device.model.js';
 import type { IDeviceRepository } from '../repositories/device.repository.js';
 
 const mockRepo: jest.Mocked<IDeviceRepository> = {
@@ -9,6 +13,10 @@ const mockRepo: jest.Mocked<IDeviceRepository> = {
   unregister: jest.fn(),
   listActiveTokens: jest.fn(),
   disableTokens: jest.fn(),
+  savePushTickets: jest.fn(),
+  listPendingPushTickets: jest.fn(),
+  deletePushTickets: jest.fn(),
+  prunePushTickets: jest.fn(),
   listPendingAlerts: jest.fn(),
   markNotified: jest.fn(),
   settleUnnotifiable: jest.fn(),
@@ -18,7 +26,8 @@ jest.unstable_mockModule('../repositories/device.repository.js', () => ({
   DeviceRepository: mockRepo,
 }));
 
-const { buildMessage, dispatchNewAlerts } = await import('./notification.service.js');
+const { buildMessage, dispatchNewAlerts, reconcilePushReceipts } =
+  await import('./notification.service.js');
 
 const fetchMock = jest.fn<typeof fetch>();
 
@@ -47,11 +56,25 @@ function device(token: string, language: 'en' | 'hi' = 'en'): DeviceTokenRow {
   };
 }
 
+function pushTicket(overrides: Partial<PushNotificationTicketRow> = {}): PushNotificationTicketRow {
+  return {
+    ticket_id: 'ticket-0',
+    device_token: 'ExponentPushToken[aaa]',
+    created_at: '2026-09-23 06:00:00',
+    ...overrides,
+  };
+}
+
 function expoReplies(tickets: { status: 'ok' | 'error'; details?: { error: string } }[]) {
   return Promise.resolve({
     ok: true,
     status: 200,
-    json: () => Promise.resolve({ data: tickets }),
+    json: () =>
+      Promise.resolve({
+        data: tickets.map((ticket, index) =>
+          ticket.status === 'ok' ? { ...ticket, id: `ticket-${index}` } : ticket,
+        ),
+      }),
   } as Response);
 }
 
@@ -63,6 +86,10 @@ beforeEach(() => {
   mockRepo.settleUnnotifiable.mockResolvedValue(ok(0));
   mockRepo.markNotified.mockResolvedValue(ok(undefined));
   mockRepo.disableTokens.mockResolvedValue(ok(0));
+  mockRepo.savePushTickets.mockResolvedValue(ok(0));
+  mockRepo.listPendingPushTickets.mockResolvedValue(ok([]));
+  mockRepo.deletePushTickets.mockResolvedValue(ok(0));
+  mockRepo.prunePushTickets.mockResolvedValue(ok(0));
   mockRepo.listActiveTokens.mockResolvedValue(ok([device('ExponentPushToken[aaa]')]));
   mockRepo.listPendingAlerts.mockResolvedValue(ok([alert()]));
   fetchMock.mockReturnValue(expoReplies([{ status: 'ok' }]));
@@ -102,8 +129,19 @@ describe('dispatchNewAlerts', () => {
     const result = await dispatchNewAlerts();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(result._unsafeUnwrap()).toMatchObject({ alerts: 1, delivered: 1 });
+    expect(result._unsafeUnwrap()).toMatchObject({ alerts: 1, accepted: 1 });
     expect(mockRepo.markNotified).toHaveBeenCalledWith([1]);
+    expect(mockRepo.savePushTickets).toHaveBeenCalledWith([
+      { ticketId: 'ticket-0', token: 'ExponentPushToken[aaa]' },
+    ]);
+    const request = fetchMock.mock.calls[0]?.[1];
+    const messages = JSON.parse(String(request?.body)) as Record<string, unknown>[];
+    expect(messages[0]).toMatchObject({
+      sound: 'default',
+      priority: 'high',
+      channelId: 'alerts',
+      data: { alertId: 1, url: '/alerts/1' },
+    });
   });
 
   it('does nothing when no warning is waiting', async () => {
@@ -144,8 +182,32 @@ describe('dispatchNewAlerts', () => {
 
     const result = await dispatchNewAlerts();
 
-    expect(result._unsafeUnwrap().delivered).toBe(0);
+    expect(result._unsafeUnwrap().accepted).toBe(0);
     // The warning is NOT recorded as announced: the next pass must try again.
+    expect(mockRepo.markNotified).toHaveBeenCalledWith([]);
+  });
+
+  it('retries when Expo returns no ticket list', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ errors: [{ message: 'temporary failure' }] }),
+    } as Response);
+
+    await dispatchNewAlerts();
+
+    expect(mockRepo.markNotified).toHaveBeenCalledWith([]);
+  });
+
+  it('retries when Expo returns fewer tickets than messages', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ data: [] }),
+    } as Response);
+
+    await dispatchNewAlerts();
+
     expect(mockRepo.markNotified).toHaveBeenCalledWith([]);
   });
 
@@ -162,5 +224,71 @@ describe('dispatchNewAlerts', () => {
     await dispatchNewAlerts();
 
     expect(mockRepo.markNotified).toHaveBeenCalledWith([1]);
+  });
+});
+
+describe('reconcilePushReceipts', () => {
+  beforeEach(() => {
+    mockRepo.listPendingPushTickets.mockResolvedValue(ok([pushTicket()]));
+  });
+
+  it('removes a ticket after Expo confirms the provider accepted it', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ data: { 'ticket-0': { status: 'ok' } } }),
+    } as Response);
+    mockRepo.deletePushTickets.mockResolvedValue(ok(1));
+
+    const result = await reconcilePushReceipts();
+
+    expect(mockRepo.deletePushTickets).toHaveBeenCalledWith(['ticket-0']);
+    expect(result._unsafeUnwrap()).toMatchObject({ resolved: 1, tokensDisabled: 0 });
+  });
+
+  it('retires a device rejected by APNs or FCM', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve({
+          data: {
+            'ticket-0': {
+              status: 'error',
+              message: 'The device is not registered',
+              details: { error: 'DeviceNotRegistered' },
+            },
+          },
+        }),
+    } as Response);
+    mockRepo.disableTokens.mockResolvedValue(ok(1));
+    mockRepo.deletePushTickets.mockResolvedValue(ok(1));
+
+    const result = await reconcilePushReceipts();
+
+    expect(mockRepo.disableTokens).toHaveBeenCalledWith(['ExponentPushToken[aaa]']);
+    expect(result._unsafeUnwrap()).toMatchObject({ resolved: 1, tokensDisabled: 1 });
+  });
+
+  it('keeps a ticket when Expo has not produced its receipt yet', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ data: {} }),
+    } as Response);
+
+    await reconcilePushReceipts();
+
+    expect(mockRepo.deletePushTickets).toHaveBeenCalledWith([]);
+    expect(mockRepo.disableTokens).toHaveBeenCalledWith([]);
+  });
+
+  it('keeps tickets for retry when the receipt service is unavailable', async () => {
+    fetchMock.mockRejectedValue(new TypeError('fetch failed'));
+
+    const result = await reconcilePushReceipts();
+
+    expect(mockRepo.deletePushTickets).not.toHaveBeenCalled();
+    expect(result._unsafeUnwrap().resolved).toBe(0);
   });
 });

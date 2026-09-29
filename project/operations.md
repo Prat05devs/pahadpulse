@@ -127,11 +127,15 @@ Rules worth knowing before changing any of it:
   current, not everything it missed; the rest are marked announced without being sent.
 - DS-6 applies: a source flagged `may_redistribute = false` (IMD today) never reaches a lock
   screen, exactly as it never reaches the API.
-- A push token Expo reports as `DeviceNotRegistered` is disabled, not deleted.
+- Successful send tickets are checked after 15 minutes. A push token Expo reports as
+  `DeviceNotRegistered` in either the ticket or final APNs/FCM receipt is disabled, not deleted.
+- Missing receipts retry until Expo's 24-hour retention window ends; resolved and expired ticket
+  rows are removed so notification state cannot grow without bound.
 
-Credentials are an EAS matter, not a code one: Android needs FCM configured for the project and
-iOS an APNs key. Set `EXPO_ACCESS_TOKEN` on the API to stop anyone who learns a token sending
-notifications that appear to come from this app.
+Credentials are an EAS matter, not a code one: the build must have `EAS_PROJECT_ID`, Android
+needs `google-services.json` plus a matching FCM V1 service-account key, and iOS needs an APNs
+key. Set `EXPO_ACCESS_TOKEN` on the API to stop anyone who learns a token sending notifications
+that appear to come from this app.
 
 **Weekly manual step.** The reference refresh (`openstreetmap` boundaries and villages,
 `openstreetmap-roads`) is deliberately not scheduled. It holds the whole state's geometry in

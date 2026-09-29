@@ -43,7 +43,7 @@ services:
       - key: APP_ENV
         value: production
       - key: PORT
-        value: '3000'
+        value: "3000"
       - key: LOG_LEVEL
         value: info
 
@@ -58,7 +58,7 @@ services:
       - key: DB_HOST
         sync: false
       - key: DB_PORT
-        value: '5432'
+        value: "5432"
       - key: DB_USER
         sync: false
       - key: DB_PASSWORD
@@ -68,7 +68,7 @@ services:
       # Mandatory: Supabase refuses unencrypted connections, and the pool verifies both the
       # certificate chain and the hostname.
       - key: DB_SSL
-        value: 'true'
+        value: "true"
       # Required, not optional, on Supabase. The pooler presents
       # *.pooler.supabase.com <- Supabase Intermediate 2021 CA <- Supabase Root 2021 CA,
       # and that root is self-signed and absent from Node's trust store — so without this
@@ -80,9 +80,14 @@ services:
       - key: DB_SSL_CA
         sync: false
       - key: DB_POOL_LIMIT
-        value: '10'
+        value: "10"
 
       # Runs ingestion in this process. Exactly one instance may have it on: a second would
       # repeat every job (the source-row lock stops them colliding, not duplicating).
       - key: SCHEDULER_ENABLED
-        value: 'true'
+        value: "true"
+
+      # Expo push-access security token. Configure the matching token in the EAS project;
+      # keeping the value in Render prevents it from ever entering source or a mobile bundle.
+      - key: EXPO_ACCESS_TOKEN
+        sync: false

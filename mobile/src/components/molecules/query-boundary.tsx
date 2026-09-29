@@ -18,7 +18,7 @@ type QueryLike<T> = {
 type QueryBoundaryProps<T> = {
   query: QueryLike<T>;
   children: (data: T) => ReactNode;
-  /** Replaces the default spinner — pass a skeleton shaped like the real content. */
+  /** Replaces the default spinner - pass a skeleton shaped like the real content. */
   loading?: ReactNode;
   /** Called with the data to decide whether it counts as empty. */
   isEmpty?: (data: T) => boolean;
@@ -30,7 +30,7 @@ type QueryBoundaryProps<T> = {
  * Renders the right one of the four states for a TanStack Query result.
  *
  * Without it, every screen re-implements the same `isPending ? ... : isError ? ...` ladder
- * and they drift — one shows a spinner, the next a blank box, a third swallows the error.
+ * and they drift - one shows a spinner, the next a blank box, a third swallows the error.
  * This is the single place the ladder is written.
  *
  * Note it checks `isError` BEFORE `data`: with a persisted cache a query can hold yesterday's

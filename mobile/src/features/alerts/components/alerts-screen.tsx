@@ -1,10 +1,16 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, ScrollView, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FlatList, ScrollView } from 'react-native';
 
 import { Card, Entrance, HStack, Icon, Text, VStack } from '@/components/atoms';
-import { Chip, EmptyState, ErrorState, LoadingState } from '@/components/molecules';
+import {
+  Chip,
+  CivicHeader,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  SectionHeader,
+} from '@/components/molecules';
 import { Screen } from '@/components/templates';
 import { useT, type TranslationKey } from '@/i18n';
 import { formatRelative } from '@/lib/format';
@@ -28,12 +34,11 @@ const TYPE_FILTERS: { labelKey: TranslationKey; value: AlertType | 'all' }[] = [
  *
  * Filtering happens on the client rather than by refetching per chip. The active set is
  * bounded and already in memory, so a round trip per tap would add latency and a spinner to
- * something that should feel instant — and would fail entirely when the reader is offline.
+ * something that should feel instant - and would fail entirely when the reader is offline.
  */
 export function AlertsScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const t = useT();
   const [type, setType] = useState<AlertType | 'all'>('all');
 
@@ -54,46 +59,41 @@ export function AlertsScreen() {
     });
   }, [data, type]);
 
-  const header = (
-    <View
-      style={{
-        paddingTop: insets.top + theme.spacing.sm,
-        backgroundColor: theme.colors.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.border,
-      }}
-    >
-      <VStack gap="sm" paddingY="sm">
-        <VStack paddingX="lg">
-          <Text variant="title">{t('nav.alerts')}</Text>
-          <Text variant="footnote" color="textMuted">
-            {isPending
-              ? t('common.loading')
-              : isError
-                ? t('alerts.savedActive', { count: alerts.length })
-                : t('alerts.inForce', { count: alerts.length })}
-          </Text>
-        </VStack>
+  const hasUrgentAlert = alerts.some(
+    (alert) => alert.severity === 'severe' || alert.severity === 'extreme'
+  );
+  const feedLabel = isPending
+    ? t('common.loading')
+    : isError
+      ? t('alerts.savedActive', { count: alerts.length })
+      : t('alerts.inForce', { count: alerts.length });
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingHorizontal: theme.spacing.lg,
-            gap: theme.spacing.xs,
-          }}
-        >
-          {TYPE_FILTERS.map((filter) => (
-            <Chip
-              key={filter.value}
-              label={t(filter.labelKey)}
-              selected={type === filter.value}
-              onPress={() => setType(filter.value)}
-            />
-          ))}
-        </ScrollView>
-      </VStack>
-    </View>
+  const header = (
+    <CivicHeader
+      title={t('nav.alerts')}
+      eyebrow={feedLabel}
+      subtitle={t('alerts.header.subtitle')}
+      live={!isPending && !isError}
+      urgent={hasUrgentAlert}
+    >
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: theme.spacing.lg,
+          gap: theme.spacing.xs,
+        }}
+      >
+        {TYPE_FILTERS.map((filter) => (
+          <Chip
+            key={filter.value}
+            label={t(filter.labelKey)}
+            selected={type === filter.value}
+            onPress={() => setType(filter.value)}
+          />
+        ))}
+      </ScrollView>
+    </CivicHeader>
   );
 
   if (isPending) {
@@ -119,7 +119,7 @@ export function AlertsScreen() {
         keyExtractor={(alert) => String(alert.id)}
         renderItem={({ item, index }) => (
           <Entrance index={index}>
-            <AlertCard alert={item} onPress={openAlert} />
+            <AlertCard alert={item} onPress={openAlert} featured={index === 0} />
           </Entrance>
         )}
         contentContainerStyle={{
@@ -130,28 +130,29 @@ export function AlertsScreen() {
         onRefresh={refetch}
         refreshing={isRefetching}
         ListHeaderComponent={
-          isError && data !== undefined ? (
-            <Card
-              tone="muted"
-              elevation="none"
-              style={{ marginBottom: theme.spacing.sm }}
-              accessibilityRole="alert"
-            >
-              <HStack gap="sm" align="center">
-                <Icon name="cloud-offline-outline" size={20} tone="warning" />
-                <VStack grow gap="xxs">
-                  <Text variant="bodyStrong">{t('alerts.savedTitle')}</Text>
-                  <Text variant="caption" color="textMuted">
-                    {dataUpdatedAt > 0
-                      ? t('error.savedData.checked', {
-                          when: formatRelative(new Date(dataUpdatedAt)),
-                        })
-                      : t('alerts.savedPullDown')}
-                  </Text>
-                </VStack>
-              </HStack>
-            </Card>
-          ) : null
+          <VStack gap="sm" style={{ marginBottom: theme.spacing.sm }}>
+            <SectionHeader
+              title={t('alerts.directives.title')}
+              subtitle={t('alerts.directives.subtitle')}
+            />
+            {isError && data !== undefined ? (
+              <Card tone="muted" elevation="none" accessibilityRole="alert">
+                <HStack gap="sm" align="center">
+                  <Icon name="cloud-offline-outline" size={20} tone="warning" />
+                  <VStack grow gap="xxs">
+                    <Text variant="bodyStrong">{t('alerts.savedTitle')}</Text>
+                    <Text variant="caption" color="textMuted">
+                      {dataUpdatedAt > 0
+                        ? t('error.savedData.checked', {
+                            when: formatRelative(new Date(dataUpdatedAt)),
+                          })
+                        : t('alerts.savedPullDown')}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </Card>
+            ) : null}
+          </VStack>
         }
         ListEmptyComponent={
           <EmptyState
@@ -165,6 +166,19 @@ export function AlertsScreen() {
             }
             icon="checkmark-circle-outline"
           />
+        }
+        ListFooterComponent={
+          <Card tone="primary" elevation="none" style={{ marginTop: theme.spacing.sm }}>
+            <HStack gap="sm" align="flex-start">
+              <Icon name="shield-checkmark-outline" tone="primary" />
+              <VStack grow gap="xxs">
+                <Text variant="bodyStrong">{t('alerts.provenance.title')}</Text>
+                <Text variant="caption" color="textMuted">
+                  {t('alerts.provenance.body')}
+                </Text>
+              </VStack>
+            </HStack>
+          </Card>
         }
       />
     </Screen>

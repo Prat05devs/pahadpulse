@@ -1,5 +1,5 @@
 import { Pressable, Text } from '@/components/atoms';
-import { useTheme } from '@/theme';
+import { HIT_SLOP_MIN_SIZE, useTheme } from '@/theme';
 
 type ChipProps = {
   label: string;
@@ -19,7 +19,7 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
       accessibilityState={{ selected }}
       accessibilityLabel={label}
       style={{
-        minHeight: 34,
+        minHeight: HIT_SLOP_MIN_SIZE,
         justifyContent: 'center',
         paddingHorizontal: theme.spacing.md,
         borderRadius: theme.radius.pill,

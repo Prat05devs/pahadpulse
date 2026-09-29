@@ -30,7 +30,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
  *
  * The library's own `mock.js` cannot be used: it re-imports the real module and hits the same
  * native initialiser. `src/test/reanimated-mock.tsx` covers the surface this app uses and
- * resolves every animation instantly — which is what a test should assert against anyway:
+ * resolves every animation instantly - which is what a test should assert against anyway:
  * the final state, not a frame partway through a spring.
  */
 jest.mock('react-native-reanimated', () => require('./reanimated-mock'));

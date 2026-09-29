@@ -1,7 +1,7 @@
 /**
  * Everything the terrain map is configured with.
  *
- * Mirrors `web/src/features/map/constants.ts`. No API key anywhere in this file — that is
+ * Mirrors `web/src/features/map/constants.ts`. No API key anywhere in this file - that is
  * the point of these choices, not an accident: every source below is free and keyless, and
  * the mobile map deliberately renders the same stack the web map does rather than swapping
  * in a platform basemap that would look nothing like it.
@@ -21,7 +21,7 @@ export const BASEMAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
  *
  * Pinned to the exact version the web app depends on so the two maps cannot drift in
  * rendering behaviour. Loaded rather than bundled because Metro cannot bundle a library
- * that expects a DOM — the WebView is a browser, and this is the browser's copy.
+ * that expects a DOM - the WebView is a browser, and this is the browser's copy.
  */
 export const MAPLIBRE_VERSION = '5.24.0';
 export const MAPLIBRE_JS = `https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/${MAPLIBRE_VERSION}/maplibre-gl.js`;
@@ -48,7 +48,7 @@ export const UTTARAKHAND_CENTER: [number, number] = [79.3, 30.1];
  *
  * Zoom is lower than the web's 7.35: a phone screen is far narrower than a desktop map
  * frame, and at the web zoom the state overflows the sides. Pitch is a little shallower for
- * the same reason — a steep tilt on a tall, narrow viewport pushes most of the state into
+ * the same reason - a steep tilt on a tall, narrow viewport pushes most of the state into
  * the compressed far distance.
  */
 export const DEFAULT_VIEW = {
@@ -57,20 +57,20 @@ export const DEFAULT_VIEW = {
   bearing: -10,
 } as const;
 
-/** Alert colours, keyed by CAP severity — the scale the source itself publishes. */
-export const SEVERITY_COLORS: Record<string, string> = {
+/** Alert colours, keyed by CAP severity - the scale the source itself publishes. */
+export const SEVERITY_COLORS = {
   extreme: '#6D0F7B',
   severe: '#C2101B',
   moderate: '#F0620E',
   minor: '#E0B100',
   unknown: '#5B6B93',
-};
+} as const;
 
 /** Garhwal and Kumaon, the two administrative divisions, tinted apart. */
-export const DIVISION_COLORS: Record<string, string> = {
+export const DIVISION_COLORS = {
   garhwal: '#1E5348',
   kumaon: '#26456C',
-};
+} as const;
 
 /** Keep terrain, roads and basemap labels readable through the administrative tint. */
 export const DISTRICT_FILL_OPACITY = 0.14;
@@ -78,7 +78,7 @@ export const DISTRICT_FILL_OPACITY = 0.14;
 /**
  * Published alert polygons may be precise; district-derived polygons are only an affected
  * administrative area and therefore receive a quieter wash. Both keep the map readable and
- * rely on the alert outline—not opacity alone—to remain visible.
+ * rely on the alert outline-not opacity alone-to remain visible.
  */
 export const ALERT_FILL_OPACITY = {
   published: 0.24,

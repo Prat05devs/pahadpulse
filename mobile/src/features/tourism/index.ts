@@ -3,3 +3,4 @@ export * from './services';
 export * from './queries';
 export * from './hooks';
 export { TourismScreen } from './components/tourism-screen';
+export { PlaceCard } from './components/place-card';

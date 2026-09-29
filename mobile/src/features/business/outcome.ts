@@ -3,7 +3,7 @@ import type { BusinessWeights, ComparisonDistrict, ComparisonReport } from './sc
 /**
  * The two readings of a comparison report that the screen must not get wrong.
  *
- * Both were wrong once, and both were wrong in the same direction — claiming more than the
+ * Both were wrong once, and both were wrong in the same direction - claiming more than the
  * data supports. They live here, away from the layout, so they can be tested without a
  * renderer: the screen's modals and animated controls cannot be driven under jest-expo.
  */
@@ -17,8 +17,8 @@ export type ComparisonOutcome =
  * `winner` has three shapes: a district slug, `tie`, or `insufficient`.
  *
  * `insufficient` is the API declining to recommend, because the evidence covers less than
- * half the weight the chosen business type asks for. Testing only for `tie` — as this
- * screen did — let that case fall through to the slug comparison, where it matched neither
+ * half the weight the chosen business type asks for. Testing only for `tie` - as this
+ * screen did - let that case fall through to the slug comparison, where it matched neither
  * district and so named district B as recommended. That is the API's refusal reported as
  * its opposite.
  */

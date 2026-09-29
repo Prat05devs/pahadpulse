@@ -20,7 +20,7 @@ const PLACEHOLDER = /\{(\w+)\}/g;
 /**
  * Look up one string.
  *
- * Exported for the few places that have a language but no React context — tests, and any
+ * Exported for the few places that have a language but no React context - tests, and any
  * helper called outside a component. Inside a component, use `useT`.
  *
  * A key missing from Hindi cannot happen: `strings.hi.ts` is typed against the English keys,
@@ -39,7 +39,7 @@ export function translate(language: Language, key: TranslationKey, vars?: Vars):
 /**
  * The hook every component uses for its own words.
  *
- * Text that comes from the API is NOT translated here — it is localised with `localise()`
+ * Text that comes from the API is NOT translated here - it is localised with `localise()`
  * from the `en`/`hi` pair the server sends, because the platform never machine translates
  * published government text (ALR-2).
  */

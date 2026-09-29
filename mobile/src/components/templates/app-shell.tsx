@@ -11,7 +11,7 @@ void SplashScreen.preventAutoHideAsync();
  * Holds the splash screen until the bundled fonts are in memory.
  *
  * Rendering before they load would draw one frame in the OS default font and then reflow
- * every line once Noto Sans arrives — the flash of unstyled text that makes cards visibly
+ * every line once Noto Sans arrives - the flash of unstyled text that makes cards visibly
  * jump on first launch. Waiting is the cheaper trade: the splash is already on screen.
  */
 export function AppShell({ children }: { children: ReactNode }) {

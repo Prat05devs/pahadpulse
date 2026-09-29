@@ -33,14 +33,14 @@ const BUNDLE_SUFFIX: Record<Variant, string> = {
 const BASE_BUNDLE_ID = 'in.pahadpulse.app';
 
 /** Accessible interface blue derived from the logo. Keep in step with `src/theme/tokens.ts`. */
-const BRAND_BLUE = '#075E9C';
+const BRAND_BLUE = '#0045A6';
 
 /**
  * The public endpoints each variant talks to.
  *
  * These live here, not only in `eas.json`, because the store archive is built in Xcode and
  * Xcode has no EAS environment. 1.0.0 (2) shipped to TestFlight with
- * `http://localhost:3000/api` inlined into the bundle — the JS is bundled by a build phase
+ * `http://localhost:3000/api` inlined into the bundle - the JS is bundled by a build phase
  * during the archive, `EXPO_PUBLIC_API_URL` was unset there, and `src/config/env.ts` fell
  * back to its development default. The app launched and then failed every request against
  * the reader's own phone.
@@ -51,8 +51,8 @@ const BRAND_BLUE = '#075E9C';
  *
  * This replaces an `assertProductionUrl` check that threw when the variables were missing at
  * config time. It could not have caught this bug: the Xcode archive never evaluates a
- * production EAS environment, and Expo loads the developer's local `.env` — with its
- * localhost values — inside the bundling step itself. The check that does catch it reads the
+ * production EAS environment, and Expo loads the developer's local `.env` - with its
+ * localhost values - inside the bundling step itself. The check that does catch it reads the
  * bundle that was actually produced, in `withBundleEnvironment` below.
  */
 const PUBLIC_URLS: Record<Variant, { api: string; web: string }> = {
@@ -92,7 +92,7 @@ const withScriptSandboxingDisabled: ConfigPlugin = (config) =>
  * Give the JS bundling phase an environment, and refuse to ship one built without it.
  *
  * `expo export:embed` runs inside the "Bundle React Native code and images" phase during a
- * Release build, inheriting whatever Xcode has — which, for an archive started from the
+ * Release build, inheriting whatever Xcode has - which, for an archive started from the
  * Xcode UI, is nothing. The exports below only fill in what is missing, so a shell or EAS
  * build that already set them is untouched.
  *
@@ -116,7 +116,7 @@ function bundleEnvironmentPrelude(variant: Variant): string {
 const BUNDLE_URL_GUARD = [
   '',
   '# What shipped in 1.0.0 (2): a bundle with no API URL inlined, falling back to localhost.',
-  '# The check is for PRESENCE of the expected URL, never absence of the fallback — the',
+  '# The check is for PRESENCE of the expected URL, never absence of the fallback - the',
   '# fallback is a literal in src/config/env.ts and is in every bundle either way.',
   'if [ "$CONFIGURATION" = "Release" ]; then',
   '  BUNDLE="$CONFIGURATION_BUILD_DIR/main.jsbundle"',
@@ -126,7 +126,7 @@ const BUNDLE_URL_GUARD = [
   '  fi',
   '  if ! grep -q "$EXPO_PUBLIC_API_URL" "$BUNDLE"; then',
   '    echo "error: $EXPO_PUBLIC_API_URL is not in the bundle, so the app would fall back to" >&2',
-  '    echo "localhost — exactly what shipped in 1.0.0 (2). See PUBLIC_URLS in app.config.ts." >&2',
+  '    echo "localhost - exactly what shipped in 1.0.0 (2). See PUBLIC_URLS in app.config.ts." >&2',
   '    exit 1',
   '  fi',
   'fi',
@@ -164,14 +164,14 @@ const withBundleEnvironment: ConfigPlugin = (config) =>
  *
  * Every framework here ships as a prebuilt `.xcframework`, and Xcode copies only some of
  * their dSYMs into the archive. Uploading 1.0.0 (2) produced eight "Upload Symbols Failed"
- * warnings — yet five of those frameworks (ExpoImage and the four SDWebImage ones) carry a
+ * warnings - yet five of those frameworks (ExpoImage and the four SDWebImage ones) carry a
  * dSYM inside the xcframework with exactly the UUID Apple asked for. This phase copies any
  * it finds next to the ones Xcode collected.
  *
  * `React`, `ReactNativeDependencies` and `hermesvm` ship with no dSYM at all: they are
  * downloaded release artifacts. Symbolicating those would mean building React Native from
  * source (`ios.buildReactNativeFromSource`), which costs far more archive time and disk than
- * readable third-party frames are worth. Those three warnings are expected and harmless —
+ * readable third-party frames are worth. Those three warnings are expected and harmless -
  * they never affect review, only the readability of crash reports inside those frameworks.
  *
  * Release only: a debug build has no archive to fill, and `DWARF_DSYM_FOLDER_PATH` is then
@@ -183,7 +183,7 @@ const COPY_VENDORED_DSYMS = [
   'mkdir -p "$DWARF_DSYM_FOLDER_PATH"',
   '# -L because CocoaPods symlinks vendored xcframeworks into node_modules; without it find',
   '# walks straight past SDWebImage and friends, which is likely why Xcode missed them too.',
-  '# Device slice only — a simulator dSYM would collide on name and is never uploaded.',
+  '# Device slice only - a simulator dSYM would collide on name and is never uploaded.',
   'find -L "$PODS_ROOT" -maxdepth 8 -type d -path "*/ios-arm64/dSYMs/*.framework.dSYM" -prune -print0 |',
   '  while IFS= read -r -d "" dsym; do',
   '    name=$(basename "$dsym")',
@@ -223,7 +223,7 @@ const withVendoredDsyms: ConfigPlugin = (config) =>
  *
  * `ios.appleTeamId` alone is read by EAS but NOT applied by prebuild, so the generated
  * project came out with no `DEVELOPMENT_TEAM` and the store archive had to have the team
- * picked by hand in Xcode after every prebuild — easy to forget, and the failure appears
+ * picked by hand in Xcode after every prebuild - easy to forget, and the failure appears
  * only at the signing step of a long archive. `/ios` is regenerated, so this belongs here.
  */
 const APPLE_TEAM_ID = '9Q56J23Z23';
@@ -270,7 +270,7 @@ const TEMPLATE_WINDOW_START = `#if os(iOS) || os(tvOS)
 `;
 
 const SCENE_DELEGATE_SWIFT = `
-// Added by withSceneLifecycle in app.config.ts — iOS 27 requires UIScene lifecycle adoption.
+// Added by withSceneLifecycle in app.config.ts - iOS 27 requires UIScene lifecycle adoption.
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   var window: UIWindow?
 
@@ -360,7 +360,7 @@ const withSceneLifecycle: ConfigPlugin = (config) =>
  *
  * The Expo template signs release builds with its bundled DEBUG keystore. Play rejects a
  * debug-signed upload outright, and the mistake is invisible until the Console refuses the
- * file, so the config is rewritten here rather than trusted to a hand edit — `/android` is
+ * file, so the config is rewritten here rather than trusted to a hand edit - `/android` is
  * gitignored and regenerated by every prebuild.
  *
  * The keystore and its passwords are read from Gradle properties, which live in
@@ -401,7 +401,7 @@ const withAndroidReleaseSigning: ConfigPlugin = (config) =>
 
     /*
      * Both anchors are asserted rather than replaced best-effort. If a future Expo template
-     * rewrites this file, the build must fail here — loudly, at prebuild — instead of
+     * rewrites this file, the build must fail here - loudly, at prebuild - instead of
      * producing an unsigned or debug-signed bundle that is only rejected at upload.
      */
     if (!gradle.contents.includes(debugSigningBlock)) {
@@ -434,7 +434,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
               ...config,
               name: NAME[VARIANT],
               slug: 'pahad-pulse',
-              version: '1.0.0',
+              version: '1.0.1',
               orientation: 'default',
               icon: './assets/images/icon.png',
               scheme: 'pahadpulse',
@@ -453,38 +453,24 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                 // is printed in every crash report and on the App Store listing.
                 appleTeamId: APPLE_TEAM_ID,
                 /**
-                 * Both store builds are produced locally — an Xcode archive and a Gradle bundle — so
+                 * Both store builds are produced locally - an Xcode archive and a Gradle bundle - so
                  * these two numbers are the real ones, not a starting point EAS would override.
                  * Increment on every upload: App Store Connect and Play each reject a repeat.
                  */
-                buildNumber: '4',
+                buildNumber: '5',
                 infoPlist: { ITSAppUsesNonExemptEncryption: false },
-                /*
-                 * Push, declared here rather than clicked into Xcode.
-                 *
-                 * 1.0.0 (2) failed to archive with "entitlements file was modified during the
-                 * build": the App ID had Push Notifications enabled while the app shipped no
-                 * push code, so automatic signing rewrote the empty entitlements mid-archive.
-                 * The app now registers for alert notifications, so the entitlement is real —
-                 * and it belongs in this file, because `/ios` is prebuild output and anything
-                 * set in the Xcode UI is destroyed by the next prebuild.
-                 *
-                 * `production` is what an App Store or TestFlight build needs; a debug build
-                 * run from Xcode gets `development` from the automatic signing flow.
-                 */
-                entitlements: { 'aps-environment': 'production' },
               },
               android: {
                 package: `${BASE_BUNDLE_ID}${BUNDLE_SUFFIX[VARIANT]}`,
                 /**
                  * Raise this by one for EVERY .aab uploaded to Play, including one that is only ever
-                 * used for internal testing. Play rejects a reused versionCode outright — AgniVision
+                 * used for internal testing. Play rejects a reused versionCode outright - AgniVision
                  * hit exactly this and had to rebuild. `versionName` comes from `version` above.
                  */
-                versionCode: 2,
+                versionCode: 3,
                 predictiveBackGestureEnabled: false,
                 adaptiveIcon: {
-                  backgroundColor: '#F2F7F7',
+                  backgroundColor: '#FAF8FF',
                   foregroundImage: './assets/images/android-icon-foreground.png',
                   monochromeImage: './assets/images/android-icon-monochrome.png',
                 },
@@ -492,7 +478,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                  * Permissions the app does not use, removed from the merged manifest.
                  *
                  * The Expo template requests "display over other apps" and legacy storage access by
-                 * default. Neither is used here, and Play review asks for a justification of each — a
+                 * default. Neither is used here, and Play review asks for a justification of each - a
                  * read-only data app declaring them invites a delayed or rejected review. INTERNET and
                  * VIBRATE (haptics) stay.
                  */
@@ -513,10 +499,18 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                 'expo-secure-store',
                 'expo-localization',
                 [
+                  'expo-notifications',
+                  {
+                    icon: './assets/images/android-icon-monochrome.png',
+                    color: BRAND_BLUE,
+                    defaultChannel: 'alerts',
+                  },
+                ],
+                [
                   'expo-splash-screen',
                   {
-                    backgroundColor: '#F2F7F7',
-                    dark: { backgroundColor: '#071719' },
+                    backgroundColor: '#FAF8FF',
+                    dark: { backgroundColor: '#0B1220' },
                     image: './assets/images/splash-icon.png',
                     imageWidth: 180,
                   },
@@ -533,7 +527,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                 /**
                  * The `eas` key is OMITTED entirely until a project ID exists, rather than set to null.
                  *
-                 * Expo's config serialisation turns a null here into `{}`, which is truthy — so the dev
+                 * Expo's config serialisation turns a null here into `{}`, which is truthy - so the dev
                  * server treats it as a real project ID, tries to sign the Expo Go manifest with it, and
                  * fails with "The path argument must be of type string". An absent key takes the
                  * unconfigured branch instead, which is what a fresh clone without EAS should do.

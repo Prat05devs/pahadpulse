@@ -1,4 +1,4 @@
-# Pahad Pulse — Mobile
+# Pahad Pulse - Mobile
 
 The iOS and Android app for the Pahad Pulse portal. Same data, same sources, same promise:
 **every figure shows the department that published it, the date it describes, and how fresh
@@ -19,10 +19,10 @@ npm run dev               # press i for iOS, a for Android
 
 The API must be reachable from the device, which is the usual first-run trap:
 
-| Running on | `EXPO_PUBLIC_API_URL` |
-|---|---|
-| iOS simulator | `http://localhost:3000/api` |
-| Android emulator | `http://10.0.2.2:3000/api` |
+| Running on       | `EXPO_PUBLIC_API_URL`                   |
+| ---------------- | --------------------------------------- |
+| iOS simulator    | `http://localhost:3000/api`             |
+| Android emulator | `http://10.0.2.2:3000/api`              |
 | A physical phone | `http://<your-machine-LAN-IP>:3000/api` |
 
 Before pushing anything:
@@ -35,16 +35,19 @@ npm run typecheck && npm run lint && npm test
 
 ## How the code is arranged
 
-Two ideas stacked on each other. **Feature slices** decide *what* code is about;
-**atomic design** decides *how small* a piece of UI is.
+Two ideas stacked on each other. **Feature slices** decide _what_ code is about;
+**atomic design** decides _how small_ a piece of UI is.
 
 ```
 src/
-├── app/                    Expo Router. ROUTING ONLY — no screen lives here.
+├── app/                    Expo Router. ROUTING ONLY - no screen lives here.
 │   ├── _layout.tsx         providers + root stack
 │   ├── (tabs)/             Today · Districts · Alerts · More
 │   ├── districts/[slug].tsx
 │   ├── alerts/[id].tsx
+│   ├── trip-check.tsx      ?to=<place-or-district>&date=YYYY-MM-DD, same as the web link
+│   ├── tourism.tsx · roads.tsx (?district=) · schemes.tsx · budget.tsx · data-explorer.tsx
+│   ├── welcome.tsx         first-launch intro, opened by onboarding/useWelcomeGate
 │   └── settings.tsx
 │
 ├── components/             Feature-agnostic UI. Knows nothing about districts or alerts.
@@ -57,7 +60,14 @@ src/
 │   ├── alerts/             warnings and their severity
 │   ├── weather/            observations and forecast
 │   ├── indicators/         statistical figures
-│   ├── dashboard/          the Today screen
+│   ├── dashboard/          the Today screen: trip hero, photo signal cards, tools
+│   ├── trip-check/         the trip check tool (model.ts is ported from web)
+│   ├── roads/              highway register + PWD closures (closures.ts, RoadClosuresPanel)
+│   ├── tourism/            Char Dham guide, places, pilgrim arrivals
+│   ├── business/           district comparison + scheme finder (schemes.ts)
+│   ├── governance/         state budget explorer, district standing
+│   ├── intelligence/       data explorer: sector coverage, benchmarks, catalogue
+│   ├── onboarding/         the welcome and the gate that shows it once
 │   └── settings/           preferences, More
 │
 ├── stores/                 Zustand. CLIENT state only.
@@ -99,16 +109,16 @@ If you are unsure, ask whether the piece would still make sense in a different a
 The web portal already has hydromet, roads, tourism, connectivity, seismic and
 comparison. Each is the same six steps. Copying `features/weather/` is the fastest start.
 
-1. `features/<domain>/schemas.ts` — **copy the file from `web/src/features/<domain>/`**.
+1. `features/<domain>/schemas.ts` - **copy the file from `web/src/features/<domain>/`**.
    Keep it identical. A schema that has drifted between web and mobile means one of the two
    clients is silently rejecting valid data.
-2. `services.ts` — one function per endpoint, calling `apiClient`. No React.
-3. `queries.ts` — a key factory, so related keys share a prefix and invalidate together.
-4. `hooks.ts` — `useQuery` wrappers. Pick the staleness window honestly:
+2. `services.ts` - one function per endpoint, calling `apiClient`. No React.
+3. `queries.ts` - a key factory, so related keys share a prefix and invalidate together.
+4. `hooks.ts` - `useQuery` wrappers. Pick the staleness window honestly:
    `STALE_TIME.live` for safety information, `hourly` for readings, `reference` for figures
    with a vintage in years.
 5. `components/<thing>-screen.tsx` plus any organisms.
-6. `index.ts` — export the public surface, then a route file in `src/app/`.
+6. `index.ts` - export the public surface, then a route file in `src/app/`.
 
 Write the tests in the same change. Schema parsing and anything that formats a number for a
 reader are the two places bugs actually reach production.
@@ -131,8 +141,8 @@ Two rules follow from that, both in `theme/fonts.ts`:
   every line that iOS does not. This is the single most common reason a layout looks right on
   one platform and cramped on the other.
 
-**The API date formats are not ISO-8601.** `vintage` is `YYYY-MM-DD` — the date a figure
-*describes*. `fetchedAt` is `YYYY-MM-DD HH:mm:ss` in UTC — when we *retrieved* it. Typing
+**The API date formats are not ISO-8601.** `vintage` is `YYYY-MM-DD` - the date a figure
+_describes_. `fetchedAt` is `YYYY-MM-DD HH:mm:ss` in UTC - when we _retrieved_ it. Typing
 either as `z.string().datetime()` makes every response fail validation. Parse timestamps with
 `parseUtc`, which appends the zone explicitly; without it some engines read them as local
 time and every "2 hours ago" is 5½ hours wrong.
