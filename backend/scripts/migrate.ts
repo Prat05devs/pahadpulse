@@ -9,6 +9,8 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { escapeIdentifier, type PoolClient } from 'pg';
+
 import { db } from '../src/database/db.js';
 import createLogger from '../src/utils/logger.js';
 import { describeError } from '../src/utils/describe-error.js';
@@ -45,6 +47,47 @@ function stripRollbackComments(sql: string): string {
     .filter((line) => !line.trimStart().startsWith('--'))
     .join('\n')
     .trim();
+}
+
+interface TableRow {
+  tablename: string;
+}
+
+/**
+ * Re-apply migration 055's lockdown to every table this role owns, after every run.
+ *
+ * 055 relied on each later migration remembering `ENABLE ROW LEVEL SECURITY`. Four did not
+ * (056, 057, 059, 067), and Supabase's linter reported `rls_disabled_in_public` again on
+ * 27 September 2026. Enforcing it here means a forgotten line can never reach production.
+ * Safe for the API for the reason 055 gives: it connects as the owner, which RLS skips.
+ */
+async function lockDownPublicTables(client: PoolClient): Promise<void> {
+  const exposed = await client.query<TableRow>(`
+    SELECT tablename
+      FROM pg_tables
+     WHERE schemaname = 'public'
+       AND tableowner = current_user
+       AND NOT rowsecurity
+  `);
+  if (exposed.rows.length === 0) return;
+
+  // A local or CI Postgres has no Supabase roles. The RLS half still applies there.
+  const apiRoles = await client.query(
+    `SELECT 1 FROM pg_roles WHERE rolname IN ('anon', 'authenticated')`,
+  );
+  const hasApiRoles = apiRoles.rows.length > 0;
+
+  for (const { tablename } of exposed.rows) {
+    const table = escapeIdentifier(tablename);
+    await client.query(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`);
+    if (hasApiRoles) {
+      await client.query(`REVOKE ALL ON public.${table} FROM anon, authenticated`);
+    }
+  }
+
+  logger.warn('row-level security enabled on tables a migration left open', {
+    tables: exposed.rows.map((row) => row.tablename),
+  });
 }
 
 async function run(): Promise<void> {
@@ -85,6 +128,8 @@ async function run(): Promise<void> {
       logger.info('migration applied', { file });
       count += 1;
     }
+
+    await lockDownPublicTables(client);
 
     logger.info('migrations complete', { applied: count, total: files.length });
   } finally {
