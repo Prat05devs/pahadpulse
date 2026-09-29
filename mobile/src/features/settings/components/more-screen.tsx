@@ -132,6 +132,12 @@ export function MoreScreen() {
       title: 'more.group.app',
       rows: [
         {
+          title: 'nav.assistant',
+          subtitle: 'more.assistant.subtitle',
+          icon: 'chatbubble-ellipses-outline',
+          href: '/assistant',
+        },
+        {
           title: 'nav.settings',
           subtitle: 'more.settings.subtitle',
           icon: 'settings-outline',

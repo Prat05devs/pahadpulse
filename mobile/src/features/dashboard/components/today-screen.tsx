@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { Card, HStack, Icon, LiveDot, Pressable, Text, VStack } from '@/components/atoms';
 import { Screen } from '@/components/templates';
 import { useActiveAlerts, useAlertSummary } from '@/features/alerts';
+import { AssistantLaunchCard } from '@/features/assistant';
 import { useT } from '@/i18n';
 import { useSavedDistricts } from '@/stores';
 import { useTheme } from '@/theme';
@@ -55,6 +56,8 @@ export function TodayScreen() {
       {alerts.data ? <UrgentWarning alerts={alerts.data} /> : null}
 
       <TripHero />
+
+      <AssistantLaunchCard />
 
       <QuickTools />
 

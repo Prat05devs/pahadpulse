@@ -66,6 +66,7 @@ export const en = {
   'nav.compare': 'Compare districts',
   'nav.credits': 'Data credits',
   'nav.settings': 'Settings',
+  'nav.assistant': 'Ask Pahad Pulse',
   'nav.notFound': 'Not found',
 
   /* ── Not found ──────────────────────────────────────────────────── */
@@ -95,6 +96,36 @@ export const en = {
   'more.settings.subtitle': 'Language, appearance and your data',
   'more.credits': 'Data and technology',
   'more.credits.subtitle': 'Where every figure and the map itself come from',
+  'more.assistant.subtitle': 'Ask about official warnings, weather, roads and districts',
+
+  /* ── Assistant ─────────────────────────────────────────────────── */
+  'assistant.launch.eyebrow': 'OFFICIAL DATA, PLAIN ANSWERS',
+  'assistant.launch.title': 'Ask Pahad Pulse',
+  'assistant.launch.subtitle': 'Warnings, weather, roads and districts, with sources',
+  'assistant.intro.title': 'What would you like to know?',
+  'assistant.intro.body':
+    'Ask about warnings, weather, roads, pilgrim places, districts, tools or where our data comes from.',
+  'assistant.howAnswersWork': 'How answers work',
+  'assistant.browseTopics': 'Browse topics',
+  'assistant.whichDistrict': 'Which district?',
+  'assistant.whichPlace': 'Which place?',
+  'assistant.group.charDham': 'Char Dham',
+  'assistant.group.pilgrimage': 'Pilgrim places',
+  'assistant.group.destinations': 'Destinations',
+  'assistant.didYouMean': 'Did you mean:',
+  'assistant.input.label': 'Type a question',
+  'assistant.input.placeholder': 'Ask, for example, weather in Almora',
+  'assistant.send': 'Send question',
+  'assistant.loading.questions': 'Loading questions…',
+  'assistant.loading.answer': 'Looking that up…',
+  'assistant.error.catalogue': 'Questions could not be loaded. Check your connection.',
+  'assistant.error.answer':
+    'That answer could not be loaded. Check your connection and try again.',
+  'assistant.error.send': 'That could not be sent. Check your connection and try again.',
+  'assistant.unavailable': 'That question is not available right now. Choose a topic below.',
+  'assistant.none':
+    'I can answer set questions from Pahad Pulse data. Try one of these topics:',
+  'assistant.retry': 'Try again',
 
   /* ── Settings ───────────────────────────────────────────────────── */
   'settings.language': 'Language',

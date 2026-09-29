@@ -71,6 +71,7 @@ function RootNavigator() {
         <Stack.Screen name="schemes" options={{ title: t('nav.schemes') }} />
         <Stack.Screen name="budget" options={{ title: t('nav.budget') }} />
         <Stack.Screen name="data-explorer" options={{ title: t('nav.dataExplorer') }} />
+        <Stack.Screen name="assistant" options={{ title: t('nav.assistant') }} />
         <Stack.Screen
           name="welcome"
           options={{

@@ -67,6 +67,7 @@ export const hi: Record<keyof typeof en, string> = {
   'nav.compare': 'ज़िलों की तुलना',
   'nav.credits': 'आँकड़ों के स्रोत',
   'nav.settings': 'सेटिंग्स',
+  'nav.assistant': 'पहाड़ पल्स से पूछें',
   'nav.notFound': 'नहीं मिला',
 
   /* ── Not found ──────────────────────────────────────────────────── */
@@ -96,6 +97,35 @@ export const hi: Record<keyof typeof en, string> = {
   'more.settings.subtitle': 'भाषा, रूप-रंग और आपका डेटा',
   'more.credits': 'आँकड़े और तकनीक',
   'more.credits.subtitle': 'हर आँकड़ा और मैप कहाँ से आता है',
+  'more.assistant.subtitle': 'आधिकारिक चेतावनी, मौसम, सड़क और ज़िलों के बारे में पूछें',
+
+  /* ── Assistant ─────────────────────────────────────────────────── */
+  'assistant.launch.eyebrow': 'आधिकारिक आँकड़े, आसान जवाब',
+  'assistant.launch.title': 'पहाड़ पल्स से पूछें',
+  'assistant.launch.subtitle': 'चेतावनी, मौसम, सड़कें और ज़िले, स्रोतों के साथ',
+  'assistant.intro.title': 'आप क्या जानना चाहते हैं?',
+  'assistant.intro.body':
+    'चेतावनी, मौसम, सड़क, तीर्थ स्थल, ज़िले, टूल या हमारे आँकड़ों के स्रोत के बारे में पूछें।',
+  'assistant.howAnswersWork': 'जवाब कैसे दिए जाते हैं',
+  'assistant.browseTopics': 'विषय देखें',
+  'assistant.whichDistrict': 'कौन सा ज़िला?',
+  'assistant.whichPlace': 'कौन सी जगह?',
+  'assistant.group.charDham': 'चार धाम',
+  'assistant.group.pilgrimage': 'तीर्थ स्थल',
+  'assistant.group.destinations': 'घूमने की जगहें',
+  'assistant.didYouMean': 'क्या आपका मतलब यह था:',
+  'assistant.input.label': 'अपना सवाल लिखें',
+  'assistant.input.placeholder': 'जैसे, अल्मोड़ा का मौसम',
+  'assistant.send': 'सवाल भेजें',
+  'assistant.loading.questions': 'सवाल लोड हो रहे हैं…',
+  'assistant.loading.answer': 'जवाब ढूँढ रहे हैं…',
+  'assistant.error.catalogue': 'सवाल लोड नहीं हो सके। अपना इंटरनेट कनेक्शन जाँचें।',
+  'assistant.error.answer': 'जवाब लोड नहीं हो सका। इंटरनेट जाँचकर फिर कोशिश करें।',
+  'assistant.error.send': 'सवाल भेजा नहीं जा सका। इंटरनेट जाँचकर फिर कोशिश करें।',
+  'assistant.unavailable': 'यह सवाल अभी उपलब्ध नहीं है। नीचे कोई विषय चुनें।',
+  'assistant.none':
+    'मैं पहाड़ पल्स के तय आँकड़ों वाले सवालों के जवाब दे सकता हूँ। कोई विषय चुनें:',
+  'assistant.retry': 'फिर कोशिश करें',
 
   /* ── Settings ───────────────────────────────────────────────────── */
   'settings.language': 'भाषा',
