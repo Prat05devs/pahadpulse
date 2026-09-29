@@ -134,7 +134,7 @@ export function BusinessComparisonScreen({
                 htmlFor="business-scenario"
                 className="block text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2"
               >
-                1. Select an Investment Scenario
+                1. What business are you planning?
               </label>
               <select
                 id="business-scenario"
@@ -150,12 +150,12 @@ export function BusinessComparisonScreen({
               >
                 <option value="" disabled>
                   {scenariosLoading
-                    ? 'Loading venture models...'
+                    ? 'Loading business types…'
                     : scenariosFailed
-                      ? 'Venture models unavailable'
+                      ? 'Business types unavailable'
                       : scenarios?.length
-                        ? 'Browse our pre-calculated venture models...'
-                        : 'No venture models available'}
+                        ? 'Choose a business type…'
+                        : 'No business types available'}
                 </option>
                 {scenarios?.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -171,7 +171,7 @@ export function BusinessComparisonScreen({
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <AlertCircle aria-hidden="true" size={18} className="shrink-0" />
-                    Venture models could not be loaded. Check your connection and try again.
+                    Business types could not be loaded. Check your connection and try again.
                   </span>
                   <button
                     type="button"
@@ -191,10 +191,16 @@ export function BusinessComparisonScreen({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                2. Base Location
+              {/* Two districts compared as equals. This read "Base" and "Target" location,
+                  which implied a move from one to the other that the tool does not model. */}
+              <label
+                htmlFor="compare-district-a"
+                className="block text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2"
+              >
+                2. First district
               </label>
               <select
+                id="compare-district-a"
                 className="w-full rounded-md border-border shadow-sm focus:border-accent focus:ring-accent p-2.5 border bg-surface"
                 value={districtA}
                 onChange={(e) => {
@@ -218,10 +224,14 @@ export function BusinessComparisonScreen({
               </span>
             </div>
             <div>
-              <label className="block text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                3. Target Location
+              <label
+                htmlFor="compare-district-b"
+                className="block text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2"
+              >
+                3. Second district
               </label>
               <select
+                id="compare-district-b"
                 className="w-full rounded-md border-border shadow-sm focus:border-accent focus:ring-accent p-2.5 border bg-surface"
                 value={districtB}
                 onChange={(e) => {
@@ -264,7 +274,7 @@ export function BusinessComparisonScreen({
       {/* Report Section */}
       {activeCompare && reportLoading ? (
         <div className="h-64 flex items-center justify-center text-slate-400">
-          <p>Evaluating scenarios...</p>
+          <p>Comparing districts…</p>
         </div>
       ) : activeCompare && report ? (
         <div className="space-y-6">

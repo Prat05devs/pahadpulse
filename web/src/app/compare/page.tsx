@@ -142,7 +142,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
                     Ease of Doing Business Engine
                   </h2>
                   <p className="text-muted-foreground mt-3 text-sm max-w-3xl leading-relaxed">
-                    Explore 51 venture models tailored to Uttarakhand. The engine combines current
+                    Choose a business type and two districts. The engine combines current
                     connectivity measurements with published tourism, market, workforce and
                     development evidence, then adds scenario-relevant state budget context and
                     verified support schemes. Every source and vintage is disclosed, and factors

@@ -123,11 +123,11 @@ export function DecisionToolsShowcase() {
             </p>
             <h3 className="mt-2 text-xl font-semibold">Find the better-supported location</h3>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Match a venture model with district evidence, relevant state budget priorities and
+              Match a business idea with district evidence, relevant state budget priorities and
               government support schemes—without presenting suitability as guaranteed profit.
             </p>
             <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-accent">
-              Test a venture{' '}
+              Compare districts{' '}
               <ArrowRight
                 className="size-4 transition-transform group-hover:translate-x-1"
                 aria-hidden="true"
