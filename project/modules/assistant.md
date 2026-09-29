@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Owner** | Pahad Pulse |
-| **Status** | in progress: phase 1 (backend) done 2026-09-29; phases 2–3 (mobile, web UI) next |
+| **Status** | in progress: backend and web UI done 2026-09-29; mobile UI next |
 | **Backend** | `src/services/assistant/` (catalogue, resolvers, matcher, composer), `src/controllers/assistant.controller.ts`, `src/routes/assistant.route.ts` |
 | **Web** | `src/features/assistant/`: floating launcher and chat panel on every page |
 | **Mobile** | `src/features/assistant/`, `src/app/assistant.tsx`: entry from Today and More |
@@ -409,9 +409,9 @@ work" to `/sources` (AST-8).
 
 ## 9. Delivery phases
 
-1. **Backend**: catalogue, resolvers, composer, matcher, three endpoints, tests.
-2. **Mobile**: screen, entry points, i18n.
-3. **Web**: launcher, panel, i18n.
+1. **Backend — complete**: catalogue, resolvers, composer, matcher, three endpoints, tests.
+2. **Web — complete**: launcher and responsive panel on every dashboard page.
+3. **Mobile — next**: screen, entry points, i18n.
 4. **Tuning**: review `none` outcomes after two weeks; add or reword questions.
 
 ## 10. Open questions

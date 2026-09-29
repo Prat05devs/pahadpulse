@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { AssistantPanel } from '@/features/assistant';
 import { Menu as MenuIconData, X as CloseIconData } from 'lucide';
 import {
   AlertTriangle,
@@ -317,6 +318,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 bg-bg-light">
         {children}
       </main>
+
+      <AssistantPanel />
     </div>
   );
 }
