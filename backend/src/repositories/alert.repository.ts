@@ -5,6 +5,7 @@ import { bulkValues } from '../database/sql.js';
 import {
   ALERT_AREAS_TABLE,
   ALERTS_TABLE,
+  STATE_ONLY_WHEN_ALONE,
   toAlert,
   type Alert,
   type AlertCountRow,
@@ -28,6 +29,13 @@ const logger = createLogger('@alert.repository');
 /**
  * Aggregates each alert's areas as a JSON array in one query — the alternative is an N+1
  * fetching areas per alert on every list endpoint (Q5).
+ *
+ * The state row is left out whenever the alert also names a district. Every SACHET alert is
+ * attached to Uttarakhand as well as to its districts, so listing it read "Uttarakhand,
+ * Chamoli, Rudraprayag" — naming the state the whole app is about, first. A state-wide
+ * alert with no district keeps it, because then it is the only place the alert names.
+ * Sorted by name so the list reads the same on every screen. Filtering by district
+ * (`listActive` with an area) joins `alert_areas` separately and is unaffected.
  */
 const ALERT_SELECT = `
   SELECT a.id, a.source_id, a.source_alert_id, a.type, a.severity, a.urgency, a.certainty,
@@ -37,10 +45,13 @@ const ALERT_SELECT = `
          ST_X(a.centroid::geometry) AS centroid_lng,
          a.issued_at, a.effective_from, a.expires_at, a.fetched_at,
          COALESCE(
-           (SELECT json_agg(json_build_object('id', ar.id, 'slug', ar.slug, 'name_en', ar.name_en, 'name_hi', ar.name_hi))
+           (SELECT json_agg(
+                     json_build_object('id', ar.id, 'slug', ar.slug, 'name_en', ar.name_en, 'name_hi', ar.name_hi)
+                     ORDER BY ar.name_en)
               FROM ${ALERT_AREAS_TABLE} aa
               JOIN areas ar ON ar.id = aa.area_id
-             WHERE aa.alert_id = a.id),
+             WHERE aa.alert_id = a.id
+               AND ${STATE_ONLY_WHEN_ALONE}),
            '[]'::json
          ) AS area_ids
     FROM ${ALERTS_TABLE} a
