@@ -32,6 +32,10 @@ const BUNDLE_SUFFIX: Record<Variant, string> = {
 
 const BASE_BUNDLE_ID = 'in.pahadpulse.app';
 
+/** Public EAS project identity used for push tokens and credential lookup. */
+const EAS_PROJECT_ID =
+  process.env.EAS_PROJECT_ID ?? 'cc9b84ca-11ae-4c2d-89f3-2b00d7d7b257';
+
 /** Accessible interface blue derived from the logo. Keep in step with `src/theme/tokens.ts`. */
 const BRAND_BLUE = '#0045A6';
 
@@ -442,8 +446,9 @@ export default ({ config }: ConfigContext): ExpoConfig =>
           withSceneLifecycle(
             withScriptSandboxingDisabled({
               ...config,
+              owner: 'wtsolutions5s-team',
               name: NAME[VARIANT],
-              slug: 'pahad-pulse',
+              slug: 'wt-it-solutions',
               version: '1.0.1',
               orientation: 'default',
               icon: './assets/images/icon.png',
@@ -534,19 +539,9 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                 variant: VARIANT,
                 brandColor: BRAND_BLUE,
                 router: {},
-                /**
-                 * The `eas` key is OMITTED entirely until a project ID exists, rather than set to null.
-                 *
-                 * Expo's config serialisation turns a null here into `{}`, which is truthy - so the dev
-                 * server treats it as a real project ID, tries to sign the Expo Go manifest with it, and
-                 * fails with "The path argument must be of type string". An absent key takes the
-                 * unconfigured branch instead, which is what a fresh clone without EAS should do.
-                 *
-                 * `eas init` writes the real value; once it exists this passes it through.
-                 */
-                ...(process.env.EAS_PROJECT_ID
-                  ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
-                  : null),
+                // The UUID is public app metadata. Keeping a committed fallback lets EAS resolve this
+                // dynamic config non-interactively; an environment value may still override it.
+                eas: { projectId: EAS_PROJECT_ID },
               },
             })
           )
