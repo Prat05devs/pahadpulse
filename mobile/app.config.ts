@@ -219,17 +219,25 @@ const withVendoredDsyms: ConfigPlugin = (config) =>
   });
 
 /**
- * The signing team, written into every build configuration.
+ * The signing team and store version, written into every build configuration.
  *
  * `ios.appleTeamId` alone is read by EAS but NOT applied by prebuild, so the generated
  * project came out with no `DEVELOPMENT_TEAM` and the store archive had to have the team
  * picked by hand in Xcode after every prebuild - easy to forget, and the failure appears
- * only at the signing step of a long archive. `/ios` is regenerated, so this belongs here.
+ * only at the signing step of a long archive. Expo's prebuild template also leaves its own
+ * `1.0 (1)` values in the project instead of applying `version` and `ios.buildNumber`.
+ * `/ios` is regenerated, so all three values belong here.
  */
 const APPLE_TEAM_ID = '9Q56J23Z23';
 
 const withDevelopmentTeam: ConfigPlugin = (config) =>
   withXcodeProject(config, (modConfig) => {
+    const marketingVersion = config.version;
+    const buildNumber = config.ios?.buildNumber;
+    if (!marketingVersion || !buildNumber) {
+      throw new Error('Both version and ios.buildNumber are required for an iOS release.');
+    }
+
     const configurations: Record<string, unknown> =
       modConfig.modResults.pbxXCBuildConfigurationSection();
 
@@ -240,6 +248,8 @@ const withDevelopmentTeam: ConfigPlugin = (config) =>
       // Only the app target carries a bundle identifier; the Pods targets must stay untouched.
       if (buildSettings.PRODUCT_BUNDLE_IDENTIFIER === undefined) continue;
       buildSettings.DEVELOPMENT_TEAM = APPLE_TEAM_ID;
+      buildSettings.MARKETING_VERSION = marketingVersion;
+      buildSettings.CURRENT_PROJECT_VERSION = buildNumber;
     }
 
     return modConfig;
@@ -457,7 +467,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                  * these two numbers are the real ones, not a starting point EAS would override.
                  * Increment on every upload: App Store Connect and Play each reject a repeat.
                  */
-                buildNumber: '6',
+                buildNumber: '7',
                 infoPlist: { ITSAppUsesNonExemptEncryption: false },
               },
               android: {
@@ -467,7 +477,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                  * used for internal testing. Play rejects a reused versionCode outright - AgniVision
                  * hit exactly this and had to rebuild. `versionName` comes from `version` above.
                  */
-                versionCode: 4,
+                versionCode: 5,
                 predictiveBackGestureEnabled: false,
                 adaptiveIcon: {
                   backgroundColor: '#FAF8FF',
