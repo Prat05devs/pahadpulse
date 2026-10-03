@@ -482,7 +482,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                  * used for internal testing. Play rejects a reused versionCode outright - AgniVision
                  * hit exactly this and had to rebuild. `versionName` comes from `version` above.
                  */
-                versionCode: 5,
+                versionCode: 6,
                 predictiveBackGestureEnabled: false,
                 adaptiveIcon: {
                   backgroundColor: '#FAF8FF',

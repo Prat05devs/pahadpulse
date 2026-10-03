@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
@@ -36,11 +37,20 @@ export function TripHero() {
   const alerts = useActiveAlerts();
   const districts = useDistricts();
   const hero = theme.colors.hero;
+  // Measured, not '100%': on Android a percent-sized Svg with no viewBox can draw nothing on
+  // the first layout pass, so the photo showed with no fade over it until something re-rendered.
+  const [size, setSize] = useState({ width: 0, height: 0 });
 
   const dhams = guide.data?.charDham ?? [];
 
   return (
     <View
+      onLayout={(event) => {
+        const { width: w, height: h } = event.nativeEvent.layout;
+        setSize((prev) =>
+          prev.width === w && prev.height === h ? prev : { width: w, height: h }
+        );
+      }}
       style={{ borderRadius: theme.radius.xl, overflow: 'hidden', backgroundColor: hero.end }}
     >
       <Image
@@ -52,21 +62,29 @@ export function TripHero() {
         transition={180}
         accessible={false}
       />
-      <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none">
-        <Defs>
-          <LinearGradient id="trip-photo-fade" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={hero.end} stopOpacity={0.56} />
-            <Stop offset="0.48" stopColor={hero.end} stopOpacity={0.76} />
-            <Stop offset="1" stopColor={hero.end} stopOpacity={0.96} />
-          </LinearGradient>
-          <LinearGradient id="trip-photo-tint" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={hero.start} stopOpacity={0.34} />
-            <Stop offset="1" stopColor={hero.start} stopOpacity={0.06} />
-          </LinearGradient>
-        </Defs>
-        <Rect width="100%" height="100%" fill="url(#trip-photo-fade)" />
-        <Rect width="100%" height="100%" fill="url(#trip-photo-tint)" />
-      </Svg>
+      {size.width > 0 ? (
+        <Svg
+          style={StyleSheet.absoluteFill}
+          width={size.width}
+          height={size.height}
+          viewBox={`0 0 ${size.width} ${size.height}`}
+          pointerEvents="none"
+        >
+          <Defs>
+            <LinearGradient id="trip-photo-fade" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={hero.end} stopOpacity={0.56} />
+              <Stop offset="0.48" stopColor={hero.end} stopOpacity={0.76} />
+              <Stop offset="1" stopColor={hero.end} stopOpacity={0.96} />
+            </LinearGradient>
+            <LinearGradient id="trip-photo-tint" x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={hero.start} stopOpacity={0.34} />
+              <Stop offset="1" stopColor={hero.start} stopOpacity={0.06} />
+            </LinearGradient>
+          </Defs>
+          <Rect width={size.width} height={size.height} fill="url(#trip-photo-fade)" />
+          <Rect width={size.width} height={size.height} fill="url(#trip-photo-tint)" />
+        </Svg>
+      ) : null}
 
       <VStack gap="md" padding="lg">
         <HStack align="center" gap="sm">

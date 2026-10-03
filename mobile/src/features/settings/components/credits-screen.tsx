@@ -58,6 +58,71 @@ const DATA_SOURCES: Credit[] = [
 ];
 
 /**
+ * Publisher links that ship inside the app. The live registry is the source of truth, but it
+ * comes from our API; a reviewer or reader who opens this screen offline, or while the API is
+ * waking up, must still find the original sources.
+ */
+const FALLBACK_SOURCES: { key: string; department: string; url: string }[] = [
+  {
+    key: 'imd',
+    department: 'India Meteorological Department',
+    url: 'https://mausam.imd.gov.in',
+  },
+  {
+    key: 'sachet',
+    department: 'NDMA SACHET (public alerts)',
+    url: 'https://sachet.ndma.gov.in',
+  },
+  { key: 'ogd', department: 'Open Government Data Platform India', url: 'https://data.gov.in' },
+  {
+    key: 'cpcb',
+    department: 'Central Pollution Control Board (air quality)',
+    url: 'https://cpcb.nic.in',
+  },
+  { key: 'census', department: 'Census of India', url: 'https://censusindia.gov.in' },
+  {
+    key: 'des',
+    department: 'Directorate of Economics & Statistics, Uttarakhand',
+    url: 'https://des.uk.gov.in',
+  },
+  {
+    key: 'tourism',
+    department: 'Uttarakhand Tourism',
+    url: 'https://www.uttarakhandtourism.gov.in',
+  },
+  {
+    key: 'pilgrim',
+    department: 'Pilgrim registration and tourist care',
+    url: 'https://registrationandtouristcare.uk.gov.in',
+  },
+];
+
+function FallbackSources() {
+  const t = useT();
+  return (
+    <>
+      {FALLBACK_SOURCES.map((source, index) => (
+        <VStack key={source.key} gap="xs">
+          {index > 0 ? <Divider /> : null}
+          <Text variant="bodyStrong">{source.department}</Text>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityHint={t('credits.official.openHint')}
+            onPress={() => {
+              void openExternal(source.url);
+            }}
+          >
+            <Text variant="caption" color="primary">
+              {source.url}
+            </Text>
+          </Pressable>
+        </VStack>
+      ))}
+    </>
+  );
+}
+
+/**
  * One registry row: who published the dataset, and a link to their own page.
  *
  * The link is the point. An app that presents government information has to say where each
@@ -123,14 +188,8 @@ export function CreditsScreen() {
             subtitle={t('credits.official.subtitle')}
           />
           <Card padding="md">
-            {sources.isPending ? (
-              <Text variant="caption" color="textMuted">
-                {t('credits.official.loading')}
-              </Text>
-            ) : sources.isError || sources.data === undefined ? (
-              <Text variant="caption" color="textMuted">
-                {t('credits.official.failed')}
-              </Text>
+            {sources.data === undefined ? (
+              <FallbackSources />
             ) : (
               sources.data.map((source, index) => (
                 <VStack key={source.key} gap="xs">
