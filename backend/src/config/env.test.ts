@@ -26,6 +26,7 @@ function readSslConfig(overrides: Record<string, string> = {}) {
       env: {
         NODE_ENV: 'test',
         DOTENV_CONFIG_PATH: '/dev/null',
+        LOG_LEVEL: 'error',
         DB_HOST: 'db.example.test',
         DB_USER: 'test',
         DB_PASSWORD: '',

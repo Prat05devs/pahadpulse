@@ -2,10 +2,8 @@ import winston from 'winston';
 
 import { env } from '../config/env.js';
 
-const level = env.LOG_LEVEL ?? (env.NODE_ENV === 'production' ? 'info' : 'debug');
-
 const base = winston.createLogger({
-  level,
+  level: env.LOG_LEVEL,
   format:
     env.NODE_ENV === 'production'
       ? winston.format.combine(winston.format.timestamp(), winston.format.json())

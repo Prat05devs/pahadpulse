@@ -18,6 +18,7 @@ import 'dotenv/config';
 process.env.NODE_ENV ??= 'test';
 process.env.APP_ENV ??= 'local';
 process.env.PORT ??= '3000';
+process.env.LOG_LEVEL ??= 'debug';
 process.env.SERVER_URL ??= 'http://localhost:3000';
 process.env.DB_HOST ??= 'localhost';
 // 5432, not 3306: this project is Postgres.

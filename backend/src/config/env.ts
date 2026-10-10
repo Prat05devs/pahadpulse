@@ -5,7 +5,7 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   APP_ENV: z.enum(['local', 'development', 'staging', 'production']).default('local'),
   PORT: z.coerce.number().int().positive().default(3000),
-  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).optional(),
+  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']),
   SERVER_URL: z.url().default('http://localhost:3000'),
 
   DB_HOST: z.string().min(1),
