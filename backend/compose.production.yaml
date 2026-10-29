@@ -1,14 +1,19 @@
-# Production: the API on the shared DigitalOcean droplet, behind the shared Caddy proxy and
-# using the shared PostgreSQL (with PostGIS). docker-compose.yml stays the local development
-# stack; the server's .env selects this file with COMPOSE_FILE=compose.production.yaml.
+# Production: the API on the shared DigitalOcean droplet, behind the shared Caddy proxy.
+# docker-compose.yml stays the local development stack; the server's .env selects this file
+# with COMPOSE_FILE=compose.production.yaml.
 #
-# No ports are published. Caddy reaches the API as `pahadpulse-api:3000` on the `edge`
-# network, and the API reaches PostgreSQL as `postgres:5432` on the internal `data` network,
-# so database traffic never leaves the droplet and needs no TLS.
+# The database is this project's OWN PostgreSQL + PostGIS container, not the droplet's shared
+# PostgreSQL. The shared one is plain postgres:17-alpine, and adding PostGIS to it would mean
+# restarting the database every other app on the droplet uses. Nothing here touches the shared
+# services: the only contact is Caddy reaching the API as `pahadpulse-api:3000` on `edge`.
+#
+# No ports are published. The database sits on `db`, an internal network with no route to
+# the internet that only this project's containers join, so it needs no TLS.
 #
 # `npm start` runs migrations and the LGD village import before the server listens; both are
 # no-ops when there is nothing new. The health check waits on /ready (a real database query),
-# which is what `server deploy` waits for.
+# which is what `server deploy` waits for. `server deploy` also runs the `backup` service's
+# script before every rebuild.
 
 services:
   api:
@@ -22,12 +27,15 @@ services:
       APP_ENV: production
       PORT: '3000'
       SERVER_URL: https://api.pahadpulse.live
-      DB_HOST: postgres
+      DB_HOST: db
       DB_PORT: '5432'
       DB_USER: pahadpulse
       DB_NAME: pahadpulse
       DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
       DB_SSL: 'false'
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/ready >/dev/null || exit 1']
       interval: 15s
@@ -36,13 +44,65 @@ services:
       start_period: 120s
     networks:
       default: {}
-      data: {}
+      db: {}
       edge:
         aliases: [pahadpulse-api]
     logging:
       driver: json-file
       options: { max-size: '20m', max-file: '10' }
 
+  db:
+    image: postgis/postgis:17-3.5-alpine
+    restart: unless-stopped
+    # Sized for a 2 GB droplet shared with other apps: the API's pool is 10 connections.
+    command: ['postgres', '-c', 'shared_buffers=64MB', '-c', 'max_connections=30']
+    shm_size: 128mb
+    environment:
+      POSTGRES_DB: pahadpulse
+      POSTGRES_USER: pahadpulse
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pahadpulse -d pahadpulse']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [db]
+    logging:
+      driver: json-file
+      options: { max-size: '20m', max-file: '5' }
+
+  # Dumps the database every 24 h, and before every `server deploy`, to the same folder the
+  # shared backups use: /opt/backups/postgres/pahadpulse/. Kept 14 days.
+  backup:
+    image: postgis/postgis:17-3.5-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: pahadpulse
+      PGDATABASE: pahadpulse
+      PGPASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    volumes:
+      - ./deploy/backup.sh:/backup.sh:ro
+      - /opt/backups/postgres/pahadpulse:/backups
+    entrypoint:
+      [
+        '/bin/sh',
+        '-c',
+        "while true; do sleep 86400; /bin/sh /backup.sh || echo 'backup failed' >&2; done",
+      ]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [db]
+
 networks:
+  db: { internal: true }
   edge: { external: true }
-  data: { external: true }
+
+volumes:
+  db_data:

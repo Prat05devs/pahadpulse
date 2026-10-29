@@ -32,19 +32,21 @@ fix this section.
 ### API and database on the DigitalOcean droplet, website on Vercel
 
 The API and its PostgreSQL database run on the shared DigitalOcean droplet (`139.59.72.220`,
-Bangalore) alongside the other apps' APIs, using the droplet's `server` command. The website
+Bangalore) alongside the other apps' APIs, using the droplet's `server` command. Unlike the
+other apps, Pahad Pulse has its **own** database container: the shared PostgreSQL has no
+PostGIS, and adding it would restart the database every other app depends on. The website
 stays on Vercel and calls `https://api.pahadpulse.live/api`; the mobile apps call the same URL.
 
 | Piece | Where |
 |---|---|
 | API | `/opt/apps/pahadpulse/backend`, Compose project `pahadpulse`, file [`backend/compose.production.yaml`](../backend/compose.production.yaml) |
 | Proxy | Shared Caddy: `api.pahadpulse.live` → `pahadpulse-api:3000`, HTTPS certificate issued automatically |
-| Database | Database and login `pahadpulse` on the shared PostgreSQL 17, which must be the **PostGIS** image (migration 001 needs the extension) |
+| Database | This project's own `db` container (`postgis/postgis:17-3.5-alpine`), data in the `pahadpulse_db_data` volume, on the internal `db` network only |
 | Secrets | `/opt/apps/pahadpulse/backend/.env` (mode 600) and the password manager; never in git |
-| Backups | Every 24 h and before every deploy, in `/opt/backups/postgres/pahadpulse/`, kept 14 days |
+| Backups | The project's `backup` service ([`backend/deploy/backup.sh`](../backend/deploy/backup.sh)): every 24 h and before every `server deploy`, in `/opt/backups/postgres/pahadpulse/`, kept 14 days |
 | DNS | Hostinger DNS (nameservers `dns-parking.com`): `A api → 139.59.72.220` |
 
-The database is reachable only on the droplet's internal `data` network, so `DB_SSL=false`
+The database is reachable only on the project's internal `db` network, so `DB_SSL=false`
 is correct here and nothing from outside can connect to it.
 
 **Release:** push to `main`, then `ssh deploy@139.59.72.220` and
@@ -56,30 +58,23 @@ runs migrations on start and waits until `/ready` passes. Logs:
 
 Run each block as `deploy` on the droplet, one command at a time.
 
-1. **PostGIS on the shared PostgreSQL.** In `server.sh` (and `/opt/platform/compose.yaml`),
-   change the `postgres` service image from `postgres:17-alpine` to
-   `postgis/postgis:17-3.5-alpine`, then `cd /opt/platform && docker compose up -d postgres`.
-   Same major version and data directory, so the existing databases are untouched; they are
-   unavailable for the few seconds the container restarts.
+None of these steps changes the shared services or any other app. The only shared piece
+touched is Caddy, in step 5, and `server add-site` checks the new site and reloads without
+dropping connections.
 
-2. **Database and checkout.**
+1. **Checkout.**
    ```sh
    git clone https://github.com/Prat05devs/pahadpulse.git /opt/apps/pahadpulse
    cd /opt/apps/pahadpulse/backend
-   PW=$(server add-db pahadpulse | sed -n 's/^ *password: *//p')
-   docker compose -f /opt/platform/compose.yaml exec -T postgres \
-     psql -U postgres -d pahadpulse -c 'CREATE EXTENSION IF NOT EXISTS postgis'
    ```
-   PostGIS needs a superuser to install, so the admin creates it once; migration 001's
-   `CREATE EXTENSION IF NOT EXISTS` is then a no-op.
 
-3. **`.env`.** Copy `EXPO_ACCESS_TOKEN` and `FIRMS_MAP_KEY` from Hostinger's environment
+2. **`.env`.** Copy `EXPO_ACCESS_TOKEN` and `FIRMS_MAP_KEY` from Hostinger's environment
    variables. Leave `SACHET_RELAY_*` unset: SACHET answers machines in India directly.
    ```sh
    cat > .env <<EOF
    COMPOSE_PROJECT_NAME=pahadpulse
    COMPOSE_FILE=compose.production.yaml
-   DB_PASSWORD=$PW
+   DB_PASSWORD=$(openssl rand -hex 24)
    DB_POOL_LIMIT=10
    LOG_LEVEL=info
    CORS_ORIGIN=https://www.pahadpulse.live,https://pahadpulse.live
@@ -87,19 +82,22 @@ Run each block as `deploy` on the droplet, one command at a time.
    EXPO_ACCESS_TOKEN=...
    FIRMS_MAP_KEY=...
    EOF
-   chmod 600 .env && grep -c DB_PASSWORD=. .env      # 1 = the password was captured
+   chmod 600 .env
    ```
-   Save `DB_PASSWORD` in the password manager now; `add-db` prints it only once.
+   Save `DB_PASSWORD` in the password manager. Then fill in the two `...` values with `nano .env`.
 
-4. **Schema, then data.** Let the migrations build the schema, then copy only the rows from
-   Supabase. This leaves out Supabase's own schemas, roles and grants.
+3. **Database and schema.** Start only the database, then let the migrations build the schema
+   (they create the PostGIS extension, as the container's own superuser):
    ```sh
+   sudo mkdir -p /opt/backups/postgres/pahadpulse
+   docker compose up -d --wait db
    docker compose build api
-   docker compose run --rm --no-deps api npm run db:migrate
+   docker compose run --rm api npm run db:migrate
    ```
-   On Hostinger, set `SCHEDULER_ENABLED=false` and redeploy, so Supabase stops changing.
-   Then dump the data from Supabase. The `postgres` container cannot reach the internet, so
-   a one-off container does it. Use the pooler host, user and password from Hostinger:
+
+4. **Data from Supabase.** On Hostinger, set `SCHEDULER_ENABLED=false` and redeploy, so
+   Supabase stops changing. Then copy only the rows (not Supabase's own schemas, roles or
+   grants). Use the pooler host, user and password from Hostinger:
    ```sh
    read -s SB_PASSWORD       # paste the Supabase password; it is not shown or kept in history
    docker run --rm -e PGPASSWORD="$SB_PASSWORD" postgres:17-alpine pg_dump \
@@ -107,13 +105,12 @@ Run each block as `deploy` on the droplet, one command at a time.
      --data-only --schema=public --format=custom \
      --exclude-table=public.schema_migrations --exclude-table=public.spatial_ref_sys \
      > /tmp/pahadpulse-data.dump
-   docker compose -f /opt/platform/compose.yaml exec -T postgres \
-     pg_restore -U postgres -d pahadpulse --data-only --disable-triggers --no-owner \
-     < /tmp/pahadpulse-data.dump
+   docker compose exec -T db pg_restore -U pahadpulse -d pahadpulse \
+     --data-only --disable-triggers --no-owner < /tmp/pahadpulse-data.dump
    rm /tmp/pahadpulse-data.dump; unset SB_PASSWORD
    ```
-   `--disable-triggers` lets rows load in any order despite foreign keys; it needs the
-   superuser, which is why the restore runs as `postgres`.
+   `--disable-triggers` lets rows load in any order despite foreign keys. It works because
+   `pahadpulse` is the superuser of its own container.
 
 5. **Start and proxy.**
    ```sh
