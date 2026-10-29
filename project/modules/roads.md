@@ -207,7 +207,7 @@ Google's terms change. Verify the current terms before building either path.
       v1. — *owner:* `<TBD>`
 
 
-## 10. PWD road closures (collecting; not displayed until permission)
+## 10. PWD road closures (displayed with permission since 2026-10-29)
 
 **Source.** `pwd-uk-road-closures` — https://mis.pwduk.in/pwd/roadClosure, the PWD dashboard
 where PWD, PMGSY, BRO, NHIDCL and NHAI divisions report closures: road name and PWD road id,
@@ -220,6 +220,12 @@ acknowledged. Migration 064 seeds the source `is_enabled = TRUE` (collected ever
 so the reader is proven on real data — product owner's decision, 2026-09-26) and
 `may_redistribute = FALSE` (never served, as for IMD alerts). After written permission, one
 migration sets `may_redistribute = TRUE` and records who granted it and when. Contacts: `eicpwduk@nic.in`, `cehq.pwduk@gov.in`.
+
+**Permission granted.** Reproduction permission from PWD Uttarakhand, approved by the
+Transport Minister of Uttarakhand, confirmed by the product owner on 2026-10-29. Migration 069
+sets `may_redistribute = TRUE`; the written permission is kept by the product owner. The
+conditions still bind every surface: name and link the source, show statuses as reported to
+PWD, never read the "Informed By" column.
 
 **Design change from §3–§5.** The planned model was segments with geometry and appended status
 history. PWD reports closures of *its own road register* (PWD road ids, km markers) with no
