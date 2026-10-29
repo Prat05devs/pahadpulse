@@ -105,6 +105,14 @@ dropping connections.
      --data-only --schema=public --format=custom \
      --exclude-table=public.schema_migrations --exclude-table=public.spatial_ref_sys \
      > /tmp/pahadpulse-data.dump
+   # The seed migrations already inserted rows; empty every table so Supabase's copy wins.
+   docker compose exec -T db psql -U pahadpulse -d pahadpulse -v ON_ERROR_STOP=1 <<'SQL'
+   DO $$ DECLARE t text; BEGIN
+     SELECT string_agg(format('%I.%I', schemaname, tablename), ', ') INTO t FROM pg_tables
+     WHERE schemaname = 'public' AND tablename NOT IN ('schema_migrations', 'spatial_ref_sys');
+     EXECUTE 'TRUNCATE ' || t || ' RESTART IDENTITY CASCADE';
+   END $$;
+   SQL
    docker compose exec -T db pg_restore -U pahadpulse -d pahadpulse \
      --data-only --disable-triggers --no-owner < /tmp/pahadpulse-data.dump
    rm /tmp/pahadpulse-data.dump; unset SB_PASSWORD
