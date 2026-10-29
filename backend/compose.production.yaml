@@ -33,6 +33,10 @@ services:
       DB_NAME: pahadpulse
       DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
       DB_SSL: 'false'
+      # Node gives each address only 250 ms to connect before trying the next (Happy
+      # Eyeballs). From Bangalore that is shorter than the round trip to US hosts such as
+      # NASA FIRMS, so every attempt was abandoned and fetch failed with ETIMEDOUT.
+      NODE_OPTIONS: --network-family-autoselection-attempt-timeout=2000
     depends_on:
       db:
         condition: service_healthy
