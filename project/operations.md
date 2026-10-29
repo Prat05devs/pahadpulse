@@ -29,13 +29,14 @@ fix this section.
 
 ## Deploy
 
-### API and database on the DigitalOcean droplet, website on Vercel
+### API and database on the DigitalOcean droplet, website on Hostinger
 
 The API and its PostgreSQL database run on the shared DigitalOcean droplet (`139.59.72.220`,
 Bangalore) alongside the other apps' APIs, using the droplet's `server` command. Unlike the
 other apps, Pahad Pulse has its **own** database container: the shared PostgreSQL has no
 PostGIS, and adding it would restart the database every other app depends on. The website
-stays on Vercel and calls `https://api.pahadpulse.live/api`; the mobile apps call the same URL.
+runs on Hostinger as a Node.js web app (Next.js preset, root `web`, auto-deployed from `main`; moved
+from Vercel 2026-10-29) and calls `https://api.pahadpulse.live/api`; the mobile apps call the same URL.
 
 | Piece | Where |
 |---|---|

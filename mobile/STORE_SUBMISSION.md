@@ -15,26 +15,40 @@ and a broken privacy-policy link. Each is handled below.
 
 | # | Blocker | Status on 29 Oct 2026 | What to do |
 |---|---|---|---|
-| 0.1 | **Website is down.** `pahadpulse.live` and `www` point to Hostinger (`82.25.106.128`) instead of Vercel, so every page except the home page — including **`/privacy`** and **`/support`** — returns 404. Both stores reject an app whose privacy link does not open. | Broken | See §0.1 below. |
+| 0.1 | **Website is down while it moves from Vercel to Hostinger.** The domain already points to Hostinger, which serves only its placeholder, so **`/privacy`** and **`/support`** do not open. Both stores reject an app whose privacy link does not open. | In progress | Finish §0.1, then check both links. |
 | 0.2 | Privacy policy and support pages list `admin@wtsolutions.cc` as the contact. The product is attributed to Pahad Pulse alone, and a reviewer comparing the developer name with that address may ask who the developer is. | Decide | Create `support@pahadpulse.live` (Hostinger email already serves the domain) and use it on both pages and in both consoles. |
 | 0.3 | Mac disk space (~2 GB free). An Xcode archive needs 6–8 GB. | Blocks iOS | Free space (npm/Expo/pnpm caches, old simulators, old Xcode archives) before **Product → Archive**. |
 | 0.4 | Installed copies of older builds call the suspended Render server and show no data. | Fixed by this release | Ship Android 1.0.1 (8) and iOS 1.0.2 (8) promptly. A reviewer testing an older TestFlight or internal build would see an empty app. |
 
-### 0.1 Restore the website (Hostinger → DNS)
+### 0.1 Move the website to Hostinger
 
-Hostinger has an unused website named **pahadpulse.live** (type PHP/HTML, created 12 Oct 2026).
-While it exists, Hostinger manages the domain's root and `www` records for it, and has pointed
-them back at its own server. The real site is on Vercel.
+The website is a Next.js app in `web/`. It runs as a Hostinger **Node.js web app** (the same
+setup as other sites on this account); Vercel is retired once it works.
 
-1. hPanel → **Websites → pahadpulse.live** (the PHP/HTML one) → **Performance → CDN → Disable**,
-   and add it to **Opt out of automatic CDN**.
-2. Delete that website (**Websites → pahadpulse.live → Advanced → Delete website**). It shows
-   only Hostinger's "You are all set" placeholder. Email (MX records) is a separate service and
-   is not affected.
-3. hPanel → **Domains → pahadpulse.live → DNS records**. Make them exactly:
+1. Delete the placeholder website **pahadpulse.live** (type PHP/HTML, created 12 Oct 2026):
+   **Websites → pahadpulse.live → Advanced → Delete website**. A domain can belong to only one
+   website, and this one shows nothing but "Default page". Email (MX) is not affected.
+2. **Websites → Add website → Node.js web app → Import Git repository** → GitHub
+   `Prat05devs/pahadpulse`. Settings:
 
-   | Type | Name | Value |
-   |---|---|---|
+   | Setting | Value |
+   |---|---|
+   | Framework preset | **Next.js** |
+   | Branch | `main` |
+   | Root directory | `web` |
+   | Node version | 22.x |
+   | Build command / output | `npm run build` / `.next` |
+   | Package manager | npm |
+   | Environment variables | `NEXT_PUBLIC_API_URL=https://api.pahadpulse.live/api` and `NEXT_PUBLIC_SITE_URL=https://www.pahadpulse.live` (read at build time — redeploy after changing them) |
+   | Domain | `pahadpulse.live` — connect with the **DNS records** option, never by changing nameservers |
+   | Auto-deployment | On |
+
+3. Check **Domains → pahadpulse.live → DNS records** afterwards: `@` and `www` point to the new
+   app, `A api → 139.59.72.220` is still there, MX/TXT/autodiscover/autoconfig unchanged.
+4. When `https://www.pahadpulse.live`, `/privacy`, `/support` and `/roads` open with SSL, remove
+   both domains from the Vercel project and delete or pause it.
+
+---|---|---|
    | A | `@` | `216.198.79.1` (Vercel) — delete any `82.25.106.128` A record and any ALIAS / AAAA on `@` |
    | CNAME | `www` | `360933028f560c3c.vercel-dns-017.com` |
    | A | `api` | `139.59.72.220` (DigitalOcean droplet) — keep |
@@ -373,7 +387,7 @@ districts a user follows, and the app works fully without them.
 ## 6. Submission checklist
 
 **Before either store**
-- [ ] Website restored on Vercel; `/privacy` and `/support` open (§0.1)
+- [ ] Website running on Hostinger; `/privacy` and `/support` open (§0.1)
 - [ ] Support email decided and updated on the site and in both consoles (§0.2)
 - [ ] `https://api.pahadpulse.live/ready` returns ready
 - [ ] Screenshots captured from this release with live data, including Road closures
