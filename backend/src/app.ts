@@ -31,7 +31,8 @@ export function createApp(): Application {
   app.use(requestId);
   app.use(helmet());
   app.use(limiter);
-  app.use(cors({ origin: allowedOrigins, credentials: true }));
+  // No cookies or auth headers exist, so credentialed cross-origin requests are not allowed.
+  app.use(cors({ origin: allowedOrigins, credentials: false }));
   app.use(express.json({ limit: BODY_LIMIT }));
   app.use(express.urlencoded({ extended: true, limit: BODY_LIMIT }));
   app.use(cookieParser());
