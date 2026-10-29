@@ -50,7 +50,7 @@ export type DistrictSummary = z.infer<typeof DistrictSummarySchema>;
 
 export const AlertSummarySchema = z.object({
   activeCount: z.number(),
-  bySeverity: z.record(z.number()),
+  bySeverity: z.record(z.string(), z.number()),
 });
 
 export const ImdCapLiveStatusSchema = z.object({

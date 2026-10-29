@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import maplibregl, { type StyleSpecification } from 'maplibre-gl';
+import { maplibregl } from '@/lib/maplibre';
+import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Navigation, X } from 'lucide-react';
 import { BASEMAP_STYLE, UTTARAKHAND_BOUNDS } from '@/features/map/constants';

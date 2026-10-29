@@ -75,7 +75,7 @@ export type ActiveAlerts = z.infer<typeof ActiveAlertsSchema>;
 
 export const AlertSummarySchema = z.object({
   activeCount: z.number(),
-  bySeverity: z.record(z.number()),
+  bySeverity: z.record(z.string(), z.number()),
 });
 
 export type AlertSummary = z.infer<typeof AlertSummarySchema>;

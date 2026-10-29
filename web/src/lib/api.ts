@@ -102,13 +102,13 @@ export const apiClient = {
   async get<T>(
     endpoint: string,
     /*
-     * `ZodType<T, ZodTypeDef, unknown>`, not `ZodSchema<T>`. The latter pins the schema's
-     * INPUT type to its output, which quietly forbids any schema using `.default()` or a
-     * `.transform()` — including the ones that let a field be absent so the web app can
+     * `ZodType<T, unknown>`: the output is `T`, the input `unknown`. The input must not be
+     * pinned to the output — that would forbid any schema using `.default()` or a
+     * `.transform()`, including the ones that let a field be absent so the web app can
      * tolerate an API that has not redeployed yet. The input here is untrusted JSON off the
      * network, so `unknown` is what it has always actually been.
      */
-    schema: z.ZodType<T, z.ZodTypeDef, unknown>,
+    schema: z.ZodType<T, unknown>,
     options?: RequestInit
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -193,13 +193,13 @@ export const apiClient = {
     endpoint: string,
     body: unknown,
     /*
-     * `ZodType<T, ZodTypeDef, unknown>`, not `ZodSchema<T>`. The latter pins the schema's
-     * INPUT type to its output, which quietly forbids any schema using `.default()` or a
-     * `.transform()` — including the ones that let a field be absent so the web app can
+     * `ZodType<T, unknown>`: the output is `T`, the input `unknown`. The input must not be
+     * pinned to the output — that would forbid any schema using `.default()` or a
+     * `.transform()`, including the ones that let a field be absent so the web app can
      * tolerate an API that has not redeployed yet. The input here is untrusted JSON off the
      * network, so `unknown` is what it has always actually been.
      */
-    schema: z.ZodType<T, z.ZodTypeDef, unknown>,
+    schema: z.ZodType<T, unknown>,
     options?: RequestInit
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;

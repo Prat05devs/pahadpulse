@@ -2,11 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import maplibregl, {
-  type ExpressionSpecification,
-  type MapGeoJSONFeature,
-  type StyleSpecification,
-} from 'maplibre-gl';
+import { maplibregl } from '@/lib/maplibre';
+import type { ExpressionSpecification, MapGeoJSONFeature, StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import {
@@ -270,7 +267,6 @@ export function TerrainMap({
       // either: swallowing map errors outright hides real breakage (a missing glyph, a bad
       // layer spec) behind a map that merely looks incomplete.
       if (process.env.NODE_ENV !== 'production') {
-        // eslint-disable-next-line no-console
         console.warn('[map]', event.error?.message ?? event);
       }
     });
