@@ -11,7 +11,7 @@ function relay(query: string, key: string | null = KEY): Promise<Response> {
   return GET(new Request(`https://www.pahadpulse.live/api/relay/sachet?${query}`, { headers }));
 }
 
-const upstream = vi.fn<[string, RequestInit?], Promise<Response>>();
+const upstream = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>();
 
 beforeEach(() => {
   vi.stubEnv('SACHET_RELAY_KEY', KEY);
