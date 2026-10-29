@@ -189,12 +189,12 @@ eas build --profile production    # store
 `runtimeVersion` follows `appVersion`, so a JS-only fix can ship over the air to everyone on
 a given store build, while anything touching native code needs a new store release.
 
-Preview and production builds are pinned to `https://pahadpulse.onrender.com/api` and
+Preview and production builds are pinned to `https://api.pahadpulse.live/api` and
 `https://www.pahadpulse.live` in `eas.json`. Before a release, validate those public contracts:
 
 ```bash
 LIVE_API_TEST=1 \
-EXPO_PUBLIC_API_URL=https://pahadpulse.onrender.com/api \
+EXPO_PUBLIC_API_URL=https://api.pahadpulse.live/api \
 EXPO_PUBLIC_WEB_URL=https://www.pahadpulse.live \
 npm test -- --runInBand src/lib/live-api.integration.test.ts
 ```

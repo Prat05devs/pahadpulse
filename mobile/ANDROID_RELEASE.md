@@ -99,7 +99,7 @@ cd mobile
 #    The URLs are set in the shell because Gradle's JS bundling otherwise reads the local
 #    .env - which put ONLY http://localhost:3000/api into 1.0.0 (2).
 export APP_VARIANT=production
-export EXPO_PUBLIC_API_URL=https://pahadpulse.onrender.com/api
+export EXPO_PUBLIC_API_URL=https://api.pahadpulse.live/api
 export EXPO_PUBLIC_WEB_URL=https://www.pahadpulse.live
 npx expo prebuild -p android --clean
 
@@ -113,7 +113,7 @@ cd android && ./gradlew bundleRelease
 
 #    The production API URL must be in the bundle. No output here = do not upload.
 unzip -p app/build/outputs/bundle/release/app-release.aab base/assets/index.android.bundle \
-  | grep -ao 'https://pahadpulse.onrender.com/api' | head -1
+  | grep -ao 'https://api.pahadpulse.live/api' | head -1
 
 # 4. Confirm it is signed with YOUR upload key, not the debug key.
 #    "CN=Android Debug" here means the signing plugin did not apply: do not upload.

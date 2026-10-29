@@ -6,7 +6,7 @@ localhost and non-HTTPS production URLs.
 
 ## Blocking inputs
 
-- [x] Production API origin: `https://pahadpulse.onrender.com/api`.
+- [x] Production API origin: `https://api.pahadpulse.live/api`.
 - [x] Canonical public web origin: `https://www.pahadpulse.live`.
 - [x] Deploy and verify `https://www.pahadpulse.live/privacy` and
       `https://www.pahadpulse.live/support`.
@@ -41,7 +41,7 @@ These public values are pinned in the preview and production profiles in `eas.js
 release candidate and store build use the same live services:
 
 ```bash
-EXPO_PUBLIC_API_URL=https://pahadpulse.onrender.com/api
+EXPO_PUBLIC_API_URL=https://api.pahadpulse.live/api
 EXPO_PUBLIC_WEB_URL=https://www.pahadpulse.live
 ```
 
@@ -156,7 +156,7 @@ npm run lint
 npm test -- --runInBand
 npm run doctor
 APP_VARIANT=production \
-EXPO_PUBLIC_API_URL=https://pahadpulse.onrender.com/api \
+EXPO_PUBLIC_API_URL=https://api.pahadpulse.live/api \
 EXPO_PUBLIC_WEB_URL=https://www.pahadpulse.live \
 npx expo config --type public
 eas build --platform ios --profile preview

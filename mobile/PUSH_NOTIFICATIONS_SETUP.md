@@ -129,7 +129,7 @@ Because a free Render web service sleeps after 15 minutes without inbound traffi
 free cron-job.org request to:
 
 ```text
-https://pahadpulse.onrender.com/health
+https://api.pahadpulse.live/health
 ```
 
 Run it every 10 minutes and enable failure/recovery emails. This keeps the in-process five-minute
@@ -145,7 +145,7 @@ builds do not gain push support remotely.
 cd mobile
 
 APP_VARIANT=production \
-EXPO_PUBLIC_API_URL=https://pahadpulse.onrender.com/api \
+EXPO_PUBLIC_API_URL=https://api.pahadpulse.live/api \
 EXPO_PUBLIC_WEB_URL=https://www.pahadpulse.live \
 npx expo prebuild --clean
 ```

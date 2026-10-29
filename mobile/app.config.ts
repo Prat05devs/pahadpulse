@@ -61,9 +61,9 @@ const BRAND_BLUE = '#0045A6';
  */
 const PUBLIC_URLS: Record<Variant, { api: string; web: string }> = {
   development: { api: 'http://localhost:3000/api', web: 'http://localhost:3001' },
-  preview: { api: 'https://pahadpulse.onrender.com/api', web: 'https://www.pahadpulse.live' },
+  preview: { api: 'https://api.pahadpulse.live/api', web: 'https://www.pahadpulse.live' },
   production: {
-    api: 'https://pahadpulse.onrender.com/api',
+    api: 'https://api.pahadpulse.live/api',
     web: 'https://www.pahadpulse.live',
   },
 };
@@ -472,7 +472,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                  * these two numbers are the real ones, not a starting point EAS would override.
                  * Increment on every upload: App Store Connect and Play each reject a repeat.
                  */
-                buildNumber: '7',
+                buildNumber: '8',
                 infoPlist: { ITSAppUsesNonExemptEncryption: false },
               },
               android: {
@@ -482,7 +482,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
                  * used for internal testing. Play rejects a reused versionCode outright - AgniVision
                  * hit exactly this and had to rebuild. `versionName` comes from `version` above.
                  */
-                versionCode: 6,
+                versionCode: 7,
                 predictiveBackGestureEnabled: false,
                 adaptiveIcon: {
                   backgroundColor: '#FAF8FF',
