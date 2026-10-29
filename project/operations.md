@@ -126,8 +126,11 @@ dropping connections.
    server add-site api.pahadpulse.live pahadpulse-api:3000
    ```
 
-6. **Cut over.** Remove `api.pahadpulse.live` from the Hostinger Node.js app first, so
-   Hostinger does not restore its own records. Then, in Hostinger DNS, replace the `api`
+6. **Cut over.** Delete the Hostinger website `api.pahadpulse.live` first. While it
+   exists, Hostinger keeps a separate DNS zone for that name, which overrides the `api`
+   record in `pahadpulse.live` and is rewritten back to Hostinger's addresses after any
+   edit. Its CDN also needs opting out, or it re-enables itself. After deletion the stale
+   zone took about 25 minutes to clear from every Hostinger nameserver. Then, in Hostinger DNS, replace the `api`
    records with `A api → 139.59.72.220`. When `dig +short api.pahadpulse.live` prints only
    that address, open `https://api.pahadpulse.live/ready` once to issue the certificate.
    Then set `SCHEDULER_ENABLED=true` in `.env` and run `server deploy .`.
