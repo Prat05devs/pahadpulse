@@ -449,7 +449,7 @@ export default ({ config }: ConfigContext): ExpoConfig =>
               owner: 'wtsolutions5s-team',
               name: NAME[VARIANT],
               slug: 'wt-it-solutions',
-              version: '1.0.1',
+              version: '1.0.2',
               orientation: 'default',
               icon: './assets/images/icon.png',
               scheme: 'pahadpulse',
