@@ -12,7 +12,9 @@ import {
   ROAD_COLORS,
   TERRAIN_VIEW,
   MAPLIBRE_CSS,
+  MAPLIBRE_CSS_INTEGRITY,
   MAPLIBRE_JS,
+  MAPLIBRE_JS_INTEGRITY,
   SEVERITY_COLORS,
   TERRAIN_EXAGGERATION,
   TERRAIN_MAX_ZOOM,
@@ -114,7 +116,7 @@ export function buildMapHtml({
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<link href="${MAPLIBRE_CSS}" rel="stylesheet" />
+<link href="${MAPLIBRE_CSS}" rel="stylesheet" integrity="${MAPLIBRE_CSS_INTEGRITY}" crossorigin="anonymous" />
 <style>
   html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: ${palette.background}; }
   /* The RN screen draws its own attribution, where it can be styled with the app's type. */
@@ -140,7 +142,7 @@ export function buildMapHtml({
 <body>
 <div id="map"></div>
 <div id="err"></div>
-<script src="${MAPLIBRE_JS}"></script>
+<script src="${MAPLIBRE_JS}" integrity="${MAPLIBRE_JS_INTEGRITY}" crossorigin="anonymous"></script>
 <script>
 (function () {
   var post = function (msg) {

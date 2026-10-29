@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
+import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
 
 import {
   Card,
@@ -57,6 +58,13 @@ const LAYER_ICONS: Record<MapLayerKey, IconName> = {
  * SDK into React Native - is slower to build and rarely achieves this framerate without
  * crashing.
  */
+const MAP_BASE_URL = 'https://pahadpulse.local/';
+
+/** Allows the map document itself; refuses every navigation away from it. */
+function isMapDocument(request: ShouldStartLoadRequest): boolean {
+  return request.url.startsWith(MAP_BASE_URL) || request.url === 'about:blank';
+}
+
 export function MapScreen() {
   const router = useRouter();
   const theme = useTheme();
@@ -298,8 +306,13 @@ export function MapScreen() {
         ref={webRef}
         // An https origin rather than the default about:blank: MapLibre needs a secure
         // context for its workers, and the library, style and tiles are all https.
-        source={{ html, baseUrl: 'https://pahadpulse.local/' }}
+        source={{ html, baseUrl: MAP_BASE_URL }}
         originWhitelist={['*']}
+        // The map is the only page this WebView may ever show. A link inside the map (or a
+        // tampered script) must not be able to load another site inside the app, where it
+        // would look like part of Pahad Pulse.
+        onShouldStartLoadWithRequest={isMapDocument}
+        setSupportMultipleWindows={false}
         onMessage={onMessage}
         style={{ flex: 1, backgroundColor: theme.colors.surfaceMuted }}
         // The map owns its gestures; the page itself must not scroll or bounce.

@@ -26,6 +26,16 @@ export const BASEMAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 export const MAPLIBRE_VERSION = '5.24.0';
 export const MAPLIBRE_JS = `https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/${MAPLIBRE_VERSION}/maplibre-gl.js`;
 export const MAPLIBRE_CSS = `https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/${MAPLIBRE_VERSION}/maplibre-gl.css`;
+/**
+ * Subresource Integrity for the two files above, as cdnjs publishes them (and recomputed from
+ * the served files, 2026-10-29). The WebView refuses a file whose hash differs, so a
+ * compromised or altered CDN copy cannot run inside the app. Change these together with
+ * MAPLIBRE_VERSION: the published values are at api.cdnjs.com/libraries/maplibre-gl/<version>?fields=sri.
+ */
+export const MAPLIBRE_JS_INTEGRITY =
+  'sha512-rOFgoUgWaVi69JW1dzBu6PWF9xKW9rxYfY5u2SexFABHhWk0qUWkJoWNz4UuZRMvSXsNZG66+tU5B+HlwWF5kA==';
+export const MAPLIBRE_CSS_INTEGRITY =
+  'sha512-KIMsMWIdnoG9OwZa+oaIafmbDonqck1UCmq+/zcUi2aaZ97N9QE6TqpTM+n36EO40HGh64hU/375zxtjx7WTyQ==';
 
 export const ATTRIBUTION = [
   '© OpenStreetMap contributors',
