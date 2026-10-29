@@ -47,3 +47,6 @@ example
 
 # Built store artifacts (.aab, universal .apk, mapping.txt). Never committed.
 /artifacts
+
+# EAS local credentials: keystore passwords (built from ~/.gradle/gradle.properties)
+credentials.json
