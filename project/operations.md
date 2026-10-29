@@ -29,30 +29,113 @@ fix this section.
 
 ## Deploy
 
-### Render API and ingestion, Vercel web
+### API and database on the DigitalOcean droplet, website on Vercel
 
-The deployment configuration is in [`render.yaml`](../render.yaml). The API runs on Render
-in Singapore and connects over TLS to Supabase PostgreSQL. The database credentials and CA
-certificate are deployment secrets, never values committed in the Blueprint.
+The API and its PostgreSQL database run on the shared DigitalOcean droplet (`139.59.72.220`,
+Bangalore) alongside the other apps' APIs, using the droplet's `server` command. The website
+stays on Vercel and calls `https://api.pahadpulse.live/api`; the mobile apps call the same URL.
 
-1. Provision Supabase PostgreSQL, then push the reviewed Blueprint and create or sync it in
-   Render. Configure the `DB_*` secrets and the Supabase CA certificate in Render.
-2. Set the API's `SERVER_URL` to its public HTTPS origin and `CORS_ORIGIN` to the Vercel
-   origin, with no trailing slash. Multiple allowed origins are comma-separated. Temporary
-   localhost values can be used during creation and replaced after the URLs are assigned.
-3. On Vercel choose root directory `web`, use npm with `package-lock.json`, and set
-   `NEXT_PUBLIC_API_URL=https://<render-host>/api` before building.
-4. Wait for Postgres initialization and successful API migrations before triggering ingestion.
-   If initial migrations fail because Postgres is starting, redeploy the API once Postgres is ready.
-5. Confirm the scheduler's first run in the API logs (`scheduler started`, then one
-   `ingestion run complete` per source), and set up the pinger below. Check `/health`, `/ready`,
-   `/api/roads`, and `/api/map/districts`, then verify the live web app.
+| Piece | Where |
+|---|---|
+| API | `/opt/apps/pahadpulse/backend`, Compose project `pahadpulse`, file [`backend/compose.production.yaml`](../backend/compose.production.yaml) |
+| Proxy | Shared Caddy: `api.pahadpulse.live` → `pahadpulse-api:3000`, HTTPS certificate issued automatically |
+| Database | Database and login `pahadpulse` on the shared PostgreSQL 17, which must be the **PostGIS** image (migration 001 needs the extension) |
+| Secrets | `/opt/apps/pahadpulse/backend/.env` (mode 600) and the password manager; never in git |
+| Backups | Every 24 h and before every deploy, in `/opt/backups/postgres/pahadpulse/`, kept 14 days |
+| DNS | Hostinger DNS (nameservers `dns-parking.com`): `A api → 139.59.72.220` |
 
-Production database traffic crosses the public network and therefore requires `DB_SSL=true`
-with certificate and hostname verification. `DB_SSL=false` is only for local Docker.
+The database is reachable only on the droplet's internal `data` network, so `DB_SSL=false`
+is correct here and nothing from outside can connect to it.
 
-Changing database projects or connection secrets does not transfer data. To rotate a password,
-rotate it in Supabase and update the matching Render secret before redeploying.
+**Release:** push to `main`, then `ssh deploy@139.59.72.220` and
+`server deploy /opt/apps/pahadpulse/backend`. It pulls, backs up every database, rebuilds,
+runs migrations on start and waits until `/ready` passes. Logs:
+`cd /opt/apps/pahadpulse/backend && docker compose logs -f --tail 100 api`.
+
+#### One-time move from Hostinger and Supabase (2026-10)
+
+Run each block as `deploy` on the droplet, one command at a time.
+
+1. **PostGIS on the shared PostgreSQL.** In `server.sh` (and `/opt/platform/compose.yaml`),
+   change the `postgres` service image from `postgres:17-alpine` to
+   `postgis/postgis:17-3.5-alpine`, then `cd /opt/platform && docker compose up -d postgres`.
+   Same major version and data directory, so the existing databases are untouched; they are
+   unavailable for the few seconds the container restarts.
+
+2. **Database and checkout.**
+   ```sh
+   git clone https://github.com/Prat05devs/pahadpulse.git /opt/apps/pahadpulse
+   cd /opt/apps/pahadpulse/backend
+   PW=$(server add-db pahadpulse | sed -n 's/^ *password: *//p')
+   docker compose -f /opt/platform/compose.yaml exec -T postgres \
+     psql -U postgres -d pahadpulse -c 'CREATE EXTENSION IF NOT EXISTS postgis'
+   ```
+   PostGIS needs a superuser to install, so the admin creates it once; migration 001's
+   `CREATE EXTENSION IF NOT EXISTS` is then a no-op.
+
+3. **`.env`.** Copy `EXPO_ACCESS_TOKEN` and `FIRMS_MAP_KEY` from Hostinger's environment
+   variables. Leave `SACHET_RELAY_*` unset: SACHET answers machines in India directly.
+   ```sh
+   cat > .env <<EOF
+   COMPOSE_PROJECT_NAME=pahadpulse
+   COMPOSE_FILE=compose.production.yaml
+   DB_PASSWORD=$PW
+   DB_POOL_LIMIT=10
+   LOG_LEVEL=info
+   CORS_ORIGIN=https://www.pahadpulse.live,https://pahadpulse.live
+   SCHEDULER_ENABLED=false
+   EXPO_ACCESS_TOKEN=...
+   FIRMS_MAP_KEY=...
+   EOF
+   chmod 600 .env && grep -c DB_PASSWORD=. .env      # 1 = the password was captured
+   ```
+   Save `DB_PASSWORD` in the password manager now; `add-db` prints it only once.
+
+4. **Schema, then data.** Let the migrations build the schema, then copy only the rows from
+   Supabase. This leaves out Supabase's own schemas, roles and grants.
+   ```sh
+   docker compose build api
+   docker compose run --rm --no-deps api npm run db:migrate
+   ```
+   On Hostinger, set `SCHEDULER_ENABLED=false` and redeploy, so Supabase stops changing.
+   Then dump the data from Supabase. The `postgres` container cannot reach the internet, so
+   a one-off container does it. Use the pooler host, user and password from Hostinger:
+   ```sh
+   read -s SB_PASSWORD       # paste the Supabase password; it is not shown or kept in history
+   docker run --rm -e PGPASSWORD="$SB_PASSWORD" postgres:17-alpine pg_dump \
+     "host=<pooler host> port=5432 user=<pooler user> dbname=postgres sslmode=require" \
+     --data-only --schema=public --format=custom \
+     --exclude-table=public.schema_migrations --exclude-table=public.spatial_ref_sys \
+     > /tmp/pahadpulse-data.dump
+   docker compose -f /opt/platform/compose.yaml exec -T postgres \
+     pg_restore -U postgres -d pahadpulse --data-only --disable-triggers --no-owner \
+     < /tmp/pahadpulse-data.dump
+   rm /tmp/pahadpulse-data.dump; unset SB_PASSWORD
+   ```
+   `--disable-triggers` lets rows load in any order despite foreign keys; it needs the
+   superuser, which is why the restore runs as `postgres`.
+
+5. **Start and proxy.**
+   ```sh
+   server deploy .
+   server add-site api.pahadpulse.live pahadpulse-api:3000
+   ```
+
+6. **Cut over.** Remove `api.pahadpulse.live` from the Hostinger Node.js app first, so
+   Hostinger does not restore its own records. Then, in Hostinger DNS, replace the `api`
+   records with `A api → 139.59.72.220`. When `dig +short api.pahadpulse.live` prints only
+   that address, open `https://api.pahadpulse.live/ready` once to issue the certificate.
+   Then set `SCHEDULER_ENABLED=true` in `.env` and run `server deploy .`.
+
+7. **Check.** `/ready` gives `{"status":"ready"}`, `/api/sources` shows new `lastRunAt` times
+   within 15 minutes, and the website and an installed app load data.
+
+8. **Retire the old hosts after a week of clean running.** Stop the Hostinger Node.js app,
+   delete the cron-job.org job (nothing sleeps now), and pause the Supabase project before
+   deleting it. Render is already suspended.
+
+Anything that registered a push token on Hostinger between the dump in step 4 and the
+cut-over in step 6 is lost. Those devices register again the next time the app opens.
 
 ### Ingestion schedule
 
@@ -75,18 +158,8 @@ Jobs are intervals, not clock times. A job is due once its interval has passed s
 run from any trigger, the CLI included. On boot, the scheduler reads the run log, so a server
 that slept or redeployed catches up at once, highest priority first. Jobs run one at a time.
 
-**Keeping the free instance awake.** Render's free plan sleeps a service after 15 minutes
-without inbound traffic, and a sleeping process runs no timers. An external pinger keeps it
-awake:
-
-1. Create a free account at [cron-job.org](https://cron-job.org).
-2. Add a cronjob: URL `https://pahadpulse.onrender.com/health`, every 10 minutes, method GET.
-3. Under the job's notification settings, turn on the email alert for failed executions.
-
-750 free instance hours a month cover one service awake all month (31 × 24 = 744), so this
-API must be the only free service in the Render workspace that stays awake. Pinging to stop
-sleep is a widely used workaround, not a Render-supported feature. Render's supported
-alternative is a paid instance.
+**No pinger.** The droplet never sleeps, so the scheduler's timers keep running. The
+cron-job.org job that kept Render's free instance awake is no longer needed.
 
 **SACHET relay (alerts).** SACHET drops every connection from Render, yet answers Vercel,
 including Vercel's US region (verified 2026-09-22 against another app fetching the national feed
@@ -107,7 +180,8 @@ any request without the shared key.
    `https://www.pahadpulse.live/api/relay/sachet` and `SACHET_RELAY_KEY` = the same key.
    Set both or neither; the API refuses to boot with only one.
 
-Leave both unset on a machine in India: the CLI then fetches SACHET directly.
+Leave both unset on a machine in India, which includes the droplet: the API then fetches
+SACHET directly. The relay exists only for hosts outside India that SACHET blocks.
 
 **Alert notifications.** The API announces new warnings to devices that asked for them, via
 Expo's push service — a scheduler job every 5 minutes, after the alert ingestion jobs. Devices
@@ -133,14 +207,14 @@ that appear to come from this app.
 
 **Weekly manual step.** The reference refresh (`openstreetmap` boundaries and villages,
 `openstreetmap-roads`) is deliberately not scheduled. It holds the whole state's geometry in
-memory for over a minute, which could take down a 512 MB instance. Run it from a machine with
-the production `backend/.env`:
+memory for over a minute. The database is reachable only from the droplet, so run it there,
+at a quiet hour, and watch memory with `server status`:
 
 ```bash
-cd backend
-npm run ingest -- openstreetmap
-npm run ingest -- openstreetmap-roads
-npm run ingest            # status: every live source should read "fresh"
+cd /opt/apps/pahadpulse/backend
+docker compose exec api npm run ingest -- openstreetmap
+docker compose exec api npm run ingest -- openstreetmap-roads
+docker compose exec api npm run ingest     # status: every live source should read "fresh"
 ```
 
 This data changes only when the government re-notifies boundaries or OSM volunteers edit
@@ -150,10 +224,9 @@ because it is how a stopped scheduler gets noticed.
 The production image deliberately retains devDependencies, scripts, and SQL source files:
 the migration and ingestion CLIs require `tsx`, and TypeScript does not copy SQL assets.
 
-After deployment, collect outbound ranges from each Render service's Connect → Outbound
-panel. Confirm IMD accepts the shared regional CIDR ranges before submitting the
-whitelisting request; a dedicated static IP is not included by default.
-See [Render outbound IPs](https://render.com/docs/outbound-ip-addresses).
+**IMD whitelisting.** IMD's CAP feed answers only whitelisted addresses, which is why
+`imd-cap-alerts` has been expired since 17 Sep 2026. The droplet has a fixed address,
+`139.59.72.220`; that is the one to submit.
 
 The generic rollout and monitoring placeholders below remain to be filled when production
 is provisioned.

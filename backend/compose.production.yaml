@@ -1,0 +1,48 @@
+# Production: the API on the shared DigitalOcean droplet, behind the shared Caddy proxy and
+# using the shared PostgreSQL (with PostGIS). docker-compose.yml stays the local development
+# stack; the server's .env selects this file with COMPOSE_FILE=compose.production.yaml.
+#
+# No ports are published. Caddy reaches the API as `pahadpulse-api:3000` on the `edge`
+# network, and the API reaches PostgreSQL as `postgres:5432` on the internal `data` network,
+# so database traffic never leaves the droplet and needs no TLS.
+#
+# `npm start` runs migrations and the LGD village import before the server listens; both are
+# no-ops when there is nothing new. The health check waits on /ready (a real database query),
+# which is what `server deploy` waits for.
+
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    # The image's files are root-owned and read-only to this user; nothing is written at runtime.
+    user: node
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      APP_ENV: production
+      PORT: '3000'
+      SERVER_URL: https://api.pahadpulse.live
+      DB_HOST: postgres
+      DB_PORT: '5432'
+      DB_USER: pahadpulse
+      DB_NAME: pahadpulse
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      DB_SSL: 'false'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/ready >/dev/null || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    networks:
+      default: {}
+      data: {}
+      edge:
+        aliases: [pahadpulse-api]
+    logging:
+      driver: json-file
+      options: { max-size: '20m', max-file: '10' }
+
+networks:
+  edge: { external: true }
+  data: { external: true }
